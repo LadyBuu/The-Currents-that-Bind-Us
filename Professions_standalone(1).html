@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>Still Waters — Professions Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #6a9ecf;
+    --accent-dark: #4a7aa5;
+    --accent-dim: #1a2d48;
+    --bg: #090c12;
+    --bg2: #0d1119;
+    --bg3: #121820;
+    --bg4: #1a2432;
+    --border: #1e2738;
+    --border2: #2a3a50;
+    --text: #cdd5e0;
+    --dim: #8aabb8;
+    --deceased: #8f5e5e;
+    --sidebar-width: 260px;
+    
+    --tooltip-bg: #1a2432;
+    --tooltip-border: #4a7ab0;
+    --modal-overlay: rgba(0,0,0,0.95);
+    --modal-bg: #0d1119;
+    --modal-border: #2a3a50;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  /* Top Bar */
+  #topbar {
+    background: var(--bg2);
+    padding: 8px 12px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+    flex-wrap: wrap;
+  }
+  
+  #topbar h1 {
+    font-family: 'Cinzel', serif;
+    color: var(--accent);
+    margin: 0;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  
+  button {
+    background: #1e2738;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  
+  button:hover {
+    background: #2a3448;
+    border-color: var(--accent);
+  }
+  
+  button.primary {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  
+  button.primary:hover {
+    background: rgba(74,122,176,0.25);
+  }
+  
+  button.danger {
+    background: #2a1a1a;
+    border-color: #8a3020;
+    color: #c08080;
+  }
+  
+  button.danger:hover {
+    background: #3a2a2a;
+  }
+  
+  button.validate-btn {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  
+  .tb-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--border2);
+    margin: 0 2px;
+  }
+  
+  /* Toast */
+  #toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  
+  .toast {
+    background: var(--bg2);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 8px 16px;
+    color: var(--accent);
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: translateX(100%);
+    animation: slideIn 0.3s forwards, fadeOut 0.3s 1.7s forwards;
+    pointer-events: none;
+    max-width: 300px;
+  }
+  
+  @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+  @keyframes fadeOut { to { opacity: 0; transform: translateX(100%); } }
+  
+  /* Mobile menu toggle */
+  #menu-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    padding: 2px 10px;
+    color: var(--accent);
+  }
+  
+  #main-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  /* Sidebar */
+  #sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    z-index: 20;
+    flex-shrink: 0;
+  }
+  
+  #sidebar-header {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  #sidebar-header h3 {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    color: var(--accent);
+    font-size: 0.85rem;
+  }
+  
+  #close-sidebar {
+    display: none;
+    background: transparent;
+    border: none;
+    font-size: 1.3rem;
+    padding: 0 8px;
+    color: var(--dim);
+    cursor: pointer;
+  }
+  
+  #close-sidebar:hover {
+    color: var(--accent);
+  }
+  
+  #sidebar-search {
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  #sidebar-search input {
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.8rem;
+  }
+  
+  #prof-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+  }
+  
+  .prof-group {
+    margin-bottom: 12px;
+  }
+  
+  .group-header {
+    padding: 6px 10px;
+    background: var(--bg);
+    border-radius: 3px;
+    margin-bottom: 3px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--accent);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 3px solid var(--accent);
+  }
+  
+  .group-header .arrow {
+    transition: transform 0.3s;
+    font-size: 0.55rem;
+    color: var(--dim);
+  }
+  
+  .group-header.collapsed .arrow {
+    transform: rotate(-90deg);
+  }
+  
+  .group-content {
+    transition: max-height 0.3s ease-out;
+    max-height: none;
+    overflow-y: visible;
+  }
+  
+  .group-content.collapsed {
+    max-height: 0;
+    overflow: hidden;
+  }
+  
+  .prof-item {
+    padding: 6px 10px;
+    margin: 2px 0;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+    font-size: 0.8rem;
+    position: relative;
+  }
+  
+  .prof-item:hover {
+    background: var(--bg);
+  }
+  
+  .prof-item.selected {
+    background: var(--bg);
+    border-left-color: var(--accent);
+  }
+  
+  .prof-name {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  
+  .prof-type-badge {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-family: 'Cinzel', serif;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    color: var(--dim);
+  }
+  
+  .prof-type-badge.daily { border-color: var(--dim); }
+  .prof-type-badge.ritual { border-color: var(--accent); color: var(--accent); }
+  
+  .prof-detail {
+    font-size: 0.65rem;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+  
+  /* Edit Panel */
+  #edit-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+    min-width: 0;
+  }
+  
+  .panel-header {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Cinzel', serif;
+    color: var(--accent);
+    font-size: 0.8rem;
+    background: var(--bg2);
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  #edit-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    scrollbar-width: thin;
+    min-height: 0;
+  }
+  
+  /* Form styles */
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .form-group label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    color: var(--dim);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  input, select, textarea {
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-family: 'Crimson Pro', serif;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  
+  /* Tags */
+  .tag-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    margin-bottom: 8px;
+  }
+  
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    color: var(--dim);
+  }
+  
+  .tag .remove {
+    cursor: pointer;
+    color: var(--dim);
+    font-size: 0.7rem;
+    transition: color 0.15s;
+  }
+  
+  .tag .remove:hover {
+    color: var(--deceased);
+  }
+  
+  .add-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  
+  .add-row input {
+    flex: 1;
+  }
+  
+  .add-row button {
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+  
+  /* Spot types */
+  .spot-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  
+  .spot-type {
+    padding: 4px 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    font-size: 0.7rem;
+    color: var(--dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  
+  .spot-type:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  
+  .spot-type.selected {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  
+  /* Actions */
+  .actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  
+  .empty-msg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--dim);
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    text-align: center;
+  }
+  
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--modal-overlay);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    overflow-y: auto;
+  }
+  
+  .modal-box {
+    background: var(--modal-bg);
+    border: 1px solid var(--modal-border);
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  
+  .modal-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  
+  /* Mobile */
+  @media (max-width: 768px) {
+    #menu-toggle {
+      display: block;
+    }
+    #close-sidebar {
+      display: block;
+    }
+    #sidebar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      transform: translateX(-100%);
+      z-index: 30;
+      width: 260px;
+    }
+    #sidebar.mobile-visible {
+      transform: translateX(0);
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    .tag-wrap {
+      gap: 4px;
+    }
+    .tag {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div id="topbar">
+  <button id="menu-toggle" onclick="toggleMobileSidebar()">☰</button>
+  <h1>Still Waters — Professions Editor</h1>
+  <button class="primary" onclick="openAddProfModal()">+ Daily</button>
+  <button class="primary" onclick="openAddRitualModal()">+ Ritual</button>
+  <div class="tb-sep"></div>
+  <button onclick="exportData()">⬇ Export</button>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+  <button onclick="document.getElementById('import-file').click()">⬆ Import</button>
+  <button class="validate-btn" onclick="validateData()">🔍 Validate</button>
+  <button class="validate-btn" onclick="addDefaultProfessions()">📋 Add Defaults</button>
+</div>
+
+<div id="main-container">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <h3>Professions</h3>
+      <button id="close-sidebar" onclick="toggleMobileSidebar()">✕</button>
+    </div>
+    <div id="sidebar-search">
+      <input type="text" id="search-box" placeholder="Search..." oninput="renderProfList()">
+    </div>
+    <div id="prof-list"></div>
+  </div>
+
+  <!-- Edit Panel -->
+  <div id="edit-panel">
+    <div class="panel-header">
+      <span>Edit Profession</span>
+    </div>
+    <div id="edit-content">
+      <div id="empty-state" class="empty-msg">
+        Select or create a profession
+      </div>
+      <div id="edit-form" style="display:none;">
+        <div class="form-group">
+          <label>Name</label>
+          <input id="prof-name" placeholder="e.g., Farmer">
+        </div>
+        
+        <div class="form-group">
+          <label>Type</label>
+          <select id="prof-type">
+            <option value="daily">Daily Profession</option>
+            <option value="ritual">Ritual Role</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Specializations</label>
+          <div class="tag-wrap" id="specs-list"></div>
+          <div class="add-row">
+            <input type="text" id="new-spec" placeholder="Add specialization..." onkeypress="if(event.key==='Enter') addSpec()">
+            <button class="primary" onclick="addSpec()">+ Add</button>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Associated Spots</label>
+          <div class="spot-types" id="spots-list"></div>
+        </div>
+        
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="prof-notes" rows="3" placeholder="Any additional notes about this profession..."></textarea>
+        </div>
+        
+        <div class="actions">
+          <button class="primary" onclick="saveProfession()">Save</button>
+          <button onclick="cancelEdit()">Cancel</button>
+          <button class="danger" onclick="deleteProfession()">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Profession Modal -->
+<div id="add-prof-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">New Daily Profession</div>
+    <div class="form-group">
+      <label>Name</label>
+      <input id="new-prof-name" placeholder="e.g., Potter" autofocus>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button class="primary" style="flex:1;" onclick="confirmAddProf()">Create</button>
+      <button style="flex:1;" onclick="closeAddProfModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="add-ritual-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">New Ritual Role</div>
+    <div class="form-group">
+      <label>Name</label>
+      <input id="new-ritual-name" placeholder="e.g., Fire Keeper" autofocus>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button class="primary" style="flex:1;" onclick="confirmAddRitual()">Create</button>
+      <button style="flex:1;" onclick="closeAddRitualModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====================== DATA STRUCTURE ======================
+const STORAGE_KEY = 'stillwaters_professions_definitions';
+
+let PROFESSIONS = [];
+
+// Default spot types for association
+const SPOT_TYPES = [
+  'Field', 'Grove', 'Plantation', 'Canoe Hut', 'Fishing Area',
+  'Market', 'Pavilion', 'Meeting House', 'Dye House', 'Weaving Hall',
+  'Healing House', 'Storage House', 'Well', 'Dock', 'Quarry', 'Other'
+];
+
+// Default professions
+const DEFAULT_DAILY = [
+  { name: 'Farmer', type: 'daily', subtags: ['Taro', 'Breadfruit', 'Coconut', 'Yam', 'Banana', 'Sugarcane', 'Forager', 'Gardener'], huts: ['Field', 'Grove', 'Plantation'], notes: '' },
+  { name: 'Fisher', type: 'daily', subtags: ['Net Fisher', 'Angler', 'Deep-sea', 'Spear Fisher', 'Shellfish', 'River Fisher'], huts: ['Fishing Area', 'Dock'], notes: '' },
+  { name: 'Sailor', type: 'daily', subtags: ['Navigator', 'Dockworker', 'Paddler', 'Deckhand', 'Tide Reader'], huts: ['Canoe Hut', 'Dock'], notes: '' },
+  { name: 'Physician', type: 'daily', subtags: ['Midwife', 'Herbalist', 'Healer', 'Bone Setter', 'Fever Treater'], huts: ['Healing House'], notes: '' },
+  { name: 'Hunter', type: 'daily', subtags: ['Bird Hunter', 'Boar Hunter', 'Land Tracker', 'Trapper', 'Forager'], huts: [], notes: '' },
+  { name: 'Crafter', type: 'daily', subtags: ['Weaver', 'Potter', 'Carver', 'Dye Maker', 'Tool Maker', 'Net Maker', 'Rope Maker'], huts: ['Dye House', 'Weaving Hall'], notes: '' },
+  { name: 'Canoer', type: 'daily', subtags: ['Canoe Builder', 'Outrigger Specialist', 'Repair'], huts: ['Canoe Hut', 'Dock'], notes: '' },
+  { name: 'Caretaker', type: 'daily', subtags: ['Cook', 'Child Minder', 'Elderly Care', 'Compound Keeper'], huts: ['Meeting House'], notes: '' },
+  { name: 'Merchant', type: 'daily', subtags: ['Trader', 'Market Trader', 'Money Lender', 'Messenger', 'Scribe'], huts: ['Market', 'Dock'], notes: '' },
+  { name: 'Builder', type: 'daily', subtags: ['Thatcher', 'Labourer', 'Stone Layer', 'Land Tender'], huts: ['Quarry', 'Storage House'], notes: '' }
+];
+
+const DEFAULT_RITUAL = [
+  { name: 'Dancer', type: 'ritual', subtags: ['War Dance', 'Celebration', 'Mourning', 'Harvest'], huts: ['Pavilion', 'Meeting House'], notes: '' },
+  { name: 'Drummer', type: 'ritual', subtags: ['Ceremony', 'Signal', 'Festival'], huts: ['Pavilion', 'Meeting House'], notes: '' },
+  { name: 'Storyteller', type: 'ritual', subtags: ['Oral Tradition', 'Children', 'Ceremony'], huts: ['Pavilion', 'Meeting House'], notes: '' },
+  { name: 'Chanter', type: 'ritual', subtags: ['Ancestral', 'Prayer', 'War', 'Harvest'], huts: ['Pavilion'], notes: '' },
+  { name: 'Tattooer', type: 'ritual', subtags: ['Ceremonial', 'Coming of Age', 'Memorial'], huts: [], notes: '' }
+];
+
+// ====================== STATE ======================
+let activeId = null;
+let collapsedGroups = new Set();
+
+// ====================== UTILITIES ======================
+function showToast(msg) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return String(text).replace(/[&<>"]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    if (m === '"') return '&quot;';
+    return m;
+  });
+}
+
+function generateId() {
+  return 'prof_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+}
+
+// ====================== DATA PERSISTENCE ======================
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(PROFESSIONS, null, 2));
+  } catch(e) {
+    console.error('Save failed:', e);
+  }
+}
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      PROFESSIONS = JSON.parse(saved);
+    } else {
+      PROFESSIONS = [];
+    }
+  } catch(e) {
+    console.error('Load failed:', e);
+    PROFESSIONS = [];
+  }
+  renderProfList();
+}
+
+function addDefaultProfessions() {
+  if (PROFESSIONS.length > 0 && !confirm('This will add default professions to your existing list. Continue?')) return;
+  
+  DEFAULT_DAILY.forEach(def => {
+    if (!PROFESSIONS.some(p => p.name === def.name && p.type === 'daily')) {
+      PROFESSIONS.push({
+        id: generateId(),
+        name: def.name,
+        type: 'daily',
+        subtags: [...def.subtags],
+        huts: [...def.huts],
+        notes: def.notes
+      });
+    }
+  });
+  
+  DEFAULT_RITUAL.forEach(def => {
+    if (!PROFESSIONS.some(p => p.name === def.name && p.type === 'ritual')) {
+      PROFESSIONS.push({
+        id: generateId(),
+        name: def.name,
+        type: 'ritual',
+        subtags: [...def.subtags],
+        huts: [...def.huts],
+        notes: def.notes
+      });
+    }
+  });
+  
+  saveData();
+  renderProfList();
+  showToast('Default professions added');
+}
+
+// ====================== IMPORT/EXPORT ======================
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (Array.isArray(imported)) {
+        PROFESSIONS = imported;
+      } else if (imported.professions && Array.isArray(imported.professions)) {
+        PROFESSIONS = imported.professions;
+      } else {
+        throw new Error('Invalid format');
+      }
+      saveData();
+      renderProfList();
+      showToast('Import complete');
+    } catch (err) {
+      showToast('Error: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function exportData() {
+  const dataStr = JSON.stringify(PROFESSIONS, null, 2);
+  const blob = new Blob([dataStr], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `stillwaters_professions_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exported');
+}
+
+function validateData() {
+  let fixes = 0;
+  
+  PROFESSIONS.forEach(prof => {
+    if (!prof.id) {
+      prof.id = generateId();
+      fixes++;
+    }
+    if (!prof.subtags) prof.subtags = [];
+    if (!prof.huts) prof.huts = [];
+    if (!prof.notes) prof.notes = '';
+  });
+  
+  if (fixes > 0) {
+    saveData();
+    showToast(`Fixed ${fixes} data issues`);
+    renderProfList();
+  } else {
+    showToast('All data is valid');
+  }
+}
+
+// ====================== RENDER SIDEBAR ======================
+function renderProfList() {
+  const listEl = document.getElementById('prof-list');
+  const searchTerm = document.getElementById('search-box').value.toLowerCase();
+  
+  let filtered = PROFESSIONS.filter(p => !searchTerm || p.name.toLowerCase().includes(searchTerm));
+  const daily = filtered.filter(p => p.type === 'daily');
+  const ritual = filtered.filter(p => p.type === 'ritual');
+  
+  function renderGroup(title, items, type) {
+    if (!items.length) return '';
+    const groupId = `group-${type}`;
+    const isCollapsed = collapsedGroups.has(groupId);
+    
+    return `
+      <div class="prof-group">
+        <div class="group-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleGroup('${groupId}')">
+          <span>${title} (${items.length})</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div id="${groupId}" class="group-content ${isCollapsed ? 'collapsed' : ''}">
+          ${items.map(prof => `
+            <div class="prof-item ${activeId === prof.id ? 'selected' : ''}" onclick="selectProfession('${prof.id}')">
+              <div class="prof-name">
+                ${escapeHtml(prof.name)}
+                <span class="prof-type-badge ${prof.type}">${prof.type === 'daily' ? 'Daily' : 'Ritual'}</span>
+              </div>
+              <div class="prof-detail">
+                ${prof.subtags?.slice(0, 2).map(t => escapeHtml(t)).join(' · ')}${prof.subtags?.length > 2 ? '…' : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  listEl.innerHTML = renderGroup('Daily Professions', daily, 'daily') + renderGroup('Ritual Roles', ritual, 'ritual');
+  if (!daily.length && !ritual.length) {
+    listEl.innerHTML = '<div class="empty-msg" style="padding:30px;">No professions<br>Click + to create one</div>';
+  }
+}
+
+function toggleGroup(groupId) {
+  if (collapsedGroups.has(groupId)) {
+    collapsedGroups.delete(groupId);
+  } else {
+    collapsedGroups.add(groupId);
+  }
+  renderProfList();
+}
+
+function selectProfession(id) {
+  activeId = id;
+  const prof = PROFESSIONS.find(p => p.id === id);
+  if (!prof) return;
+  
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('edit-form').style.display = 'block';
+  
+  document.getElementById('prof-name').value = prof.name;
+  document.getElementById('prof-type').value = prof.type;
+  document.getElementById('prof-notes').value = prof.notes || '';
+  
+  // Render specializations
+  const specsList = document.getElementById('specs-list');
+  specsList.innerHTML = (prof.subtags || []).map((spec, i) => `
+    <span class="tag">
+      ${escapeHtml(spec)}
+      <span class="remove" onclick="removeSpec(${i})">×</span>
+    </span>
+  `).join('');
+  
+  // Render spot types
+  const spotsList = document.getElementById('spots-list');
+  spotsList.innerHTML = SPOT_TYPES.map(spot => `
+    <span class="spot-type ${(prof.huts || []).includes(spot) ? 'selected' : ''}" onclick="toggleSpot('${spot}')">
+      ${escapeHtml(spot)}
+    </span>
+  `).join('');
+  
+  renderProfList();
+}
+
+function addSpec() {
+  const input = document.getElementById('new-spec');
+  const spec = input.value.trim();
+  if (!spec) return;
+  
+  const prof = PROFESSIONS.find(p => p.id === activeId);
+  if (!prof) return;
+  
+  if (!prof.subtags) prof.subtags = [];
+  if (!prof.subtags.includes(spec)) {
+    prof.subtags.push(spec);
+    saveData();
+    selectProfession(activeId);
+  }
+  input.value = '';
+}
+
+function removeSpec(index) {
+  const prof = PROFESSIONS.find(p => p.id === activeId);
+  if (!prof) return;
+  
+  prof.subtags.splice(index, 1);
+  saveData();
+  selectProfession(activeId);
+}
+
+function toggleSpot(spot) {
+  const prof = PROFESSIONS.find(p => p.id === activeId);
+  if (!prof) return;
+  
+  if (!prof.huts) prof.huts = [];
+  const idx = prof.huts.indexOf(spot);
+  if (idx >= 0) {
+    prof.huts.splice(idx, 1);
+  } else {
+    prof.huts.push(spot);
+  }
+  saveData();
+  selectProfession(activeId);
+}
+
+function saveProfession() {
+  const prof = PROFESSIONS.find(p => p.id === activeId);
+  if (!prof) return;
+  
+  prof.name = document.getElementById('prof-name').value.trim();
+  prof.type = document.getElementById('prof-type').value;
+  prof.notes = document.getElementById('prof-notes').value;
+  
+  if (!prof.name) {
+    showToast('Name required');
+    return;
+  }
+  
+  saveData();
+  renderProfList();
+  showToast('Saved');
+}
+
+function cancelEdit() {
+  activeId = null;
+  document.getElementById('empty-state').style.display = 'block';
+  document.getElementById('edit-form').style.display = 'none';
+  renderProfList();
+}
+
+function deleteProfession() {
+  if (!activeId) return;
+  const prof = PROFESSIONS.find(p => p.id === activeId);
+  if (!prof) return;
+  
+  if (!confirm(`Delete "${prof.name}" permanently?`)) return;
+  
+  PROFESSIONS = PROFESSIONS.filter(p => p.id !== activeId);
+  activeId = null;
+  saveData();
+  renderProfList();
+  document.getElementById('empty-state').style.display = 'block';
+  document.getElementById('edit-form').style.display = 'none';
+  showToast('Deleted');
+}
+
+// ====================== ADD MODALS ======================
+function openAddProfModal() {
+  document.getElementById('add-prof-modal').style.display = 'flex';
+  document.getElementById('new-prof-name').focus();
+}
+
+function closeAddProfModal() {
+  document.getElementById('add-prof-modal').style.display = 'none';
+  document.getElementById('new-prof-name').value = '';
+}
+
+function confirmAddProf() {
+  const name = document.getElementById('new-prof-name').value.trim();
+  if (!name) {
+    showToast('Name required');
+    return;
+  }
+  
+  const newProf = {
+    id: generateId(),
+    name: name,
+    type: 'daily',
+    subtags: [],
+    huts: [],
+    notes: ''
+  };
+  
+  PROFESSIONS.push(newProf);
+  saveData();
+  closeAddProfModal();
+  selectProfession(newProf.id);
+  renderProfList();
+  showToast('Created: ' + name);
+}
+
+function openAddRitualModal() {
+  document.getElementById('add-ritual-modal').style.display = 'flex';
+  document.getElementById('new-ritual-name').focus();
+}
+
+function closeAddRitualModal() {
+  document.getElementById('add-ritual-modal').style.display = 'none';
+  document.getElementById('new-ritual-name').value = '';
+}
+
+function confirmAddRitual() {
+  const name = document.getElementById('new-ritual-name').value.trim();
+  if (!name) {
+    showToast('Name required');
+    return;
+  }
+  
+  const newProf = {
+    id: generateId(),
+    name: name,
+    type: 'ritual',
+    subtags: [],
+    huts: [],
+    notes: ''
+  };
+  
+  PROFESSIONS.push(newProf);
+  saveData();
+  closeAddRitualModal();
+  selectProfession(newProf.id);
+  renderProfList();
+  showToast('Created: ' + name);
+}
+
+// ====================== MOBILE SIDEBAR ======================
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('mobile-visible');
+}
+
+document.addEventListener('click', function(e) {
+  const sidebar = document.getElementById('sidebar');
+  const menuToggle = document.getElementById('menu-toggle');
+  
+  if (window.innerWidth <= 768 && 
+      sidebar.classList.contains('mobile-visible') && 
+      !sidebar.contains(e.target) && 
+      e.target !== menuToggle &&
+      !menuToggle.contains(e.target)) {
+    toggleMobileSidebar();
+  }
+});
+
+window.addEventListener('resize', () => {
+  const sidebar = document.getElementById('sidebar');
+  if (window.innerWidth > 768 && sidebar.classList.contains('mobile-visible')) {
+    sidebar.classList.remove('mobile-visible');
+  }
+});
+
+// ====================== INIT ======================
+window.addEventListener('load', () => {
+  loadData();
+  if (PROFESSIONS.length === 0) {
+    if (confirm('No professions found. Load default set?')) {
+      addDefaultProfessions();
+    }
+  }
+});
+</script>
+</body>
+</html>
