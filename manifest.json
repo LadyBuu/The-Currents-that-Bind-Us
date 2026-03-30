@@ -1,0 +1,48 @@
+{
+  "name": "Still Waters",
+  "short_name": "StillWaters",
+  "description": "Worldbuilding tools for Still Waters chronicle",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#6a9ecf",
+  "background_color": "#090c12",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%236a9ecf'/%3E%3Ctext x='50' y='70' text-anchor='middle' fill='white' font-size='50' font-family='Arial'%3E🌊%3C/text%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Census",
+      "short_name": "Census",
+      "description": "Population statistics",
+      "url": "Census.html",
+      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📊%3C/text%3E%3C/svg%3E", "sizes": "any" }]
+    },
+    {
+      "name": "Character Manager",
+      "short_name": "Characters",
+      "description": "Create and edit characters",
+      "url": "character-manager.html",
+      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👥%3C/text%3E%3C/svg%3E", "sizes": "any" }]
+    },
+    {
+      "name": "Locations",
+      "short_name": "Locations",
+      "description": "Map and geography",
+      "url": "Locations.html",
+      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🗺️%3C/text%3E%3C/svg%3E", "sizes": "any" }]
+    },
+    {
+      "name": "Family Tree",
+      "short_name": "Tree",
+      "description": "Genealogy viewer",
+      "url": "Tree.html",
+      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌳%3C/text%3E%3C/svg%3E", "sizes": "any" }]
+    }
+  ]
+}
