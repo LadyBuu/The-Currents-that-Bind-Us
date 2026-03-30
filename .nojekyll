@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Still Waters — The Currents That Bind Us</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090c12;
+      --bg2: #0d1119;
+      --bg3: #121820;
+      --bg4: #1a2432;
+      --border: #1e2738;
+      --border2: #2a3a50;
+      --text: #cdd5e0;
+      --tdim: #8aabb8;
+      --tmut: #6a8098;
+      --accent: #6a9ecf;
+      --accent2: #4a7ab0;
+      --accent-dim: #1a2d48;
+      --gold: #c9a87c;
+      --sage: #6aac80;
+      --deceased: #8f5e5e;
+      --warn: #c87040;
+      --success: #4a9060;
+      --rank-chief: #c9a87c;
+      --rank-sacred-sons: #a87898;
+      --rank-sacred: #7a9eb0;
+      --rank-sacred-daughters: #b88aa8;
+      --rank-consort: #c89880;
+      --rank-elder: #6a9ecf;
+      --rank-master: #8a9eb0;
+      --tooltip-bg: #1a2432;
+      --tooltip-border: #4a7ab0;
+      --modal-overlay: rgba(0,0,0,0.95);
+      --modal-bg: #0d1119;
+      --modal-border: #2a3a50;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Crimson Pro', Georgia, serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Hero Section */
+    .hero {
+      position: relative;
+      padding: 40px 20px 30px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(9,12,18,0.95) 0%, var(--bg) 100%);
+    }
+
+    .hero h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      text-shadow: 0 0 10px rgba(106,158,207,0.2);
+    }
+
+    .hero .sub {
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      color: var(--tdim);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero .tagline {
+      font-size: 0.9rem;
+      font-style: italic;
+      color: var(--tmut);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Main Grid */
+    .tools-grid {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px 20px 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    /* Tool Cards */
+    .tool-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(2px);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent2);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+    }
+
+    .card-header {
+      padding: 18px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+    }
+
+    .card-header h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-header .icon {
+      font-size: 1.4rem;
+    }
+
+    .card-body {
+      padding: 18px 20px;
+      flex: 1;
+    }
+
+    .card-body p {
+      font-size: 0.85rem;
+      color: var(--tdim);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .badge-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .badge {
+      font-size: 0.6rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--tdim);
+      font-family: 'Cinzel', serif;
+      letter-spacing: 0.05em;
+    }
+
+    .badge.accent {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .card-footer {
+      padding: 14px 20px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      background: transparent;
+      border: 1px solid var(--border2);
+      border-radius: 30px;
+      color: var(--tdim);
+      padding: 8px 20px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+      transform: scale(0.98);
+    }
+
+    .btn.primary {
+      background: var(--accent-dim);
+      border-color: var(--accent2);
+      color: var(--accent);
+    }
+
+    .btn.primary:hover {
+      background: rgba(74,122,176,0.25);
+    }
+
+    /* Diagnostics Panel (embedded) */
+    .diagnostics-section {
+      max-width: 1400px;
+      margin: 20px auto 40px;
+      padding: 0 20px;
+    }
+
+    .diag-container {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .diag-header {
+      background: var(--bg3);
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .diag-header h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .diag-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .diag-tab {
+      padding: 6px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 30px;
+      font-size: 0.65rem;
+      font-family: 'Cinzel', serif;
+      color: var(--tdim);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .diag-tab.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .diag-tab:hover:not(.active) {
+      border-color: var(--accent2);
+      color: var(--accent);
+    }
+
+    .diag-pane {
+      display: none;
+      padding: 24px;
+      background: var(--bg);
+    }
+
+    .diag-pane.active {
+      display: block;
+    }
+
+    /* Merger UI inside diagnostics */
+    .merger-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .file-box {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .file-box h4 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .file-control {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .file-badge {
+      background: var(--bg3);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-family: monospace;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stats-mini {
+      font-size: 0.7rem;
+      color: var(--tdim);
+      margin-top: 8px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .merge-options-mini {
+      background: var(--bg3);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 20px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: space-between;
+    }
+
+    .merge-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .merge-group label {
+      font-size: 0.65rem;
+      font-family: 'Cinzel', serif;
+      color: var(--dim);
+    }
+
+    .radio-row {
+      display: flex;
+      gap: 12px;
+      font-size: 0.7rem;
+    }
+
+    textarea.raw-preview {
+      width: 100%;
+      height: 180px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: monospace;
+      font-size: 0.7rem;
+      padding: 8px;
+      border-radius: 8px;
+      resize: vertical;
+    }
+
+    .diagnostic-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: var(--accent);
+      font-family: 'Cinzel', serif;
+    }
+
+    .stat-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--tdim);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .warning-note {
+      background: rgba(200,112,64,0.1);
+      border-left: 3px solid var(--warn);
+      padding: 12px;
+      font-size: 0.7rem;
+      color: var(--warn);
+      margin: 16px 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 0.6rem;
+      color: var(--tmut);
+      letter-spacing: 0.1em;
+    }
+
+    @media (max-width: 700px) {
+      .hero h1 { font-size: 1.2rem; letter-spacing: 0.1em; }
+      .merger-row { grid-template-columns: 1fr; gap: 16px; }
+      .diag-header { flex-direction: column; align-items: stretch; }
+      .diag-tabs { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>STILL WATERS</h1>
+  <div class="sub">the currents that bind us</div>
+  <div class="tagline">census · characters · gatherings · locations · family tree · professions</div>
+</div>
+
+<div class="tools-grid" id="toolsGrid"></div>
+
+<div class="diagnostics-section">
+  <div class="diag-container" id="diagnosticsRoot">
+    <div class="diag-header">
+      <h3><span>⚙️</span> KELP & STONE — DATA WORKSHOP</h3>
+      <div class="diag-tabs">
+        <span class="diag-tab active" data-pane="merger-pane">🔄 JSON Merger</span>
+        <span class="diag-tab" data-pane="validate-pane">🔍 Validate & Stable IDs</span>
+        <span class="diag-tab" data-pane="diagnose-pane">📊 Diagnostics</span>
+      </div>
+    </div>
+
+    <!-- MERGER PANE -->
+    <div id="merger-pane" class="diag-pane active">
+      <div class="merger-row">
+        <div class="file-box">
+          <h4>📂 SOURCE A (Base)</h4>
+          <div class="file-control">
+            <input type="file" id="mergeLeftFile" accept=".json" style="display:none">
+            <button class="btn small" onclick="document.getElementById('mergeLeftFile').click()">Load JSON</button>
+            <span id="mergeLeftName" class="file-badge">No file</span>
+            <button class="btn small" onclick="clearMergeSide('left')">✕ Clear</button>
+          </div>
+          <div id="mergeLeftStats" class="stats-mini"></div>
+        </div>
+        <div class="file-box">
+          <h4>📂 SOURCE B (To Merge)</h4>
+          <div class="file-control">
+            <input type="file" id="mergeRightFile" accept=".json" style="display:none">
+            <button class="btn small" onclick="document.getElementById('mergeRightFile').click()">Load JSON</button>
+            <span id="mergeRightName" class="file-badge">No file</span>
+            <button class="btn small" onclick="clearMergeSide('right')">✕ Clear</button>
+          </div>
+          <div id="mergeRightStats" class="stats-mini"></div>
+        </div>
+      </div>
+
+      <div class="merge-options-mini">
+        <div class="merge-group">
+          <label>Base priority</label>
+          <div class="radio-row">
+            <label><input type="radio" name="mergeStrategy" value="left" checked> Source A</label>
+            <label><input type="radio" name="mergeStrategy" value="right"> Source B</label>
+            <label><input type="radio" name="mergeStrategy" value="union"> Union</label>
+          </div>
+        </div>
+        <div class="merge-group">
+          <label>People merge</label>
+          <div class="radio-row">
+            <label><input type="radio" name="peopleMerge" value="preserve" checked> Preserve</label>
+            <label><input type="radio" name="peopleMerge" value="smart"> Smart (keep ranks)</label>
+            <label><input type="radio" name="peopleMerge" value="overwrite"> Overwrite</label>
+          </div>
+        </div>
+        <div class="merge-group">
+          <label>Relationships</label>
+          <div class="radio-row">
+            <label><input type="radio" name="relsMerge" value="preserve" checked> Preserve</label>
+            <label><input type="radio" name="relsMerge" value="merge"> Merge arrays</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end; margin-bottom: 16px;">
+        <button class="btn primary" id="performMergeBtn">⟿ Merge & Preview</button>
+        <button class="btn" id="downloadMergedBtn" style="display:none;">⬇ Download Merged</button>
+      </div>
+
+      <div id="mergePreviewArea" style="margin-top: 12px;">
+        <textarea id="mergePreviewText" class="raw-preview" readonly placeholder="Merged JSON will appear here..."></textarea>
+      </div>
+      <div class="warning-note">⚠️ Merger merges people, relationships, locations, professions. Stable IDs are preserved. Smart merge keeps rank arrays from both sides.</div>
+    </div>
+
+    <!-- VALIDATE & STABLE ID PANE -->
+    <div id="validate-pane" class="diag-pane">
+      <div class="diagnostic-stats">
+        <div class="stat-card"><div class="stat-number" id="valPeopleCount">0</div><div class="stat-label">People loaded</div></div>
+        <div class="stat-card"><div class="stat-number" id="valStableCount">0</div><div class="stat-label">Have Stable ID</div></div>
+        <div class="stat-card"><div class="stat-number" id="valRelCount">0</div><div class="stat-label">Relationships</div></div>
+      </div>
+      <div class="action-buttons">
+        <button class="btn primary" id="loadForValidationBtn">📂 Load JSON / From Storage</button>
+        <button class="btn" id="validateDataBtn">🔍 Validate & Fix</button>
+        <button class="btn" id="migrateStableBtn">🆔 Migrate Missing Stable IDs</button>
+      </div>
+      <div id="validateMessage" class="warning-note" style="margin-top: 16px;"></div>
+      <div class="warning-note" style="background: rgba(74,144,96,0.05); border-left-color: var(--success);">
+        💡 Stable IDs are permanent identifiers (XXX-XXX-XXX). Migration adds them to all characters without IDs.
+      </div>
+    </div>
+
+    <!-- DIAGNOSTICS PANE -->
+    <div id="diagnose-pane" class="diag-pane">
+      <div class="diagnostic-stats">
+        <div class="stat-card"><div class="stat-number" id="diagPeople">0</div><div class="stat-label">Total People</div></div>
+        <div class="stat-card"><div class="stat-number" id="diagOrphans">0</div><div class="stat-label">Orphaned Rel</div></div>
+        <div class="stat-card"><div class="stat-number" id="diagRanks">0</div><div class="stat-label">Rank holders</div></div>
+        <div class="stat-card"><div class="stat-number" id="diagLocations">0</div><div class="stat-label">Locations</div></div>
+      </div>
+      <div class="action-buttons">
+        <button class="btn" id="runFullDiagnose">🔬 Run Full Diagnosis</button>
+        <button class="btn" id="exportDiagnosticLog">📄 Export Report</button>
+      </div>
+      <textarea id="diagnosticLog" class="raw-preview" readonly placeholder="Diagnostic output will appear here..."></textarea>
+    </div>
+  </div>
+</div>
+
+<footer>
+  STILL WATERS — Tools for worldbuilding & chronicle keeping
+</footer>
+
+<script>
+  // ====================== TOOL CARDS WITH RELATIVE PATHS ======================
+  const tools = [
+    { 
+      name: "Census & Analytics", 
+      desc: "Population statistics, age distribution, compound viewer.", 
+      icon: "📊", 
+      file: "Census.html", 
+      tags: ["stats", "filter", "charts"] 
+    },
+    { 
+      name: "Character Manager", 
+      desc: "Create, edit, ranks, relationships, professions, friendships.", 
+      icon: "👥", 
+      file: "Character Manager3.html", 
+      tags: ["editor", "family", "romance"] 
+    },
+    { 
+      name: "Gatherings", 
+      desc: "Festival seating, council of elders by district.", 
+      icon: "⛩️", 
+      file: "gatherings.html", 
+      tags: ["festival", "council", "diagram"] 
+    },
+    { 
+      name: "Locations", 
+      desc: "Hierarchical map: countries, districts, towns, compounds.", 
+      icon: "🗺️", 
+      file: "Locations.html", 
+      tags: ["geography", "households"] 
+    },
+    { 
+      name: "Family Tree", 
+      desc: "Ancestors, descendants, relationship finder.", 
+      icon: "🌳", 
+      file: "Tree.html", 
+      tags: ["genealogy", "historical"] 
+    },
+    { 
+      name: "Professions Editor", 
+      desc: "Daily & ritual roles, specializations, associated spots.", 
+      icon: "⚒️", 
+      file: "Professions_standalone(1).html", 
+      tags: ["crafts", "jobs"] 
+    }
+  ];
+
+  const grid = document.getElementById('toolsGrid');
+  
+  tools.forEach(tool => {
+    const card = document.createElement('div');
+    card.className = 'tool-card';
+    // Use relative path - open in new tab
+    card.onclick = () => {
+      window.open(tool.file, '_blank');
+    };
+    card.innerHTML = `
+      <div class="card-header">
+        <h2>
+          <span class="icon">${tool.icon}</span> 
+          ${tool.name}
+        </h2>
+      </div>
+      <div class="card-body">
+        <p>${tool.desc}</p>
+        <div class="badge-group">
+          ${tool.tags.map(t => `<span class="badge">${t}</span>`).join('')}
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="btn primary">Launch →</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // ====================== DIAGNOSTICS GLOBAL STATE ======================
+  let diagData = { people: {}, relationships: {}, locations: {}, professions: [] };
+  let leftMergeData = null, rightMergeData = null;
+  let mergedResult = null;
+
+  // Helper: load JSON file
+  function loadJSONFile(fileInput, callback) {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try { callback(JSON.parse(e.target.result), file.name); } catch(err) { alert("Invalid JSON"); }
+    };
+    reader.readAsText(file);
+  }
+
+  // Merge logic
+  function deepMerge(base, incoming, peopleStrategy, relsStrategy) {
+    const result = JSON.parse(JSON.stringify(base));
+    if (!result.people) result.people = {};
+    if (!result.relationships) result.relationships = {};
+    if (!result.locations) result.locations = {};
+    if (!result.professions) result.professions = [];
+
+    if (incoming.people) {
+      Object.entries(incoming.people).forEach(([id, person]) => {
+        if (!result.people[id]) result.people[id] = person;
+        else {
+          if (peopleStrategy === 'overwrite') result.people[id] = person;
+          else if (peopleStrategy === 'smart') {
+            const existing = result.people[id];
+            const newRanks = person.ranks || [];
+            const mergedRanks = [...(existing.ranks || [])];
+            newRanks.forEach(r => {
+              if (!mergedRanks.some(er => er.type === r.type && er.value === r.value && er.number === r.number))
+                mergedRanks.push(r);
+            });
+            result.people[id] = { ...existing, ...person, ranks: mergedRanks };
+          } else {
+            Object.keys(person).forEach(k => { if (result.people[id][k] === undefined) result.people[id][k] = person[k]; });
+          }
+        }
+      });
+    }
+    if (incoming.relationships && relsStrategy === 'merge') {
+      Object.entries(incoming.relationships).forEach(([id, rel]) => {
+        if (!result.relationships[id]) result.relationships[id] = rel;
+        else {
+          ['ongoing','ended','widowed','friends'].forEach(arr => {
+            if (rel[arr]) {
+              if (!result.relationships[id][arr]) result.relationships[id][arr] = [];
+              rel[arr].forEach(v => { if (!result.relationships[id][arr].includes(v)) result.relationships[id][arr].push(v); });
+            }
+          });
+          if (rel.father) result.relationships[id].father = rel.father;
+          if (rel.mother) result.relationships[id].mother = rel.mother;
+          if (rel.details) result.relationships[id].details = { ...(result.relationships[id].details || {}), ...rel.details };
+        }
+      });
+    } else if (incoming.relationships) {
+      Object.entries(incoming.relationships).forEach(([id, rel]) => { if (!result.relationships[id]) result.relationships[id] = rel; });
+    }
+    if (incoming.locations) Object.assign(result.locations, incoming.locations);
+    if (incoming.professions) {
+      incoming.professions.forEach(p => { if (!result.professions.some(ep => ep.id === p.id)) result.professions.push(p); });
+    }
+    return result;
+  }
+
+  function updateMergePreview() {
+    const strategy = document.querySelector('input[name="mergeStrategy"]:checked').value;
+    const peopleStrategy = document.querySelector('input[name="peopleMerge"]:checked').value;
+    const relsStrategy = document.querySelector('input[name="relsMerge"]:checked').value;
+    let base = null, incoming = null;
+    if (strategy === 'left') { base = leftMergeData; incoming = rightMergeData; }
+    else if (strategy === 'right') { base = rightMergeData; incoming = leftMergeData; }
+    else { base = {}; incoming = {}; if (leftMergeData) Object.assign(base, leftMergeData); if (rightMergeData) Object.assign(incoming, rightMergeData); }
+    if (!base && !incoming) { document.getElementById('mergePreviewText').value = ''; document.getElementById('downloadMergedBtn').style.display = 'none'; return; }
+    if (!base) base = { people: {}, relationships: {}, locations: {}, professions: [] };
+    if (!incoming) incoming = { people: {}, relationships: {}, locations: {}, professions: [] };
+    mergedResult = deepMerge(base, incoming, peopleStrategy, relsStrategy);
+    document.getElementById('mergePreviewText').value = JSON.stringify(mergedResult, null, 2);
+    document.getElementById('downloadMergedBtn').style.display = 'inline-block';
+  }
+
+  function clearMergeSide(side) {
+    if (side === 'left') { leftMergeData = null; document.getElementById('mergeLeftName').innerText = 'No file'; document.getElementById('mergeLeftStats').innerHTML = ''; }
+    else { rightMergeData = null; document.getElementById('mergeRightName').innerText = 'No file'; document.getElementById('mergeRightStats').innerHTML = ''; }
+    updateMergePreview();
+  }
+
+  // Validation & Stable ID
+  function generateStableId() { const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let id=''; for(let i=0;i<9;i++){ if(i===3||i===6)id+='-'; else id+=c[Math.floor(Math.random()*c.length)];} return id; }
+  function rebuildStableIndex(data) { let idx = {}; Object.entries(data.people).forEach(([pid, p]) => { if(p.stableId) idx[p.stableId]=pid; }); return idx; }
+  function migrateStableIds(data) { let migrated=0; Object.keys(data.people).forEach(id => { if(!data.people[id].stableId) { data.people[id].stableId = generateStableId(); migrated++; } }); data.stableIdIndex = rebuildStableIndex(data); return migrated; }
+  function validateData(data) { let fixes=0; Object.keys(data.people).forEach(id => { if(!data.relationships[id]) data.relationships[id]={}; if(!data.people[id].stableId) { data.people[id].stableId = generateStableId(); fixes++; } }); return fixes; }
+
+  function refreshDiagnosticStats() {
+    const peopleCount = Object.keys(diagData.people).length;
+    const stableCount = Object.values(diagData.people).filter(p => p.stableId).length;
+    const relCount = Object.keys(diagData.relationships).length;
+    document.getElementById('valPeopleCount').innerText = peopleCount;
+    document.getElementById('valStableCount').innerText = stableCount;
+    document.getElementById('valRelCount').innerText = relCount;
+    document.getElementById('diagPeople').innerText = peopleCount;
+    let orphanRel = 0;
+    Object.entries(diagData.relationships).forEach(([id, rel]) => { if (!diagData.people[id]) orphanRel++; });
+    document.getElementById('diagOrphans').innerText = orphanRel;
+    let rankHolders = Object.values(diagData.people).filter(p => p.ranks && p.ranks.length).length;
+    document.getElementById('diagRanks').innerText = rankHolders;
+    document.getElementById('diagLocations').innerText = Object.keys(diagData.locations || {}).length;
+  }
+
+  function runDiagnose() {
+    let log = `=== STILL WATERS DIAGNOSTIC ===\n`;
+    log += `Total people: ${Object.keys(diagData.people).length}\n`;
+    log += `With stable IDs: ${Object.values(diagData.people).filter(p=>p.stableId).length}\n`;
+    let missingBirth = Object.values(diagData.people).filter(p=>!p.birthYear).length;
+    log += `Missing birth year: ${missingBirth}\n`;
+    let deadCount = Object.values(diagData.people).filter(p=>p.deceased).length;
+    log += `Deceased: ${deadCount}\n`;
+    let relEntries = Object.keys(diagData.relationships).length;
+    log += `Relationship entries: ${relEntries}\n`;
+    let compounds = new Set();
+    Object.values(diagData.people).forEach(p => { if(p.currComp) compounds.add(p.currComp); if(p.birthComp) compounds.add(p.birthComp); });
+    log += `Unique compound keys referenced: ${compounds.size}\n`;
+    let profs = diagData.professions?.length || 0;
+    log += `Professions defined: ${profs}\n`;
+    document.getElementById('diagnosticLog').value = log;
+  }
+
+  function loadFromStorageForDiag() {
+    const keys = ['stillwaters_editor','stillwaters_connections','stillwaters_locations','stillwaters_tree','stillwaters_professions'];
+    for(let k of keys) {
+      const raw = localStorage.getItem(k);
+      if(raw) {
+        try { const parsed = JSON.parse(raw); if(parsed.people) { diagData = { people: parsed.people || {}, relationships: parsed.relationships || {}, locations: parsed.locations || {}, professions: parsed.professions || [] }; refreshDiagnosticStats(); document.getElementById('validateMessage').innerHTML = `<span style="color:var(--success)">✅ Loaded from storage (${Object.keys(diagData.people).length} people)</span>`; return; } } catch(e) {}
+      }
+    }
+    document.getElementById('validateMessage').innerHTML = `<span style="color:var(--warn)">⚠️ No Still Waters data found in localStorage.</span>`;
+  }
+
+  // Attach events
+  document.addEventListener('DOMContentLoaded', () => {
+    // Merger file handlers
+    const leftInput = document.getElementById('mergeLeftFile');
+    const rightInput = document.getElementById('mergeRightFile');
+    leftInput.addEventListener('change', (e) => loadJSONFile(e.target, (data, name) => { leftMergeData = data; document.getElementById('mergeLeftName').innerText = name; let stats = `People: ${Object.keys(data.people || {}).length} · Rels: ${Object.keys(data.relationships || {}).length}`; document.getElementById('mergeLeftStats').innerHTML = stats; updateMergePreview(); }));
+    rightInput.addEventListener('change', (e) => loadJSONFile(e.target, (data, name) => { rightMergeData = data; document.getElementById('mergeRightName').innerText = name; let stats = `People: ${Object.keys(data.people || {}).length} · Rels: ${Object.keys(data.relationships || {}).length}`; document.getElementById('mergeRightStats').innerHTML = stats; updateMergePreview(); }));
+    document.getElementById('performMergeBtn').onclick = () => updateMergePreview();
+    document.getElementById('downloadMergedBtn').onclick = () => { if(mergedResult) { const blob = new Blob([JSON.stringify(mergedResult, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=`stillwaters_merged_${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); } };
+    // validation pane
+    document.getElementById('loadForValidationBtn').onclick = () => loadFromStorageForDiag();
+    document.getElementById('validateDataBtn').onclick = () => { const fixed = validateData(diagData); refreshDiagnosticStats(); document.getElementById('validateMessage').innerHTML = `<span style="color:var(--success)">✅ Validation complete. Fixed ${fixed} missing stable IDs & missing relationships.</span>`; };
+    document.getElementById('migrateStableBtn').onclick = () => { const cnt = migrateStableIds(diagData); refreshDiagnosticStats(); document.getElementById('validateMessage').innerHTML = `<span style="color:var(--success)">✨ Migrated ${cnt} new stable IDs.</span>`; };
+    // diagnose pane
+    document.getElementById('runFullDiagnose').onclick = () => runDiagnose();
+    document.getElementById('exportDiagnosticLog').onclick = () => { const log = document.getElementById('diagnosticLog').value; const blob = new Blob([log], {type:'text/plain'}); const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`stillwaters_diagnostic_${Date.now()}.txt`; a.click(); URL.revokeObjectURL(blob); };
+    // Tab switching
+    const tabs = document.querySelectorAll('.diag-tab');
+    const panes = { 'merger-pane': document.getElementById('merger-pane'), 'validate-pane': document.getElementById('validate-pane'), 'diagnose-pane': document.getElementById('diagnose-pane') };
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetPane = tab.getAttribute('data-pane');
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        Object.values(panes).forEach(p => p.classList.remove('active'));
+        if(panes[targetPane]) panes[targetPane].classList.add('active');
+      });
+    });
+    loadFromStorageForDiag();
+  });
+</script>
+</body>
+</html>
