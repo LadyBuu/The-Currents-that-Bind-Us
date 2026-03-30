@@ -5,124 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <title>Still Waters — JSON Merger</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stillwaters.css">
 <style>
-:root {
-  --bg: #090c12;
-  --bg2: #0d1119;
-  --bg3: #121820;
-  --border: #1e2738;
-  --border2: #2a3a50;
-  --text: #cdd5e0;
-  --dim: #8aabb8;
-  --acc: #6a9ecf;
-  --acc2: #4a7ab0;
-  --acc-dim: #1a2d48;
-  --success: #4a9060;
-  --warning: #c87040;
-  --danger: #8b4040;
-}
+/* ============================================
+   MERGER TOOL - UNIQUE STYLES
+   ============================================ */
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Crimson Pro', Georgia, serif;
-  font-size: 16px;
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-#topbar {
-  background: var(--bg2);
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  min-height: 56px;
-}
-
-#topbar h1 {
-  font-family: 'Cinzel', serif;
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  color: var(--acc);
-  text-transform: uppercase;
-  white-space: nowrap;
-  margin-right: 4px;
-}
-
-.tb-sep {
-  width: 1px;
-  height: 20px;
-  background: var(--border2);
-  margin: 0 4px;
-}
-
-.btn {
-  background: transparent;
-  border: 1px solid var(--border2);
-  border-radius: 4px;
-  color: var(--dim);
-  padding: 6px 10px;
-  font-family: 'Cinzel', serif;
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-
-.btn:hover {
-  border-color: var(--acc);
-  color: var(--acc);
-}
-
-.btn.primary {
-  background: var(--acc-dim);
-  border-color: var(--acc2);
-  color: var(--acc);
-}
-
-.btn.primary:hover {
-  background: rgba(74, 122, 176, 0.25);
-}
-
-.btn.success {
-  background: rgba(74, 144, 96, 0.15);
-  border-color: var(--success);
-  color: var(--success);
-}
-
-.btn.success:hover {
-  background: rgba(74, 144, 96, 0.25);
-}
-
-.btn.warning {
-  background: rgba(200, 112, 64, 0.15);
-  border-color: var(--warning);
-  color: var(--warning);
-}
-
-.btn.warning:hover {
-  background: rgba(200, 112, 64, 0.25);
-}
-
-.btn.small {
-  padding: 4px 8px;
-  font-size: 0.6rem;
-}
-
-/* Main container - responsive grid */
+/* Main container - 3-column grid specific to merger */
 #main-container {
   flex: 1;
   display: grid;
@@ -222,7 +111,7 @@ body {
   margin-left: 4px;
 }
 
-/* Center panel */
+/* Center panel - merger specific */
 #center-panel {
   display: flex;
   flex-direction: column;
@@ -384,7 +273,7 @@ body {
   border-radius: 3px;
 }
 
-/* Result Modal */
+/* Result Modal - merger specific (different structure than shared modal) */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -442,56 +331,14 @@ body {
   flex-wrap: wrap;
 }
 
-/* Toast */
-#toast-container {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: none;
-}
-
-.toast {
-  background: var(--bg2);
-  border: 1px solid var(--acc2);
-  border-radius: 4px;
-  padding: 8px 16px;
-  color: var(--acc);
-  font-family: 'Cinzel', serif;
-  font-size: 0.7rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  opacity: 0;
-  transform: translateX(100%);
-  animation: slideIn 0.3s forwards, fadeOut 0.3s 1.7s forwards;
-  pointer-events: none;
-  max-width: 300px;
-}
-
-@keyframes slideIn {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeOut {
-  to {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
-
-/* Syntax highlighting */
+/* Syntax highlighting - merger specific */
 .string { color: #6a9ecf; }
 .number { color: #4a9060; }
 .boolean { color: #c87040; }
 .null { color: #8b4040; }
 .key { color: #8aabb8; }
 
-/* Mobile Responsive */
+/* Mobile Responsive - Merger Specific */
 @media (max-width: 900px) {
   #main-container {
     grid-template-columns: 1fr;
@@ -526,11 +373,6 @@ body {
     width: 100%;
   }
   
-  .btn {
-    padding: 5px 8px;
-    font-size: 0.6rem;
-  }
-  
   .stats-row {
     gap: 4px;
   }
@@ -538,18 +380,6 @@ body {
   .stat {
     padding: 3px 6px;
     font-size: 0.6rem;
-  }
-  
-  #topbar {
-    padding: 6px 8px;
-  }
-  
-  #topbar h1 {
-    font-size: 0.6rem;
-  }
-  
-  .tb-sep {
-    margin: 0 2px;
   }
 }
 
@@ -598,26 +428,7 @@ body {
   }
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border2);
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--acc);
-}
-
-/* Ensure all scrollable areas have proper overflow */
+/* Scrollbar styling for merger components */
 .panel-content,
 .merge-options,
 .modal-body,
@@ -625,6 +436,7 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--border2) var(--bg);
 }
+</style>
 </style>
 </head>
 <body>
