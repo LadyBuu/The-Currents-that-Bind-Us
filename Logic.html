@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Still Waters — Inconsistencies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="stillwaters.css">
+  <style>
+    .inconsistencies-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; }
+    .stats-group { display: flex; gap: 12px; flex-wrap: wrap; }
+    .stats-badge { background: var(--accent-dim); border: 1px solid var(--accent); border-radius: 20px; padding: 6px 16px; font-family: 'Cinzel', serif; font-size: 0.7rem; color: var(--accent); cursor: pointer; transition: all 0.15s; }
+    .stats-badge:hover { background: var(--accent); color: var(--bg); }
+    .stats-badge.orphan-badge { border-color: var(--warning); color: var(--warning); }
+    .stats-badge.orphan-badge:hover { background: var(--warning); color: var(--bg); }
+    .stats-badge .count { font-weight: bold; font-size: 1.1rem; margin-right: 4px; }
+    
+    .category-tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .category-tab { padding: 8px 16px; font-family: 'Cinzel', serif; font-size: 0.65rem; color: var(--tdim); cursor: pointer; border-radius: 20px; transition: all 0.15s; white-space: nowrap; }
+    .category-tab:hover { color: var(--accent); background: var(--accent-dim); }
+    .category-tab.active { background: var(--accent-dim); color: var(--accent); }
+    
+    .inconsistency-list, .orphan-list { display: flex; flex-direction: column; gap: 16px; }
+    .inconsistency-card, .orphan-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .inconsistency-card:hover, .orphan-card:hover { border-color: var(--warning); }
+    .card-header { background: var(--bg3); padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .person-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .person-name { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--accent); cursor: pointer; }
+    .person-name:hover { text-decoration: underline; }
+    .person-details { font-size: 0.7rem; color: var(--tdim); display: flex; gap: 12px; flex-wrap: wrap; }
+    .warning-badge { background: rgba(200,112,64,0.15); border: 1px solid var(--warning); border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; color: var(--warning); font-family: 'Cinzel', serif; }
+    .card-body { padding: 16px 20px; display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: center; }
+    .parents-section { display: flex; gap: 20px; flex-wrap: wrap; flex: 1; }
+    .parent-card { background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 16px; min-width: 180px; cursor: pointer; transition: all 0.15s; }
+    .parent-card:hover { border-color: var(--accent); }
+    .parent-role { font-size: 0.55rem; font-family: 'Cinzel', serif; color: var(--tdim); text-transform: uppercase; margin-bottom: 4px; }
+    .parent-name { font-weight: 600; font-size: 0.85rem; color: var(--text); }
+    .parent-status { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.55rem; margin-top: 6px; }
+    .parent-status.ongoing { background: rgba(74,144,96,0.15); border: 1px solid var(--ok); color: var(--ok); }
+    .parent-status.none { background: rgba(200,112,64,0.15); border: 1px solid var(--warning); color: var(--warning); }
+    .action-buttons { display: flex; gap: 10px; flex-shrink: 0; }
+    .btn.purge { background: rgba(139,64,64,0.2); border-color: var(--danger); color: var(--danger-lt); }
+    .btn.purge:hover { background: var(--danger); color: white; border-color: var(--danger); }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--tdim); font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.1em; }
+    .error-detail { font-size: 0.7rem; color: var(--danger-lt); margin-top: 4px; }
+    .fix-suggestion { font-size: 0.65rem; color: var(--success); margin-top: 4px; font-style: italic; }
+    .confirm-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; }
+    .confirm-modal { background: var(--bg2); border: 1px solid var(--accent); border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; }
+    .confirm-modal p { margin-bottom: 20px; font-size: 0.9rem; }
+    .confirm-modal .confirm-buttons { display: flex; gap: 12px; justify-content: flex-end; }
+    .confirm-modal .confirm-yes { background: var(--danger); border-color: var(--danger); color: white; }
+    @media (max-width: 768px) {
+      .category-tab { padding: 6px 12px; font-size: 0.6rem; }
+      .card-header { flex-direction: column; align-items: flex-start; }
+      .parents-section { flex-direction: column; }
+      .card-body { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="topbar" class="topbar">
+  <h1>STILL WATERS · INCONSISTENCIES</h1>
+  <div class="tb-sep"></div>
+  <label class="btn primary" style="cursor:pointer">📂 Load JSON<input type="file" id="import-file" accept=".json" style="display:none"></label>
+  <button class="btn" id="load-storage-btn">⟳ From Storage</button>
+  <button class="btn success" id="export-btn">💾 Export Fixed JSON</button>
+  <button class="btn" id="refresh-btn">🔄 Refresh</button>
+  <div style="flex:1"></div>
+  <div id="year-control" class="year-control">
+    <label>Year:</label>
+    <input type="number" id="current-year" value="1560">
+  </div>
+</div>
+
+<div id="main-container" style="flex:1; overflow-y: auto; padding: 20px;">
+  <div class="inconsistencies-container">
+    <div class="toolbar">
+      <div class="stats-group" id="stats-group"></div>
+      <button class="btn warning" id="fix-all-btn" style="display:none;">🔧 Fix All Possible Issues</button>
+    </div>
+
+    <div class="category-tabs" id="category-tabs"></div>
+
+    <div id="content-area"></div>
+  </div>
+</div>
+
+<div id="confirm-modal" class="confirm-modal-overlay">
+  <div class="confirm-modal">
+    <p id="confirm-message"></p>
+    <div class="confirm-buttons">
+      <button class="confirm-yes" id="confirm-yes">Yes</button>
+      <button class="confirm-no" id="confirm-no">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+  const STORAGE_KEY = 'stillwaters_manager';
+  let DATA = { version: "1.0", currentYear: 1560, people: {}, relationships: {}, locations: {}, professions: [], stableIdIndex: {} };
+  let currentCategory = 'age';
+  
+  // Define all categories
+  const categories = [
+    { id: 'age', name: '👶 Age Issues', desc: 'Parents younger than children, impossible ages' },
+    { id: 'parents', name: '👪 Unpartnered Parents', desc: 'Parents not in a relationship' },
+    { id: 'orphans', name: '👶 Orphans', desc: 'No parents recorded' },
+    { id: 'timeline', name: '⏰ Timeline', desc: 'Death before birth, impossible dates' },
+    { id: 'family', name: '🏠 Family Structure', desc: 'Self-referential, incest detection' },
+    { id: 'ranks', name: '👑 Rank Issues', desc: 'Multiple chiefs, invalid ranks' },
+    { id: 'locations', name: '🗺️ Location Issues', desc: 'Invalid compounds, missing households' },
+    { id: 'professions', name: '⚒️ Profession Issues', desc: 'Masters without apprentices' },
+    { id: 'relationships', name: '💔 One-way Relationships', desc: 'Unidirectional links' },
+    { id: 'data', name: '📁 Data Integrity', desc: 'Missing stable IDs, duplicate IDs' }
+  ];
+  
+  let categoryData = {};
+
+  function showToast(msg) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    return String(text).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m);
+  }
+
+  function getPersonId(input) {
+    if (DATA.people[input]) return input;
+    if (DATA.stableIdIndex?.[input]) return DATA.stableIdIndex[input];
+    for (let [id, person] of Object.entries(DATA.people)) if (person.stableId === input) return id;
+    return input;
+  }
+
+  function getPerson(id) { return DATA.people[getPersonId(id)] || {}; }
+  function getRelationships(id) { return DATA.relationships[getPersonId(id)] || {}; }
+
+  function getPersonDisplay(id) {
+    const actualId = getPersonId(id);
+    const core = getPerson(actualId);
+    const rel = getRelationships(actualId);
+    let age = core.age;
+    if (!age && core.birthYear) age = DATA.currentYear - core.birthYear;
+    if (core.deceased && core.deathYear) age = core.deathYear - core.birthYear;
+    return {
+      id: actualId, stableId: core.stableId || actualId, name: core.name || actualId,
+      gender: core.gender || 'unknown', birthYear: core.birthYear, age: age, stage: core.stage || '',
+      deceased: !!(core.deceased || rel.deceased), deathYear: core.deathYear,
+      father: rel.father ? getPersonId(rel.father) : null, mother: rel.mother ? getPersonId(rel.mother) : null,
+      currComp: core.currComp || core.birthComp || '', birthComp: core.birthComp || '',
+      household: core.household || '', ongoing: rel.ongoing || [], ended: rel.ended || [], widowed: rel.widowed || [],
+      ranks: core.ranks || [], professions: core.professions || [], apprentices: core.apprentices || []
+    };
+  }
+
+  // ====================== CHECK FUNCTIONS ======================
+  
+  function checkAgeIssues() {
+    const issues = [];
+    Object.keys(DATA.people).forEach(id => {
+      const p = getPersonDisplay(id);
+      if (!p.birthYear) return;
+      
+      if (p.father) {
+        const father = getPersonDisplay(p.father);
+        if (father.birthYear && father.birthYear > p.birthYear) {
+          issues.push({ type: 'parent_younger', person: p, parent: father, role: 'Father' });
+        }
+        if (father.birthYear && p.birthYear - father.birthYear < 12) {
+          issues.push({ type: 'parent_too_young', person: p, parent: father, role: 'Father', ageDiff: p.birthYear - father.birthYear });
+        }
+        if (father.deceased && father.deathYear && father.deathYear < p.birthYear) {
+          issues.push({ type: 'parent_dead_before_birth', person: p, parent: father, role: 'Father' });
+        }
+      }
+      if (p.mother) {
+        const mother = getPersonDisplay(p.mother);
+        if (mother.birthYear && mother.birthYear > p.birthYear) {
+          issues.push({ type: 'parent_younger', person: p, parent: mother, role: 'Mother' });
+        }
+        if (mother.birthYear && p.birthYear - mother.birthYear < 12) {
+          issues.push({ type: 'parent_too_young', person: p, parent: mother, role: 'Mother', ageDiff: p.birthYear - mother.birthYear });
+        }
+        if (mother.birthYear && p.birthYear - mother.birthYear > 50) {
+          issues.push({ type: 'mother_too_old', person: p, parent: mother, ageDiff: p.birthYear - mother.birthYear });
+        }
+        if (mother.deceased && mother.deathYear && mother.deathYear < p.birthYear) {
+          issues.push({ type: 'parent_dead_before_birth', person: p, parent: mother, role: 'Mother' });
+        }
+      }
+    });
+    return issues;
+  }
+
+  function checkTimelineIssues() {
+    const issues = [];
+    Object.keys(DATA.people).forEach(id => {
+      const p = getPersonDisplay(id);
+      if (p.deathYear && p.birthYear && p.deathYear < p.birthYear) {
+        issues.push({ type: 'death_before_birth', person: p });
+      }
+      if (p.deathYear && p.deathYear > DATA.currentYear + 200) {
+        issues.push({ type: 'death_too_far_future', person: p });
+      }
+      if (p.birthYear && p.birthYear > DATA.currentYear + 150) {
+        issues.push({ type: 'birth_too_far_future', person: p });
+      }
+    });
+    return issues;
+  }
+
+  function checkFamilyStructureIssues() {
+    const issues = [];
+    Object.keys(DATA.people).forEach(id => {
+      const p = getPersonDisplay(id);
+      if (p.father === id || p.mother === id) {
+        issues.push({ type: 'self_parent', person: p });
+      }
+      if (p.father && p.mother && p.father === p.mother) {
+        issues.push({ type: 'same_parent', person: p, parent: p.father });
+      }
+      if (p.ongoing) {
+        p.ongoing.forEach(partnerId => {
+          const partner = getPersonDisplay(partnerId);
+          if ((partner.father === p.id || partner.mother === p.id) || (p.father === partner.id || p.mother === partner.id)) {
+            issues.push({ type: 'incest', person: p, partner: partner });
+          }
+        });
+      }
+      const siblings = [];
+      Object.keys(DATA.people).forEach(sibId => {
+        if (sibId !== id) {
+          const sib = getPersonDisplay(sibId);
+          if ((sib.father && sib.father === p.father) || (sib.mother && sib.mother === p.mother)) {
+            if (p.ongoing?.includes(sibId) || p.ended?.includes(sibId) || p.widowed?.includes(sibId)) {
+              issues.push({ type: 'incest_sibling', person: p, partner: sib });
+            }
+          }
+        }
+      });
+    });
+    return issues;
+  }
+
+  function checkRankIssues() {
+    const issues = [];
+    const compounds = {};
+    Object.keys(DATA.people).forEach(id => {
+      const p = getPersonDisplay(id);
+      if (p.ranks?.some(r => r.value === 'Chief')) {
+        const comp = p.currComp || p.birthComp;
+        if (comp) {
+          if (!compounds[comp]) compounds[comp] = [];
+          compounds[comp].push(p);
+        }
+      }
+      if (p.ranks) {
+        const hasCommoner = p.ranks.some(r => r.value === 'Commoner');
+        const hasOther = p.ranks.some(r => r.value !== 'Commoner');
+        if (hasCommoner && hasOther) {
+          issues.push({ type: 'conflicting_ranks', person: p, ranks: p.ranks });
+        }
+        const masterRank = p.ranks.find(r => r.value === 'Master');
+        if (masterRank && (!p.professions || p.professions.length === 0)) {
+          issues.push({ type: 'master_no_profession', person: p });
+        }
+      }
+    });
+    Object.entries(compounds).forEach(([comp, chiefs]) => {
+      if (chiefs.length > 1) {
+        issues.push({ type: 'multiple_chiefs', compound: comp, chiefs: chiefs });
+      }
+    });
+    return issues;
+  }
+
+  function checkLocationIssues() {
+    const issues = [];
+    Object.keys(DATA.people).forEach(id => {
+      const p = getPersonDisplay(id);
+      if (p.currComp) {
+        const exists = Object.values(DATA.locations || {}).some(loc => loc.compKey === p.currComp);
+        if (!exists) issues.push({ type: 'invalid_compound', person: p, compKey: p.currComp });
+      }
+      if (p.birthComp) {
+        const exists = Object.values(DATA.locations || {}).some(loc => loc.compKey === p.birthComp);
+        if (!exists) issues.push({ type: 'invalid_birth_compound', person: p, compKey: p.birthComp });
+      }
+      if (p.household && !p.currComp && !p.birthComp) {
+        issues.push({ type: 'household_no_compound', person: p });
+      }
+    });
+    return issues;
+  }
+
+  function checkProfessionIssues() {
+    const issues = [];
+    Object.keys(DATA.people).forEach(id => {
+      const p = getPersonDisplay(id);
+      if (p.apprentices && p.apprentices.length > 0) {
+        p.apprentices.forEach(appId => {
+          const apprentice = getPersonDisplay(appId);
+          if (!apprentice.masterFor?.includes(id)) {
+            issues.push({ type: 'apprentice_no_master', person: apprentice, master: p });
+          }
+        });
+      }
+      const masterRank = p.ranks?.find(r => r.value === 'Master');
+      if (masterRank && (!p.apprentices || p.apprentices.length === 0)) {
+        issues.push({ type: 'master_no_apprentice', person: p });
+      }
+    });
+    return issues;
+  }
+
+  function checkRelationshipDirectionIssues() {
+    const issues = [];
+    Object.keys(DATA.people).forEach(id => {
+      const p = getPersonDisplay(id);
+      p.ongoing?.forEach(partnerId => {
+        const partner = getPersonDisplay(partnerId);
+        if (!partner.ongoing?.includes(id)) {
+          issues.push({ type: 'one_way_ongoing', person: p, partner: partner });
+        }
+      });
+      p.friends?.forEach(friendId => {
+        const friend = getPersonDisplay(friendId);
+        if (!friend.friends?.includes(id)) {
+          issues.push({ type: 'one_way_friend', person: p, partner: friend });
+        }
+      });
+    });
+    return issues;
+  }
+
+  function checkDataIntegrityIssues() {
+    const issues = [];
+    const stableIds = new Set();
+    Object.keys(DATA.people).forEach(id => {
+      const p = getPersonDisplay(id);
+      if (!p.name || p.name.trim() === '') issues.push({ type: 'missing_name', person: p });
+      if (!p.stableId) issues.push({ type: 'missing_stable_id', person: p });
+      else if (stableIds.has(p.stableId)) issues.push({ type: 'duplicate_stable_id', person: p, stableId: p.stableId });
+      else stableIds.add(p.stableId);
+      if (!p.gender || (p.gender !== 'male' && p.gender !== 'female' && p.gender !== 'unknown')) {
+        issues.push({ type: 'invalid_gender', person: p });
+      }
+    });
+    return issues;
+  }
+
+  function findUnpartneredParents() {
+    const issues = [];
+    Object.keys(DATA.people).forEach(childId => {
+      const child = getPersonDisplay(childId);
+      if (!child.father || !child.mother) return;
+      const father = getPersonDisplay(child.father);
+      const mother = getPersonDisplay(child.mother);
+      const fatherHasMother = father.ongoing?.some(p => getPersonId(p) === mother.id) ||
+                              father.ended?.some(p => getPersonId(p) === mother.id) ||
+                              father.widowed?.some(p => getPersonId(p) === mother.id);
+      if (!fatherHasMother) issues.push({ child, father, mother });
+    });
+    return issues;
+  }
+
+  function findOrphans() {
+    const orphans = [];
+    Object.keys(DATA.people).forEach(id => {
+      const p = getPersonDisplay(id);
+      if (!p.father && !p.mother) orphans.push(p);
+    });
+    return orphans;
+  }
+
+  function runAllChecks() {
+    categoryData = {
+      age: checkAgeIssues(),
+      parents: findUnpartneredParents(),
+      orphans: findOrphans(),
+      timeline: checkTimelineIssues(),
+      family: checkFamilyStructureIssues(),
+      ranks: checkRankIssues(),
+      locations: checkLocationIssues(),
+      professions: checkProfessionIssues(),
+      relationships: checkRelationshipDirectionIssues(),
+      data: checkDataIntegrityIssues()
+    };
+    
+    const statsHtml = categories.map(cat => `
+      <div class="stats-badge ${cat.id === 'orphans' ? 'orphan-badge' : ''}" data-category="${cat.id}">
+        <span class="count">${categoryData[cat.id]?.length || 0}</span>
+        <span>${cat.name.split(' ')[0]}</span>
+      </div>
+    `).join('');
+    document.getElementById('stats-group').innerHTML = statsHtml;
+    
+    document.querySelectorAll('.stats-badge').forEach(badge => {
+      badge.addEventListener('click', () => switchCategory(badge.dataset.category));
+    });
+    
+    const fixAllBtn = document.getElementById('fix-all-btn');
+    const totalIssues = Object.values(categoryData).reduce((sum, arr) => sum + arr.length, 0);
+    fixAllBtn.style.display = totalIssues > 0 ? 'inline-block' : 'none';
+    
+    renderCurrentCategory();
+  }
+
+  function renderCurrentCategory() {
+    const issues = categoryData[currentCategory] || [];
+    const container = document.getElementById('content-area');
+    const category = categories.find(c => c.id === currentCategory);
+    
+    if (issues.length === 0) {
+      container.innerHTML = `<div class="empty-state">✨ No ${category?.name.toLowerCase()} issues found.</div>`;
+      return;
+    }
+    
+    let html = `<div class="inconsistency-list">`;
+    
+    if (currentCategory === 'parents') {
+      issues.forEach(issue => {
+        html += `
+          <div class="inconsistency-card">
+            <div class="card-header">
+              <div class="person-info">
+                <span class="person-name" data-id="${issue.child.id}">${escapeHtml(issue.child.name)}</span>
+                <div class="person-details">${issue.child.age ? issue.child.age + ' yrs' : ''}</div>
+              </div>
+              <div class="warning-badge">⚠️ Parents not in a relationship</div>
+            </div>
+            <div class="card-body">
+              <div class="parents-section">
+                <div class="parent-card" data-id="${issue.father.id}">
+                  <div class="parent-role">FATHER</div>
+                  <div class="parent-name">${escapeHtml(issue.father.name)}</div>
+                </div>
+                <div class="parent-card" data-id="${issue.mother.id}">
+                  <div class="parent-role">MOTHER</div>
+                  <div class="parent-name">${escapeHtml(issue.mother.name)}</div>
+                </div>
+              </div>
+              <button class="btn purge" data-action="remove" data-child="${issue.child.id}" data-father="${issue.father.id}" data-mother="${issue.mother.id}">🗑️ Remove Child</button>
+            </div>
+          </div>`;
+      });
+    } 
+    else if (currentCategory === 'orphans') {
+      issues.forEach(orphan => {
+        html += `
+          <div class="orphan-card">
+            <div class="card-header">
+              <div class="person-info">
+                <span class="person-name" data-id="${orphan.id}">${escapeHtml(orphan.name)}</span>
+                <div class="person-details">${orphan.age ? orphan.age + ' yrs' : ''} · ${orphan.gender === 'male' ? '♂' : orphan.gender === 'female' ? '♀' : '·'}</div>
+              </div>
+              <div class="warning-badge">👶 No parents</div>
+            </div>
+            <div class="card-body">
+              <div class="orphan-stats">📍 ${orphan.currComp || orphan.birthComp || 'No location'}</div>
+              <button class="btn primary" data-action="adopt" data-orphan="${orphan.id}">🏠 Adopt</button>
+            </div>
+          </div>`;
+      });
+    }
+    else {
+      issues.forEach((issue, idx) => {
+        let detailHtml = '';
+        if (issue.type === 'parent_younger') detailHtml = `<div class="error-detail">⚠️ ${issue.role} ${escapeHtml(issue.parent.name)} born ${issue.parent.birthYear} after child ${escapeHtml(issue.person.name)} (${issue.person.birthYear})</div>`;
+        else if (issue.type === 'parent_too_young') detailHtml = `<div class="error-detail">⚠️ ${issue.role} ${escapeHtml(issue.parent.name)} was only ${issue.ageDiff} years old at ${escapeHtml(issue.person.name)}'s birth</div>`;
+        else if (issue.type === 'mother_too_old') detailHtml = `<div class="error-detail">⚠️ Mother ${escapeHtml(issue.parent.name)} was ${issue.ageDiff} years old at birth</div>`;
+        else if (issue.type === 'parent_dead_before_birth') detailHtml = `<div class="error-detail">⚠️ ${issue.role} ${escapeHtml(issue.parent.name)} died before ${escapeHtml(issue.person.name)} was born</div>`;
+        else if (issue.type === 'death_before_birth') detailHtml = `<div class="error-detail">⚠️ ${escapeHtml(issue.person.name)} died before birth (${issue.person.deathYear} < ${issue.person.birthYear})</div>`;
+        else if (issue.type === 'self_parent') detailHtml = `<div class="error-detail">⚠️ ${escapeHtml(issue.person.name)} is listed as their own parent</div>`;
+        else if (issue.type === 'incest') detailHtml = `<div class="error-detail">⚠️ ${escapeHtml(issue.person.name)} in relationship with ${escapeHtml(issue.partner.name)} (parent-child)</div>`;
+        else if (issue.type === 'multiple_chiefs') detailHtml = `<div class="error-detail">⚠️ Multiple chiefs in ${issue.compound}: ${issue.chiefs.map(c => c.name).join(', ')}</div>`;
+        else if (issue.type === 'invalid_compound') detailHtml = `<div class="error-detail">⚠️ Compound "${issue.compKey}" does not exist in locations</div>`;
+        else if (issue.type === 'missing_stable_id') detailHtml = `<div class="error-detail">⚠️ Missing stable ID - will be auto-generated on export</div><div class="fix-suggestion">💡 Click "Export Fixed JSON" to generate missing IDs</div>`;
+        else if (issue.type === 'duplicate_stable_id') detailHtml = `<div class="error-detail">⚠️ Duplicate stable ID: ${issue.stableId}</div>`;
+        else if (issue.type === 'master_no_profession') detailHtml = `<div class="error-detail">⚠️ Has Master rank but no profession assigned</div>`;
+        else if (issue.type === 'one_way_ongoing') detailHtml = `<div class="error-detail">⚠️ ${escapeHtml(issue.person.name)} has ${escapeHtml(issue.partner.name)} as partner, but not vice versa</div>`;
+        
+        html += `
+          <div class="inconsistency-card">
+            <div class="card-header">
+              <div class="person-info">
+                <span class="person-name" data-id="${issue.person?.id || issue.id}">${escapeHtml(issue.person?.name || issue.name || 'Unknown')}</span>
+              </div>
+              <div class="warning-badge">⚠️ ${issue.type?.replace(/_/g, ' ') || 'Issue'}</div>
+            </div>
+            <div class="card-body">
+              <div style="flex:1">${detailHtml}</div>
+            </div>
+          </div>`;
+      });
+    }
+    
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+
+  function switchCategory(categoryId) {
+    currentCategory = categoryId;
+    document.querySelectorAll('.category-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`.category-tab[data-category="${categoryId}"]`).classList.add('active');
+    renderCurrentCategory();
+  }
+
+  function customConfirm(message, callback) {
+    const modal = document.getElementById('confirm-modal');
+    const messageEl = document.getElementById('confirm-message');
+    const yesBtn = document.getElementById('confirm-yes');
+    const noBtn = document.getElementById('confirm-no');
+    messageEl.textContent = message;
+    modal.style.display = 'flex';
+    function cleanup() { modal.style.display = 'none'; yesBtn.removeEventListener('click', onYes); noBtn.removeEventListener('click', onNo); }
+    function onYes() { cleanup(); callback(true); }
+    function onNo() { cleanup(); callback(false); }
+    yesBtn.addEventListener('click', onYes);
+    noBtn.addEventListener('click', onNo);
+  }
+
+  function removeChildPerson(childId, fatherId, motherId) {
+    const child = getPersonDisplay(childId);
+    const childRel = DATA.relationships[child.id] || {};
+    const fatherRel = DATA.relationships[fatherId] || {};
+    const motherRel = DATA.relationships[motherId] || {};
+    const childStable = child.stableId;
+    const fatherStable = getPersonDisplay(fatherId).stableId;
+    const motherStable = getPersonDisplay(motherId).stableId;
+    if (childRel.father === fatherId || childRel.father === fatherStable) delete childRel.father;
+    if (childRel.mother === motherId || childRel.mother === motherStable) delete childRel.mother;
+    if (fatherRel.children) fatherRel.children = fatherRel.children.filter(c => getPersonId(c) !== child.id && getPersonId(c) !== childStable);
+    if (motherRel.children) motherRel.children = motherRel.children.filter(c => getPersonId(c) !== child.id && getPersonId(c) !== childStable);
+    DATA.relationships[child.id] = childRel;
+    DATA.relationships[fatherId] = fatherRel;
+    DATA.relationships[motherId] = motherRel;
+    saveData();
+    return true;
+  }
+
+  function adoptOrphan(orphanId) {
+    const orphan = getPersonDisplay(orphanId);
+    const allPeople = Object.keys(DATA.people).map(id => getPersonDisplay(id)).filter(p => p.id !== orphanId);
+    const peopleList = allPeople.map((p, idx) => `${idx + 1}. ${p.name} (${p.gender === 'male' ? '♂' : p.gender === 'female' ? '♀' : '·'})`).join('\n');
+    const choice = prompt(`Select a parent for ${orphan.name}:\n1 - Father\n2 - Mother\n\nEnter number:`);
+    if (!choice) return false;
+    const parentChoice = prompt(`Select person:\n${peopleList}\n\nEnter number:`);
+    if (!parentChoice) return false;
+    const idx = parseInt(parentChoice) - 1;
+    if (idx < 0 || idx >= allPeople.length) return false;
+    const parent = allPeople[idx];
+    const orphanRel = DATA.relationships[orphan.id] || {};
+    const parentRel = DATA.relationships[parent.id] || {};
+    if (choice === '1') orphanRel.father = parent.stableId;
+    else if (choice === '2') orphanRel.mother = parent.stableId;
+    else return false;
+    if (!parentRel.children) parentRel.children = [];
+    if (!parentRel.children.includes(orphan.stableId)) parentRel.children.push(orphan.stableId);
+    DATA.relationships[orphan.id] = orphanRel;
+    DATA.relationships[parent.id] = parentRel;
+    saveData();
+    return true;
+  }
+
+  function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA, null, 2)); }
+  
+  function loadData(data) {
+    DATA = {
+      version: data.version || "1.0", currentYear: data.currentYear || 1560,
+      people: data.people || {}, relationships: data.relationships || {},
+      locations: data.locations || {}, professions: data.professions || [],
+      stableIdIndex: data.stableIdIndex || {}
+    };
+    document.getElementById('current-year').value = DATA.currentYear;
+    runAllChecks();
+    showToast(`Loaded ${Object.keys(DATA.people).length} people`);
+  }
+
+  function refreshAll() { runAllChecks(); }
+
+  function exportFixedJSON() {
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    Object.keys(DATA.people).forEach(id => { if (!DATA.people[id].stableId) DATA.people[id].stableId = `${id.slice(0, 8)}_${Math.random().toString(36).substr(2, 6)}`.toUpperCase(); });
+    const blob = new Blob([JSON.stringify(DATA, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `stillwaters_fixed_${timestamp}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Exported fixed JSON');
+  }
+
+  // Event Listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabsHtml = categories.map(cat => `<span class="category-tab ${cat.id === 'age' ? 'active' : ''}" data-category="${cat.id}">${cat.name}</span>`).join('');
+    document.getElementById('category-tabs').innerHTML = tabsHtml;
+    document.querySelectorAll('.category-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchCategory(tab.dataset.category));
+    });
+    
+    document.getElementById('import-file').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => { try { loadData(JSON.parse(ev.target.result)); } catch(err) { showToast('Error: ' + err.message); } };
+      reader.readAsText(file);
+    });
+    
+    document.getElementById('load-storage-btn').addEventListener('click', () => {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) { showToast('No saved data'); return; }
+      try { loadData(JSON.parse(raw)); } catch(err) { showToast('Error loading'); }
+    });
+    
+    document.getElementById('export-btn').addEventListener('click', exportFixedJSON);
+    document.getElementById('refresh-btn').addEventListener('click', refreshAll);
+    document.getElementById('current-year').addEventListener('change', () => {
+      DATA.currentYear = parseInt(document.getElementById('current-year').value) || 1560;
+      refreshAll();
+    });
+    
+    document.getElementById('content-area').addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('[data-action="remove"]');
+      if (removeBtn) {
+        const childId = removeBtn.dataset.child;
+        const fatherId = removeBtn.dataset.father;
+        const motherId = removeBtn.dataset.mother;
+        const child = getPersonDisplay(childId);
+        const father = getPersonDisplay(fatherId);
+        const mother = getPersonDisplay(motherId);
+        customConfirm(`Remove ${child.name} as child of ${father.name} and ${mother.name}?`, (confirmed) => {
+          if (confirmed && removeChildPerson(childId, fatherId, motherId)) refreshAll();
+        });
+      }
+      const adoptBtn = e.target.closest('[data-action="adopt"]');
+      if (adoptBtn) {
+        const orphanId = adoptBtn.dataset.orphan;
+        customConfirm(`Adopt ${getPersonDisplay(orphanId).name}?`, (confirmed) => {
+          if (confirmed && adoptOrphan(orphanId)) refreshAll();
+        });
+      }
+      const personName = e.target.closest('.person-name');
+      if (personName && personName.dataset.id) {
+        window.open('Character Manager3.html', '_blank');
+        showToast(`Opening ${getPersonDisplay(personName.dataset.id).name} in Character Manager`);
+      }
+      const parentCard = e.target.closest('.parent-card');
+      if (parentCard && parentCard.dataset.id) {
+        window.open('Character Manager3.html', '_blank');
+        showToast(`Opening parent in Character Manager`);
+      }
+    });
+    
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { try { loadData(JSON.parse(raw)); } catch(e) {} }
+    else { runAllChecks(); }
+  });
+</script>
+</body>
+</html>
