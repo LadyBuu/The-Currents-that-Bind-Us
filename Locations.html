@@ -5,6 +5,897 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <title>Still Waters — Locations</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stillwaters.css">
+<style>
+/* ============================================
+   LOCATIONS - UNIQUE STYLES
+   ============================================ */
+
+/* Floating Save Buttons */
+.float-save-btn {
+  position: fixed; bottom: 20px; right: 20px; z-index: 999;
+  padding: 8px 16px; background: var(--acc-dim); border: 1px solid var(--acc2);
+  color: var(--acc); font-family: 'Cinzel', serif; font-size: .65rem;
+  letter-spacing: .1em; border-radius: 5px; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,.6); transition: opacity .2s, transform .2s;
+  pointer-events: auto;
+}
+.float-save-btn:hover { background: rgba(74,122,176,.25); }
+.float-save-btn.hidden { opacity: 0; pointer-events: none; transform: translateY(8px); }
+
+#top-save-btn {
+  display: none;
+  position: fixed;
+  top: 60px;
+  right: 10px;
+  z-index: 998;
+  padding: 6px 12px;
+  background: var(--acc-dim);
+  border: 1px solid var(--acc2);
+  color: var(--acc);
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+#top-save-btn:hover { background: rgba(74,122,176,0.25); }
+
+/* App Container */
+.app { display: none; grid-template-columns: 220px 1fr 1fr; flex: 1; overflow: hidden; min-height: 0; }
+.app.visible { display: grid; }
+
+/* Tab Bar (mobile) */
+.tab-bar {
+  display: none; background: var(--bg2); border-bottom: 1px solid var(--bd);
+  flex-shrink: 0;
+}
+.tab-bar button {
+  flex: 1; padding: 8px 4px; font-size: .6rem; font-family: 'Cinzel', serif;
+  letter-spacing: .08em; border: none; background: none; color: var(--tdim);
+  cursor: pointer; border-bottom: 2px solid transparent; transition: .15s;
+}
+.tab-bar button.active { color: var(--acc); border-bottom-color: var(--acc); }
+
+/* Sidebar */
+.sidebar {
+  border-right: 1px solid var(--bd); display: flex; flex-direction: column;
+  overflow: hidden; background: var(--bg2);
+}
+.sidebar-header {
+  padding: 10px; border-bottom: 1px solid var(--bd); display: flex; justify-content: space-between; align-items: center;
+}
+.sidebar-header h3 {
+  font-family: 'Cinzel', serif; font-size: .7rem; color: var(--acc); text-transform: uppercase; letter-spacing: .15em;
+}
+.sidebar-top { padding: 6px; border-bottom: 1px solid var(--bd); flex-shrink: 0; }
+.sidebar-top input { padding: 4px 6px; font-size: .8rem; }
+.name-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 0; }
+
+/* Hierarchy Headers */
+.group-hd {
+  padding: 5px 8px 3px; font-family: 'Cinzel', serif; font-size: .5rem;
+  letter-spacing: .18em; color: var(--acc); text-transform: uppercase;
+  border-bottom: 1px solid var(--bd); margin-top: 4px;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; touch-action: manipulation; user-select: none;
+}
+.group-hd:hover { color: var(--text); }
+.group-hd .arrow { cursor: pointer; padding: 0 4px; font-size: .55rem; opacity: .7; }
+.group-hd .name-btn { cursor: pointer; flex: 1; color: var(--acc); }
+
+.sub-hd {
+  padding: 4px 8px 2px 15px; font-family: 'Cinzel', serif; font-size: .45rem;
+  letter-spacing: .12em; color: var(--text); margin-top: 2px;
+  display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+}
+.sub-hd .name-btn { cursor: pointer; flex: 1; color: var(--text); }
+.sub-hd .name-btn:hover { color: var(--acc); }
+.sub-hd .arrow { cursor: pointer; padding: 0 4px; font-size: .48rem; opacity: .5; }
+
+.sub-hd2 {
+  padding: 3px 8px 2px 22px; font-size: .42rem; font-family: 'Cinzel', serif;
+  letter-spacing: .1em; color: var(--text);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sub-hd2 .name-btn { cursor: pointer; flex: 1; color: var(--text); }
+.sub-hd2 .name-btn:hover { color: var(--acc); }
+.sub-hd2 .arrow { cursor: pointer; padding: 0 4px; font-size: .45rem; opacity: .5; }
+
+/* Place Items */
+.place-item {
+  padding: 6px 10px 6px 20px; font-size: .8rem; cursor: pointer;
+  border-left: 2px solid transparent; border-bottom: 1px solid rgba(30,39,56,.4);
+  color: var(--text); transition: background .1s;
+}
+.place-item:hover { background: var(--bg3); }
+.place-item.active { background: var(--acc-dim); border-left-color: var(--acc); color: var(--acc); }
+.place-item .tag { font-size: .55rem; color: var(--tdim); margin-left: 3px; font-style: italic; }
+.occupied-mark { font-size: .65rem; color: #c07050; margin-left: 3px; }
+.compound-badge {
+  font-size: .5rem; background: var(--acc-dim); color: var(--acc); padding: 2px 5px;
+  border-radius: 8px; margin-left: 5px; border: 1px solid var(--acc2); font-family: 'Cinzel', serif;
+}
+
+/* Panels */
+.panel { overflow-y: auto; border-right: 1px solid var(--bd); }
+.panel:last-child { border-right: none; }
+.panel-empty {
+  display: flex; align-items: center; justify-content: center; height: 100%;
+  color: var(--tdim); font-style: italic; font-size: .85rem; padding: 15px; text-align: center;
+}
+
+/* Info Panel */
+.info-scroll { padding: 15px 12px 40px; }
+.loc-image { width: 100%; max-height: 160px; object-fit: cover; border-radius: 5px; border: 1px solid var(--bd); margin-bottom: 10px; display: block; }
+.loc-name { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--acc); margin-bottom: 2px; }
+.loc-sub { font-size: .8rem; color: var(--tdim); font-style: italic; margin-bottom: 10px; }
+.info-sec {
+  font-family: 'Cinzel', serif; font-size: .5rem; letter-spacing: .16em;
+  color: var(--acc); text-transform: uppercase; border-bottom: 1px solid var(--bd);
+  padding-bottom: 3px; margin: 12px 0 6px;
+}
+.info-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; font-size: .82rem; margin-bottom: 8px; }
+.info-label {
+  color: var(--tdim); font-family: 'Cinzel', serif; font-size: .5rem;
+  letter-spacing: .08em; text-transform: uppercase; padding-top: 2px; white-space: nowrap;
+}
+.info-value { color: var(--text); line-height: 1.4; }
+.pop-num { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--acc); }
+
+/* Household Cards */
+.hh-card {
+  background: var(--bg2); border: 1px solid var(--bd); border-radius: 4px;
+  padding: 8px; margin-bottom: 6px; cursor: pointer; transition: border-color .15s;
+  position: relative;
+}
+.hh-card:hover { border-color: var(--acc2); }
+.hh-card:hover::after {
+  content: attr(data-stable-id);
+  position: absolute; left: 100%; top: 0; margin-left: 8px;
+  background: var(--tooltip-bg); border: 1px solid var(--tooltip-border);
+  border-radius: 4px; padding: 4px 8px;
+  font-family: monospace; font-size: 0.65rem; color: var(--acc);
+  white-space: nowrap; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+.hh-header { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.hh-sym { font-size: 1rem; width: 22px; text-align: center; flex-shrink: 0; }
+.hh-name { font-family: 'Cinzel', serif; font-size: .6rem; letter-spacing: .08em; color: var(--acc2); }
+.hh-members { font-size: .75rem; color: var(--tdim); line-height: 1.5; }
+.hh-notes { font-size: .72rem; color: var(--text); font-style: italic; margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--bd); }
+.homeless-list { font-size: .75rem; color: var(--tdim); line-height: 1.6; }
+.notes-block {
+  font-size: .82rem; line-height: 1.6; color: var(--text); white-space: pre-wrap;
+  border-left: 2px solid var(--acc-dim); padding: 6px 10px; background: var(--bg2); border-radius: 0 4px 4px 0;
+}
+
+/* Person Chips */
+.person-chip {
+  display: inline-block; background: var(--bg2); border: 1px solid var(--bd);
+  border-radius: 3px; padding: 2px 6px; font-size: .7rem; margin: 2px 2px 2px 0; cursor: pointer;
+  position: relative;
+}
+.person-chip:hover { border-color: var(--acc2); color: var(--acc); }
+.person-chip:hover::after {
+  content: attr(data-stable-id);
+  position: absolute; left: 100%; top: 0; margin-left: 8px;
+  background: var(--tooltip-bg); border: 1px solid var(--tooltip-border);
+  border-radius: 4px; padding: 4px 8px;
+  font-family: monospace; font-size: 0.65rem; color: var(--acc);
+  white-space: nowrap; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+
+/* Tags and Pills */
+.tag-strip { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 5px; }
+.type-pill {
+  background: var(--bg2); border: 1px solid var(--bd); border-radius: 3px;
+  padding: 2px 6px; font-size: .65rem; font-family: 'Cinzel', serif;
+  letter-spacing: .05em; color: var(--tdim);
+}
+
+/* Feature Cards */
+.nature-card, .animal-card, .community-card {
+  background: var(--bg2); border: 1px solid var(--bd); border-radius: 4px;
+  padding: 6px 8px; margin-bottom: 4px; font-size: .8rem;
+}
+.nature-card .nc-name, .animal-card .nc-name, .community-card .nc-name {
+  color: var(--acc2); font-family: 'Cinzel', serif; font-size: .6rem; letter-spacing: .06em;
+}
+.nature-card .nc-detail, .animal-card .nc-detail, .community-card .nc-detail {
+  color: var(--tdim); font-size: .72rem; margin-top: 2px;
+}
+
+/* Chief Selection */
+.chief-option {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 4px; position: relative;
+}
+.chief-option:hover::after {
+  content: attr(data-stable-id);
+  position: absolute; left: 100%; top: 0; margin-left: 8px;
+  background: var(--tooltip-bg); border: 1px solid var(--tooltip-border);
+  border-radius: 4px; padding: 4px 8px;
+  font-family: monospace; font-size: 0.65rem; color: var(--acc);
+  white-space: nowrap; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+.chief-option .deceased-mark { color: var(--deceased); margin-left: 2px; }
+.chief-option .comp-badge {
+  font-size: 0.55rem; background: var(--bg); padding: 2px 5px;
+  border-radius: 8px; color: var(--tdim); margin-left: auto; border: 1px solid var(--bd2);
+}
+
+/* Migration Modal */
+.migrate-modal {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: var(--bg2); border: 1px solid var(--acc2); border-radius: 8px;
+  padding: 20px; z-index: 2000; max-width: 400px; width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+}
+.migrate-modal h3 { font-family: 'Cinzel', serif; color: var(--acc); margin-bottom: 12px; font-size: 0.8rem; }
+.migrate-stats { background: var(--bg); padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid var(--bd); }
+.migrate-stats div { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.75rem; }
+.migrate-stats .value { color: var(--acc); font-weight: bold; }
+
+/* Storage Table */
+.storage-table {
+  width: 100%; border-collapse: collapse; font-size: 0.75rem;
+}
+.storage-table th {
+  text-align: left; padding: 8px 6px; font-family: 'Cinzel', serif;
+  font-size: 0.6rem; color: var(--tdim); border-bottom: 1px solid var(--bd);
+}
+.storage-table td { padding: 8px 6px; border-bottom: 1px solid var(--bd2); }
+.storage-table tr.has-data { background: rgba(74, 144, 96, 0.05); }
+.storage-table tr.warning { background: rgba(200, 112, 64, 0.05); }
+.storage-table tr.danger { background: rgba(139, 64, 64, 0.05); }
+.storage-table .key-name { font-family: monospace; font-size: 0.65rem; color: var(--tdim); }
+
+/* Edit Panel */
+.edit-scroll { padding: 12px 10px 60px; }
+.ef-sec {
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: 'Cinzel', serif; font-size: .5rem; letter-spacing: .16em;
+  color: var(--acc); text-transform: uppercase; border-bottom: 1px solid var(--bd);
+  padding-bottom: 3px; margin: 12px 0 8px; cursor: default;
+}
+.ef-sec.collapsible { cursor: pointer; user-select: none; }
+.ef-sec.collapsible:hover { color: var(--acc2); }
+.ef-sec-arrow { font-size: .45rem; opacity: .6; margin-left: 4px; }
+.ef-sec:first-child { margin-top: 0; }
+.ef-label {
+  font-size: .55rem; color: var(--tdim); font-family: 'Cinzel', serif;
+  letter-spacing: .06em; margin-bottom: 2px;
+}
+.ef-input { padding: 4px 6px; font-size: .8rem; }
+.ef-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.ef-row > div { flex: 1; min-width: 100px; }
+.check-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: .8rem; }
+
+/* Quick Add Buttons */
+.quick-add-buttons { display: flex; gap: 6px; margin-top: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.quick-add-btn {
+  flex: 1; min-width: 100px; padding: 6px 8px; background: var(--bg3);
+  border: 1px solid var(--bd2); border-radius: 4px; color: var(--tdim);
+  font-size: 0.65rem; font-family: 'Cinzel', serif; cursor: pointer;
+  transition: all 0.15s; text-align: center;
+}
+.quick-add-btn:hover { border-color: var(--acc); color: var(--acc); background: var(--bg4); }
+.quick-add-btn.primary { background: var(--acc-dim); border-color: var(--acc2); color: var(--acc); }
+.quick-add-btn.primary:hover { background: rgba(74,122,176,0.25); }
+
+/* Key Input Group */
+.key-input-group { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
+.key-input-group input { flex: 1; font-family: monospace; text-transform: lowercase; }
+.key-badge { background: var(--acc-dim); color: var(--acc); padding: 3px 8px; border-radius: 12px; font-size: .6rem; font-family: monospace; border: 1px solid var(--acc2); }
+.key-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; margin-bottom: 10px; }
+.key-tag { background: var(--bg2); border: 1px solid var(--bd2); border-radius: 12px; padding: 2px 8px; font-size: .65rem; font-family: monospace; display: inline-flex; align-items: center; gap: 4px; }
+.key-tag .remove { cursor: pointer; color: var(--tdim); font-size: .7rem; margin-left: 2px; }
+.key-tag .remove:hover { color: var(--deceased); }
+
+/* Simple Modals */
+.modal { display: none; position: fixed; inset: 0; background: #0009; z-index: 200; align-items: center; justify-content: center; padding: 15px; }
+.modal-box { background: var(--bg2); border: 1px solid var(--bd); border-radius: 8px; padding: 18px; max-width: 380px; width: 100%; max-height: 85vh; overflow-y: auto; }
+
+/* Household Overlay */
+.hh-overlay { display: none; position: fixed; inset: 0; background: #0009; z-index: 300; align-items: flex-start; justify-content: center; padding: 20px 15px; overflow-y: auto; }
+.hh-overlay-box { background: var(--bg2); border: 1px solid var(--bd); border-radius: 8px; padding: 18px; max-width: 450px; width: 100%; }
+
+/* Toast */
+#toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg2); border: 1px solid var(--acc2); color: var(--acc); padding: 6px 12px; border-radius: 4px; font-size: .65rem; font-family: 'Cinzel', serif; opacity: 0; transition: opacity .3s; z-index: 999; pointer-events: none; }
+#toast.show { opacity: 1; }
+
+/* Add Step */
+.add-step { display: none; }
+.add-step.visible { display: block; }
+
+/* Mobile Responsiveness - Locations Specific */
+@media (max-width: 700px) {
+  .app { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  .app.visible { display: flex; }
+  .sidebar, .panel { display: none !important; }
+  .sidebar.mobile-active, .panel.mobile-active { display: flex !important; }
+  .sidebar { border-right: none; max-height: none; min-height: 0; flex: 1; width: 100%; }
+  .panel { border-right: none; flex: 1; width: 100%; }
+  .tab-bar { display: flex; flex-shrink: 0; }
+  .edit-scroll { padding-bottom: 80px; }
+  #float-save-btn { bottom: 10px; right: 10px; padding: 6px 12px; font-size: .6rem; }
+  #top-save-btn { display: block; }
+  .ef-row { flex-direction: column; gap: 4px; }
+  .ef-row > div { width: 100%; }
+  .form-grid { grid-template-columns: 1fr; }
+  .modal-box { padding: 15px; max-width: 95vw; }
+  .hh-card:hover::after, .person-chip:hover::after, .chief-option:hover::after {
+    left: auto; right: 100%; margin-left: 0; margin-right: 8px;
+  }
+  .quick-add-buttons { flex-direction: column; }
+  .quick-add-btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .loc-name { font-size: .9rem; }
+  .info-grid { font-size: .78rem; }
+  .ef-input { font-size: .75rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="title">STILL WATERS · LOCATIONS</div>
+  <div class="tb-sep"></div>
+  <label class="btn accent" style="cursor:pointer">⬆ Import<input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)"></label>
+  <button class="btn" onclick="exportJSON()">⬇ Export</button>
+  <button class="btn validate-btn" onclick="validateAllData()">🔍 Validate</button>
+  <button class="btn validate-btn" onclick="openMigrateModal()">🆔 Stable IDs</button>
+  <button class="btn validate-btn" onclick="openStorageManager()">💾 Storage Manager</button>
+  <button class="btn validate-btn" onclick="diagnoseData()">🔬 Diagnose</button>
+  <div class="tb-sep"></div>
+  <button class="btn primary" onclick="openAddPlace()">+ Place</button>
+  <button class="btn" onclick="openPeopleSearch()">🔍 People</button>
+</div>
+
+<button id="float-save" class="float-save-btn hidden" onclick="floatSave()">💾 Save</button>
+<button id="top-save-btn" class="hidden" onclick="floatSave()">💾 Save</button>
+
+<div id="import-hint" style="display:flex;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:40px;text-align:center;">
+  <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.25em;color:var(--acc)">LOCATIONS</div>
+  <p style="color:var(--tdim);font-size:.85rem">Load a Still Waters JSON file to begin</p>
+  <button class="btn primary" style="padding:8px 16px" onclick="document.getElementById('import-file').click()">Load JSON</button>
+  <button class="btn" style="padding:6px 12px" onclick="startFresh()">Start empty</button>
+  <div id="import-hint-box"></div>
+</div>
+
+<div id="migrate-modal" class="migrate-modal" style="display:none;">
+  <h3>Migrate to Stable IDs</h3>
+  <p style="margin-bottom:12px; font-size:0.75rem;">This will assign permanent stable IDs to all characters.</p>
+  <div class="migrate-stats">
+    <div><span>Total characters:</span> <span class="value" id="migrate-total">0</span></div>
+    <div><span>Already have IDs:</span> <span class="value" id="migrate-existing">0</span></div>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn primary" style="flex:1;" onclick="confirmMigration()">Migrate Now</button>
+    <button class="btn" style="flex:1;" onclick="closeMigrateModal()">Cancel</button>
+  </div>
+</div>
+
+<div id="storage-manager-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-box" style="max-width: 700px;">
+    <div class="modal-title">Storage Manager</div>
+    <div style="margin-bottom: 15px;"><p style="color:var(--tdim); font-size:0.8rem;">View and clear localStorage data from all Still Waters apps.</p></div>
+    <div id="storage-list" style="max-height: 350px; overflow-y: auto; margin-bottom: 15px; background: var(--bg); padding: 10px; border-radius: 4px;"></div>
+    <div style="display:flex; gap:8px; flex-wrap: wrap; margin-bottom: 15px;">
+      <button class="btn danger" onclick="clearAllStorage()" style="flex:1;">🗑️ Clear All</button>
+      <button class="btn warning" onclick="clearCurrentApp()" style="flex:1;">📝 Clear Current App</button>
+      <button class="btn" onclick="refreshStorageList()" style="flex:1;">🔄 Refresh</button>
+      <button class="btn primary" onclick="closeStorageManager()" style="flex:1;">Close</button>
+    </div>
+    <div style="margin-top: 10px; padding: 10px; background: var(--bg2); border-radius: 4px; border-left: 3px solid var(--warn);">
+      <p style="color:var(--warn); font-size:0.7rem;">⚠️ Warning: Clearing data is permanent. Make sure you've exported your data first!</p>
+    </div>
+  </div>
+</div>
+
+<div class="tab-bar" id="mob-tabs">
+  <button class="active" onclick="showMobileTab('list')">☰ Places</button>
+  <button onclick="showMobileTab('info')">ℹ Info</button>
+  <button onclick="showMobileTab('edit')">✎ Edit</button>
+</div>
+
+<div class="app" id="app">
+  <div class="sidebar mobile-active" id="mob-list">
+    <div class="sidebar-header"><h3>Places</h3></div>
+    <div class="sidebar-top"><input id="search" placeholder="Search places…" oninput="debouncedFilter(this.value)"></div>
+    <div class="name-list" id="place-list"></div>
+  </div>
+  
+  <div class="panel" id="mob-info">
+    <div id="panel-info" style="flex:1;overflow-y:auto"><div class="panel-empty">select a location</div></div>
+  </div>
+  
+  <div class="panel" id="mob-edit">
+    <div id="panel-edit" style="flex:1;overflow-y:auto"><div class="panel-empty">select a location</div></div>
+  </div>
+</div>
+
+<div class="modal" id="add-place-modal">
+  <div class="modal-box">
+    <div class="modal-title">Add Place</div>
+    <div class="ef-label">Hierarchy Level</div>
+    <select class="ef-input" id="np-level" onchange="onLevelChange()" style="margin-bottom:8px">
+      <option value="">— select —</option>
+      <option value="country">Country / Nation</option>
+      <option value="district">District / Island / Region</option>
+      <option value="town">Town</option>
+      <option value="village">Village</option>
+      <option value="compound">Compound</option>
+      <option value="sacred">Sacred Site</option>
+    </select>
+    <div class="ef-label" style="margin-bottom:4px">Additional Types <span style="color:var(--tdim);font-weight:normal">(select all)</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px" id="np-type-checks"></div>
+    
+    <div id="add-country-step" class="add-step">
+      <div class="ef-label">Name</div><input class="ef-input" id="np-country-name" placeholder="e.g. Straecia" style="margin-bottom:6px">
+      <div class="ef-label">Variable Key (optional)</div>
+      <div class="key-input-group"><input class="ef-input" id="np-country-key" placeholder="e.g. straecia" style="font-family:monospace;"><span class="key-badge">key</span></div>
+    </div>
+    <div id="add-district-step" class="add-step">
+      <div class="ef-label">Country <span style="color:var(--deceased)">*</span></div>
+      <select class="ef-input" id="np-par-country" style="margin-bottom:6px"><option value="">— select —</option></select>
+      <div class="ef-label">Name</div><input class="ef-input" id="np-district-name" placeholder="e.g. Baso" style="margin-bottom:6px">
+      <div class="ef-label">Variable Key (optional)</div>
+      <div class="key-input-group"><input class="ef-input" id="np-district-key" placeholder="e.g. baso" style="font-family:monospace;"><span class="key-badge">key</span></div>
+    </div>
+    <div id="add-town-step" class="add-step">
+      <div class="ef-label">District <span style="color:var(--deceased)">*</span></div>
+      <select class="ef-input" id="np-par-district" style="margin-bottom:6px"><option value="">— select —</option></select>
+      <div class="ef-label">Name</div><input class="ef-input" id="np-town-name" placeholder="e.g. Vaitea" style="margin-bottom:6px">
+      <div class="ef-label">Variable Key (optional)</div>
+      <div class="key-input-group"><input class="ef-input" id="np-town-key" placeholder="e.g. vaitea" style="font-family:monospace;"><span class="key-badge">key</span></div>
+    </div>
+    <div id="add-compound-step" class="add-step">
+      <div class="ef-label">Town / Village <span style="color:var(--deceased)">*</span></div>
+      <select class="ef-input" id="np-par-town" style="margin-bottom:6px"><option value="">— select —</option></select>
+      <div class="ef-label">Name</div><input class="ef-input" id="np-compound-name" placeholder="e.g. Kainga-Awa" style="margin-bottom:6px">
+      <div class="ef-label">Variable Key <span style="color:var(--deceased)">*</span></div>
+      <div class="key-input-group"><input class="ef-input" id="np-compkey" placeholder="e.g. awa, van, ahi..." style="font-family:monospace;" required><span class="key-badge">key</span></div>
+    </div>
+    <div id="add-sacred-step" class="add-step">
+      <div class="ef-label">Nearest Place <span style="color:var(--tdim)">(optional)</span></div>
+      <select class="ef-input" id="np-par-sacred" style="margin-bottom:6px"><option value="">— optional —</option></select>
+      <div class="ef-label">Name</div><input class="ef-input" id="np-sacred-name" placeholder="e.g. Grove of Makai" style="margin-bottom:6px">
+      <div class="ef-label">Variable Key (optional)</div>
+      <div class="key-input-group"><input class="ef-input" id="np-sacred-key" placeholder="e.g. grove" style="font-family:monospace;"><span class="key-badge">key</span></div>
+    </div>
+    
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn primary" style="flex:1;padding:8px" onclick="createPlace()">Create</button>
+      <button class="btn" style="padding:8px 10px" onclick="closeAddPlace()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="hh-overlay" id="hh-overlay" onclick="if(event.target===this)closeOverlay()">
+  <div class="hh-overlay-box"><div id="hh-overlay-content"></div><button class="btn" style="margin-top:12px;width:100%" onclick="closeOverlay()">Close</button></div>
+</div>
+
+<div class="modal" id="ps-modal" style="align-items:flex-start;padding-top:40px">
+  <div class="modal-box" style="max-width:450px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div class="modal-title" style="margin:0;flex:1">People Search</div>
+      <button class="btn sm" onclick="document.getElementById('ps-modal').style.display='none'">✕</button>
+    </div>
+    <input class="ef-input" id="ps-q" placeholder="Type a name…" oninput="runPS()" style="margin-bottom:10px;padding:6px 8px">
+    <div id="ps-out" style="max-height:350px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const STORAGE_KEYS = ['stillwaters_editor','stillwaters_connections','stillwaters_locations','stillwaters_professions','stillwaters_tree','stillwaters_gatherings'];
+const STORAGE_KEY = 'stillwaters_locations';
+
+let DATA = {
+  version: "1.0", lastSaved: null, currentYear: 1560,
+  people: {}, relationships: {}, locations: {}, professions: [],
+  stableIdIndex: {}, metadata: {}
+};
+
+let activeId = null;
+const collapsed = new Set();
+const editCollapsed = new Set();
+let mobileActiveTab = 'list';
+
+function openStorageManager() { refreshStorageList(); document.getElementById('storage-manager-modal').style.display = 'flex'; }
+function closeStorageManager() { document.getElementById('storage-manager-modal').style.display = 'none'; }
+function refreshStorageList() {
+  const listEl = document.getElementById('storage-list');
+  let html = '<table class="storage-table"><tr><th>App</th><th>Size</th><th>People</th><th>Actions</th></tr>';
+  let totalSize = 0, totalPeople = 0;
+  STORAGE_KEYS.forEach(key => {
+    const raw = localStorage.getItem(key);
+    const size = raw ? new Blob([raw]).size : 0;
+    totalSize += size;
+    let peopleCount = 0, status = '❌ Empty', rowClass = '';
+    if (raw) {
+      try { const data = JSON.parse(raw); if (data.people) { peopleCount = Object.keys(data.people).length; totalPeople += peopleCount; status = `✅ ${peopleCount} people`; rowClass = 'has-data'; } else { status = '⚠️ Invalid format'; rowClass = 'warning'; } } 
+      catch(e) { status = '⚠️ Corrupted'; rowClass = 'danger'; }
+    }
+    const sizeKB = (size / 1024).toFixed(2);
+    const appName = key.replace('stillwaters_', '').charAt(0).toUpperCase() + key.replace('stillwaters_', '').slice(1);
+    html += `<tr class="${rowClass}"><td>${appName}<br><span class="key-name">${key}</span></td><td style="text-align:right;">${sizeKB} KB</td><td style="text-align:right;">${status}</td><td style="text-align:right;"><button class="btn small danger" onclick="clearStorageKey('${key}')" style="padding:2px 6px; font-size:0.55rem;">Clear</button>${raw ? `<button class="btn small" onclick="viewStorageKey('${key}')" style="padding:2px 6px; margin-left:4px;">View</button>` : ''}</td></tr>`;
+  });
+  html += `<tr style="border-top:2px solid var(--acc); font-weight:bold;"><td>TOTAL</td><td style="text-align:right;">${(totalSize/1024).toFixed(2)} KB</td><td style="text-align:right;">${totalPeople} people</td><td></td></tr></table>`;
+  listEl.innerHTML = html;
+}
+function clearStorageKey(key) { if (confirm(`Clear ${key}?`)) { localStorage.removeItem(key); refreshStorageList(); showToast(`Cleared ${key}`); if (key === 'stillwaters_locations') setTimeout(() => window.location.reload(), 1500); } }
+function clearAllStorage() { if (confirm('Clear ALL Still Waters data?')) { STORAGE_KEYS.forEach(key => localStorage.removeItem(key)); refreshStorageList(); showToast('All storage cleared'); setTimeout(() => window.location.reload(), 1500); } }
+function clearCurrentApp() { if (confirm('Clear current app data?')) { localStorage.removeItem('stillwaters_locations'); refreshStorageList(); showToast('Cleared locations data'); setTimeout(() => window.location.reload(), 1500); } }
+function viewStorageKey(key) { const raw = localStorage.getItem(key); if (!raw) return; try { const data = JSON.parse(raw); const content = JSON.stringify(data, null, 2); const viewModal = document.createElement('div'); viewModal.className = 'modal-overlay'; viewModal.style.display = 'flex'; viewModal.innerHTML = `<div class="modal-box" style="max-width:800px;"><div class="modal-title">${key} - Raw Data</div><pre style="background:var(--bg); padding:10px; overflow:auto; max-height:60vh; font-size:0.7rem;">${escapeHtml(content)}</pre><div style="display:flex; gap:8px;"><button class="btn primary" onclick="this.closest('.modal-overlay').remove()">Close</button><button class="btn" onclick="copyToClipboard('${escapeHtml(content.replace(/'/g, "\\'"))}')">Copy</button></div></div>`; document.body.appendChild(viewModal); } catch(e) { showToast('Error parsing data'); } }
+function copyToClipboard(text) { navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard')); }
+document.addEventListener('click', function(e) { const modal = document.getElementById('storage-manager-modal'); if (modal && modal.style.display === 'flex') { const modalBox = modal.querySelector('.modal-box'); if (modalBox && !modalBox.contains(e.target) && !e.target.closest('[onclick="openStorageManager()"]')) closeStorageManager(); } });
+
+function diagnoseData() { console.log('People:', Object.keys(DATA.people).length); showToast('Diagnostic - check console'); }
+
+function generateStableId() { const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let id = ''; for (let i = 0; i < 9; i++) { if (i === 3 || i === 6) id += '-'; else id += c[Math.floor(Math.random() * c.length)]; } return id; }
+function getHumanIdByStableId(stableId) { return DATA.stableIdIndex?.[stableId] || null; }
+function getPersonId(input) { if (DATA.people[input]) return input; const hid = getHumanIdByStableId(input); return hid || input; }
+function rebuildStableIdIndex() { DATA.stableIdIndex = {}; Object.entries(DATA.people).forEach(([id, p]) => { if (p.stableId) DATA.stableIdIndex[p.stableId] = id; }); }
+function migrateToStableIds() { let m = 0; Object.keys(DATA.people).forEach(id => { if (!DATA.people[id].stableId) { DATA.people[id].stableId = generateStableId(); m++; } }); rebuildStableIdIndex(); return m; }
+function openMigrateModal() { const total = Object.keys(DATA.people).length; const existing = Object.values(DATA.people).filter(p => p.stableId).length; document.getElementById('migrate-total').textContent = total; document.getElementById('migrate-existing').textContent = existing; document.getElementById('migrate-modal').style.display = 'block'; }
+function closeMigrateModal() { document.getElementById('migrate-modal').style.display = 'none'; }
+function confirmMigration() { const m = migrateToStableIds(); saveData(); closeMigrateModal(); if (activeId) { renderInfo(activeId); renderEdit(activeId); } showToast(`Migration complete! ${m} new stable IDs.`); }
+
+const PLACE_BL = { name:'', level:'', types:[], parentId:'', compKey:'', ruler:'', govType:'', occupied:false, occupyingCountry:'', export:'', tradepartners:'', language:'', religion:'', climate:'', terrain:'', founded:'', status:'', notes:'', image:'', population_override:'', households:{}, communitySpots:[], naturalFeatures:[], animalHouses:[] };
+
+const HH_TYPES = { hut:{sym:'🛖',label:'Hut'}, house:{sym:'🏠',label:'House'}, longhouse:{sym:'🏚',label:'Longhouse'}, palace:{sym:'🏛',label:'Palace'}, castle:{sym:'🏰',label:'Castle'}, tent:{sym:'⛺',label:'Tent'}, shrine:{sym:'⛩',label:'Shrine'}, cave:{sym:'🪨',label:'Cave'}, other:{sym:'◈',label:'Other'} };
+const SPOT_PRIMARIES = ['Field','Grove','Plantation','Canoe Hut','Fishing Area','Market','Pavilion','Meeting House','Dye House','Weaving Hall','Healing House','Storage House','Well','Dock','Quarry','Other'];
+const SPOT_SUBTAGS = { 'Field':['Taro','Yam','Banana','Sugarcane','Breadfruit','Vegetables','Other'], 'Grove':['Coconut','Breadfruit','Banana','Mango','Pandanus','Medicinal','Other'], 'Plantation':['Coconut','Taro','Sugarcane','Breadfruit','Banana','Other'] };
+const SPOT_ELIGIBLE_PROFS = { 'Field':['Farmer'],'Grove':['Farmer'],'Plantation':['Farmer'], 'Canoe Hut':['Canoer','Sailor','Fisher'], 'Fishing Area':['Fisher','Sailor','Canoer'], 'Dye House':['Crafter'],'Weaving Hall':['Crafter'], 'Healing House':['Physician'], 'Dock':['Sailor','Canoer','Fisher','Merchant'], 'Quarry':['Builder'] };
+const NATURAL_TYPES = ['River','Stream','Lake','Spring','Waterfall','Grove','Forest','Rock / Boulder','Cave','Hill','Beach','Bay','Reef','Marsh','Cliff','Field','Other'];
+const ANIMAL_LIST = ['Chicken','Pig','Dog','Goat','Duck','Turtle','Fish (pond)','Other'];
+const PLACE_TYPE_TAGS = ['Capital','Port Town','Market Town','Fishing Village','Sacred Ground','Fortified','Ruin','Outpost'];
+const LEVEL_HIERARCHY = ['country','district','town','village','compound','sacred'];
+const GOV_TYPES = ['Chiefdom','Monarchy','Republic','Empire','Tribal Council','Theocracy','Oligarchy','Confederacy','City-state','Anarchy'];
+const STATUS_LIST = ['Active','Disputed','Abandoned','Ruins','Sacred'];
+
+function showMobileTab(tab) { mobileActiveTab = tab; document.querySelectorAll('#mob-tabs button').forEach(btn => btn.classList.remove('active')); const activeBtn = Array.from(document.querySelectorAll('#mob-tabs button')).find(btn => btn.textContent.includes(tab === 'list' ? 'Places' : tab === 'info' ? 'Info' : 'Edit')); if (activeBtn) activeBtn.classList.add('active'); document.getElementById('mob-list').classList.toggle('mobile-active', tab === 'list'); document.getElementById('mob-info').classList.toggle('mobile-active', tab === 'info'); document.getElementById('mob-edit').classList.toggle('mobile-active', tab === 'edit'); }
+
+function validateAllData() { let fixes = 0; Object.keys(DATA.people).forEach(id => { if (!DATA.relationships[id]) { DATA.relationships[id] = { ongoing: [], ended: [], widowed: [], details: {} }; fixes++; } if (!DATA.people[id].stableId) { DATA.people[id].stableId = generateStableId(); fixes++; } }); Object.keys(DATA.relationships).forEach(id => { if (!DATA.people[id]) { delete DATA.relationships[id]; fixes++; } }); const compKeys = new Set(); Object.entries(DATA.locations).forEach(([id, loc]) => { if (loc.compKey) { if (compKeys.has(loc.compKey)) { const newKey = loc.compKey + '_' + Date.now(); console.warn(`Duplicate key ${loc.compKey} for ${loc.name}, changing to ${newKey}`); loc.compKey = newKey; fixes++; } else compKeys.add(loc.compKey); } }); Object.keys(DATA.people).forEach(id => { const p = DATA.people[id]; if (p.currComp) { const exists = Object.values(DATA.locations).some(loc => loc.compKey === p.currComp); if (!exists) { p.currComp = ''; fixes++; } } if (p.birthComp) { const exists = Object.values(DATA.locations).some(loc => loc.compKey === p.birthComp); if (!exists) { p.birthComp = ''; fixes++; } } }); rebuildStableIdIndex(); if (fixes > 0) { saveData(); showToast(`Fixed ${fixes} data issues`); if (activeId) { renderInfo(activeId); renderEdit(activeId); } } else showToast('All data is consistent'); return fixes; }
+
+function getPlace(id) { return { ...PLACE_BL, ...(DATA.locations[id] || {}), types: (DATA.locations[id] || {}).types || [], households: (DATA.locations[id] || {}).households || {}, communitySpots: (DATA.locations[id] || {}).communitySpots || [], naturalFeatures: (DATA.locations[id] || {}).naturalFeatures || [], animalHouses: (DATA.locations[id] || {}).animalHouses || [] }; }
+function updatePlace(id, fields) { if (!DATA.locations[id]) DATA.locations[id] = {}; Object.assign(DATA.locations[id], fields); saveData(); }
+
+function getPerson(id) { const aid = getPersonId(id); return DATA.people[aid] || {}; }
+function getPersonDisplay(id) { const aid = getPersonId(id); const core = getPerson(aid); const rel = DATA.relationships[aid] || {}; return { id: aid, stableId: core.stableId || aid, name: core.name || aid, gender: core.gender || 'unknown', age: core.age ? parseInt(core.age) : (core.birthYear ? DATA.currentYear - core.birthYear : null), birthYear: core.birthYear, deceased: !!(core.deceased || rel.deceased), ranks: core.ranks || [], currComp: core.currComp || core.birthComp || '', birthComp: core.birthComp || '' }; }
+function displayName(id) { const p = getPerson(id); return p.name || id; }
+function getPeopleInComp(compKey) { if (!compKey) return []; return Object.keys(DATA.people).filter(id => { const p = DATA.people[id] || {}; return p.currComp === compKey || p.birthComp === compKey; }); }
+function getLiving(compKey) { return getPeopleInComp(compKey).filter(id => { const p = DATA.people[id] || {}; return !p.deceased; }); }
+function getHHFromPeople(compKey) { const hhs = {}, homeless = []; getLiving(compKey).forEach(id => { const p = DATA.people[id] || {}; const h = p.household || ''; if (h) { if (!hhs[h]) hhs[h] = []; hhs[h].push(id); } else homeless.push(id); }); return { hhs, homeless }; }
+
+// ====================== POPULATION COUNT FUNCTIONS ======================
+function getCompoundPopulation(compKey) { return getLiving(compKey).length; }
+
+function getTownPopulation(townId) {
+  const town = DATA.locations[townId];
+  if (!town) return 0;
+  let total = 0;
+  Object.entries(DATA.locations).forEach(([id, loc]) => {
+    if (loc.level === 'compound' && loc.parentId === townId && loc.compKey) {
+      total += getCompoundPopulation(loc.compKey);
+    }
+  });
+  if (town.population_override) total = parseInt(town.population_override);
+  return total;
+}
+
+function getDistrictPopulation(districtId) {
+  const district = DATA.locations[districtId];
+  if (!district) return 0;
+  let total = 0;
+  Object.entries(DATA.locations).forEach(([id, loc]) => {
+    if ((loc.level === 'town' || loc.level === 'village') && loc.parentId === districtId) {
+      total += getTownPopulation(id);
+    }
+  });
+  return total;
+}
+
+function getLocationPopulation(id) {
+  const loc = DATA.locations[id];
+  if (!loc) return 0;
+  if (loc.level === 'compound' && loc.compKey) return getCompoundPopulation(loc.compKey);
+  if (loc.level === 'town' || loc.level === 'village') return getTownPopulation(id);
+  if (loc.level === 'district') return getDistrictPopulation(id);
+  if (loc.population_override) return parseInt(loc.population_override);
+  return 0;
+}
+
+function getFullLocationNameWithDistrict(compKey) {
+  if (!compKey || !DATA.locations) return compKey || '—';
+  const compound = Object.entries(DATA.locations).find(([, loc]) => loc.compKey === compKey);
+  if (!compound) return compKey;
+  const loc = compound[1];
+  let name = loc.name;
+  if (loc.parentId && DATA.locations[loc.parentId]) {
+    const parent = DATA.locations[loc.parentId];
+    name += ` (${parent.name})`;
+    if (parent.parentId && DATA.locations[parent.parentId]) {
+      const grandparent = DATA.locations[parent.parentId];
+      if (grandparent.level === 'district') name += `, ${grandparent.name}`;
+    }
+  }
+  return name;
+}
+
+function byLevel(level) { return Object.entries(DATA.locations).filter(([,p]) => p.level === level).map(([id,p]) => ({ id, ...p })); }
+function children(pid) { return Object.entries(DATA.locations).filter(([,p]) => p.parentId === pid).map(([id,p]) => ({ id, ...p })); }
+function breadcrumb(id) { const parts = []; let cur = id; while (cur) { const p = DATA.locations[cur]; if (!p) break; parts.unshift(escapeHtml(p.name)); cur = p.parentId || null; } return parts.join(' › '); }
+function escapeHtml(text) { if (!text) return ''; return String(text).replace(/[&<>"]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;'; return m; }); }
+function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1800); }
+
+function validateCompoundKey(key, currentId = null) { if (!key) return { valid: false, message: 'Key is required' }; const formatted = key.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, ''); if (formatted !== key) return { valid: false, message: 'Key must be lowercase alphanumeric with hyphens only', formatted }; const existing = Object.entries(DATA.locations).find(([id, loc]) => loc.compKey === key && id !== currentId); if (existing) return { valid: false, message: 'Key already exists' }; return { valid: true }; }
+
+function buildList(q = '') {
+  const list = document.getElementById('place-list');
+  const ql = q.toLowerCase();
+  function matches(p) { return !ql || (p.name || '').toLowerCase().includes(ql); }
+  function placeRow(p, indent) { const occMark = p.occupied ? '<span class="occupied-mark" title="Occupied">⚑</span>' : ''; const capMark = (p.types || []).includes('Capital') ? '<span style="color:var(--acc);font-size:.65rem;margin-left:3px">★</span>' : ''; const keyMark = p.compKey ? `<span class="compound-badge">${escapeHtml(p.compKey)}</span>` : ''; const selectedClass = p.id === activeId ? ' active' : ''; return `<div class="place-item${selectedClass}" style="padding-left:${indent}px" onclick="selectPlace('${p.id}')">${escapeHtml(p.name)}${capMark}${occMark}${keyMark}</div>`; }
+  function renderLevel(parentId, indent, level) {
+    let h = '';
+    const kids = children(parentId).sort((a,b) => (a.name || '').localeCompare(b.name || ''));
+    kids.forEach(p => {
+      const hasKids = children(p.id).length > 0;
+      const ck = 'g-' + p.id;
+      const cColl = collapsed.has(ck);
+      const occMark = p.occupied ? '<span class="occupied-mark" title="Occupied">⚑</span>' : '';
+      const capMark = (p.types || []).includes('Capital') ? '<span style="color:var(--acc);font-size:.6rem;margin-left:3px" title="Capital">★</span>' : '';
+      const keyMark = p.compKey ? `<span class="compound-badge">${escapeHtml(p.compKey)}</span>` : '';
+      if (level <= 1) {
+        h += `<div class="group-hd" style="padding-left:${indent}px" onclick="toggleGroup('${ck}')"><span class="name-btn" onclick="event.stopPropagation();selectPlace('${p.id}')" style="font-size:${level===0?'.5rem':'.45rem'}">${escapeHtml(p.name)}${capMark}${occMark}${keyMark}</span>${hasKids ? `<span class="arrow">${cColl ? '▸' : '▾'}</span>` : ''}</div>`;
+        if (hasKids && !cColl) h += renderLevel(p.id, indent + 10, level + 1);
+      } else if (level <= 3) {
+        const cls = level === 2 ? 'sub-hd' : level === 3 ? 'sub-hd2' : '';
+        h += `<div class="${cls}" style="padding-left:${indent}px" onclick="toggleGroup('${ck}')"><span class="name-btn" onclick="event.stopPropagation();selectPlace('${p.id}')" style="font-size:.45rem">${escapeHtml(p.name)}${capMark}${occMark}${keyMark}</span>${hasKids ? `<span class="arrow">${cColl ? '▸' : '▾'}</span>` : ''}</div>`;
+        if (hasKids && !cColl) h += renderLevel(p.id, indent + 8, level + 1);
+      } else { h += placeRow(p, indent); }
+    });
+    return h;
+  }
+  let html = renderLevel('', 8, 0);
+  const orphans = Object.entries(DATA.locations).filter(([,p]) => !p.parentId && p.level !== 'country').map(([id,p]) => ({ id, ...p })).filter(matches).sort((a,b) => (a.name || '').localeCompare(b.name || ''));
+  orphans.forEach(p => { const occMark = p.occupied ? '<span class="occupied-mark">⚑</span>' : ''; const capMark = (p.types || []).includes('Capital') ? '<span style="color:var(--acc);font-size:.6rem;margin-left:3px">★</span>' : ''; const keyMark = p.compKey ? `<span class="compound-badge">${escapeHtml(p.compKey)}</span>` : ''; const selectedClass = p.id === activeId ? ' active' : ''; html += `<div class="place-item${selectedClass}" onclick="selectPlace('${p.id}')">${escapeHtml(p.name)}${capMark}${occMark}${keyMark}</div>`; });
+  list.innerHTML = html || '<div style="padding:12px;color:var(--tdim);font-style:italic;font-size:.75rem">No places yet.</div>';
+}
+function toggleGroup(k) { if (collapsed.has(k)) collapsed.delete(k); else collapsed.add(k); buildList(document.getElementById('search').value); }
+function collapseTopLevel() { collapsed.clear(); Object.entries(DATA.locations).forEach(([id, p]) => { if ((!p.parentId || p.parentId === '') && p.level !== 'compound' && p.level !== 'town' && p.level !== 'village') collapsed.add('g-' + id); }); }
+function selectPlace(id) { activeId = id; buildList(document.getElementById('search').value); renderInfo(id); renderEdit(id); showFloatSave(); if (window.innerWidth <= 700) showMobileTab('info'); }
+
+function addEmptyHousehold(placeId) { const p = getPlace(placeId); const hhs = { ...(p.households || {}) }; let n = 1; while (hhs['Household ' + n]) n++; const name = 'Household ' + n; hhs[name] = { type: 'hut', notes: '' }; updatePlace(placeId, { households: hhs }); renderInfo(placeId); setTimeout(() => openHHOverlay(placeId, name), 80); }
+
+function renderInfo(id) {
+  const panel = document.getElementById('panel-info');
+  const p = getPlace(id);
+  const compKey = p.compKey || '';
+  const living = getLiving(compKey);
+  const population = getLocationPopulation(id);
+  const { hhs: autoHHs, homeless } = getHHFromPeople(compKey);
+  const allHHNames = new Set([...Object.keys(autoHHs), ...Object.keys(p.households || {})]);
+
+  let h = '<div class="info-scroll">';
+  h += p.image ? '<img class="loc-image" src="' + escapeHtml(p.image) + '" alt="' + escapeHtml(p.name) + '">' : '<div style="width:100%;height:80px;background:var(--bg2);border:1px dashed var(--bd);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--tdim);font-size:.72rem;margin-bottom:12px">No image</div>';
+  h += '<div class="loc-name">' + escapeHtml(p.name);
+  if (p.occupied) h += ' <span style="color:#c07050;font-size:.65rem">⚑ Occupied</span>';
+  if (p.compKey) h += ` <span class="compound-badge" style="margin-left:8px;">${escapeHtml(p.compKey)}</span>`;
+  h += '</div>';
+  h += '<div class="loc-sub">' + breadcrumb(id) + '</div>';
+  const allTypes = [p.level, ...(p.types || [])].filter(Boolean);
+  if (allTypes.length) h += '<div class="tag-strip">' + allTypes.map(t => '<span class="type-pill">' + escapeHtml(t) + '</span>').join('') + '</div>';
+  
+  h += '<div class="info-sec">Overview</div><div class="info-grid">';
+  if (p.govType) h += '<div class="info-label">Government</div><div class="info-value">' + escapeHtml(p.govType) + '</div>';
+  if (p.occupied && p.occupyingCountry) h += '<div class="info-label">Occupied by</div><div class="info-value" style="color:#c07050">' + escapeHtml(p.occupyingCountry) + '</div>';
+  if (p.ruler) { const ruler = getPersonDisplay(p.ruler); const rankSymbol = ruler.ranks?.some(r => r.value === 'Chief') ? '<span class="rank-icon chief">★</span>' : ''; const deceased = ruler.deceased ? ' <span class="deceased-mark">†</span>' : ''; h += '<div class="info-label">Ruler / Chief</div><div class="info-value" data-stable-id="' + (ruler.stableId || '') + '">' + rankSymbol + ' ' + escapeHtml(ruler.name || p.ruler) + deceased + '</div>'; }
+  if (p.founded) h += '<div class="info-label">Founded</div><div class="info-value">' + escapeHtml(p.founded) + '</div>';
+  if (p.status) h += '<div class="info-label">Status</div><div class="info-value">' + escapeHtml(p.status) + '</div>';
+  if (p.export) h += '<div class="info-label">Main Export</div><div class="info-value">' + escapeHtml(p.export) + '</div>';
+  if (p.tradepartners) h += '<div class="info-label">Trade Partners</div><div class="info-value">' + escapeHtml(p.tradepartners) + '</div>';
+  if (p.language) h += '<div class="info-label">Language</div><div class="info-value">' + escapeHtml(p.language) + '</div>';
+  if (p.religion) h += '<div class="info-label">Religion</div><div class="info-value">' + escapeHtml(p.religion) + '</div>';
+  if (p.climate) h += '<div class="info-label">Climate</div><div class="info-value">' + escapeHtml(p.climate) + '</div>';
+  if (p.terrain) h += '<div class="info-label">Terrain</div><div class="info-value">' + escapeHtml(p.terrain) + '</div>';
+  if (compKey) h += '<div class="info-label">Data Key</div><div class="info-value" style="font-family:monospace;font-size:.72rem;color:var(--tdim)">' + escapeHtml(compKey) + '</div>';
+  h += '</div>';
+  
+  // Population section
+  h += '<div class="info-sec">Population</div>';
+  h += '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px"><div class="pop-num">' + population + '</div><div style="font-size:.7rem;color:var(--tdim)">residents</div></div>';
+  
+  const kids = children(id);
+  if (kids.length) {
+    h += '<div class="info-sec">Sub-locations (' + kids.length + ')</div>';
+    kids.sort((a,b) => (a.name || '').localeCompare(b.name || '')).forEach(ch => {
+      const childPop = getLocationPopulation(ch.id);
+      const keyMark = ch.compKey ? `<span class="compound-badge" style="margin-left:3px;">${escapeHtml(ch.compKey)}</span>` : '';
+      h += '<span class="person-chip" onclick="selectPlace(\'' + ch.id + '\')">' + escapeHtml(ch.name) + keyMark + '<span class="tag" style="margin-left:3px">' + (childPop > 0 ? childPop + ' pop' : '') + '</span></span>';
+    });
+    h += '<br>';
+  }
+  
+  if (compKey || p.population_override) {
+    if (allHHNames.size) {
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;margin-bottom:3px"><div class="info-sec" style="margin:0">Households (' + allHHNames.size + ')</div><button onclick="addEmptyHousehold(\'' + id + '\')" style="font-size:.6rem;padding:2px 8px;border:1px solid var(--acc);border-radius:8px;background:transparent;color:var(--acc);cursor:pointer">+ Add</button></div>';
+      Array.from(allHHNames).sort().forEach(hhName => {
+        const meta = (p.households || {})[hhName] || {};
+        const members = autoHHs[hhName] || [];
+        const hhType = meta.type || 'hut';
+        const sym = (HH_TYPES[hhType] || HH_TYPES.other).sym;
+        h += '<div class="hh-card" onclick="openHHOverlay(\'' + id + '\',\'' + escapeHtml(hhName) + '\')" data-stable-id="' + (members.map(m => getPersonDisplay(m).stableId).join(',') || '') + '">';
+        h += '<div class="hh-header"><div class="hh-sym">' + sym + '</div><div class="hh-name">' + escapeHtml(hhName) + '</div><div style="margin-left:auto;font-size:.58rem;color:var(--tdim)">' + (HH_TYPES[hhType] || HH_TYPES.other).label + '</div></div>';
+        if (members.length) h += '<div class="hh-members">' + members.map(mid => { const pd = getPersonDisplay(mid); return '<span class="person-chip" onclick="event.stopPropagation()" style="font-size:.7rem" data-stable-id="' + (pd.stableId || '') + '">' + escapeHtml(displayName(mid)) + '</span>'; }).join('') + '</div>';
+        else h += '<div class="hh-members" style="font-style:italic;color:var(--tdim)">No occupants</div>';
+        if (meta.notes) h += '<div class="hh-notes">' + escapeHtml(meta.notes) + '</div>';
+        h += '</div>';
+      });
+    }
+    if (homeless.length) { h += '<div class="info-sec" style="margin-top:6px">No Household (' + homeless.length + ')</div><div class="homeless-list">' + homeless.map(mid => { const pd = getPersonDisplay(mid); return '<span class="person-chip" style="font-size:.72rem" data-stable-id="' + (pd.stableId || '') + '">' + escapeHtml(displayName(mid)) + '</span>'; }).join('') + '</div>'; }
+  }
+  
+  if (p.communitySpots && p.communitySpots.length) {
+    h += '<div class="info-sec">Community Spots (' + p.communitySpots.length + ')</div>';
+    p.communitySpots.forEach(sp => {
+      h += '<div class="community-card"><div class="nc-name">' + escapeHtml(sp.name || sp.spotType || 'Spot') + '</div>';
+      const spSubtags = (sp.subtags || []).join(', ');
+      if (sp.spotType) h += '<div class="nc-detail">' + escapeHtml(sp.spotType + (spSubtags ? ' · ' + spSubtags : '')) + '</div>';
+      if (sp.master) { const md = getPersonDisplay(sp.master); h += '<div style="font-size:.68rem;color:var(--acc)" data-stable-id="' + (md.stableId || '') + '">★ Master: ' + escapeHtml(md.name || sp.master) + '</div>'; }
+      if ((sp.workers || []).length) { h += '<div class="nc-detail">Workers: ' + sp.workers.map(pid => { const pd = getPersonDisplay(pid); const age = pd.age ? (' ' + pd.age) : ''; return '<span data-stable-id="' + (pd.stableId || '') + '">' + escapeHtml((pd.name || pid) + age) + '</span>'; }).join(', ') + '</div>'; }
+      if (sp.notes) h += '<div class="nc-detail" style="margin-top:3px;font-style:italic">' + escapeHtml(sp.notes) + '</div>';
+      h += '</div>';
+    });
+  }
+  
+  if (p.naturalFeatures && p.naturalFeatures.length) {
+    h += '<div class="info-sec">Natural Features (' + p.naturalFeatures.length + ')</div>';
+    p.naturalFeatures.forEach(f => { h += '<div class="nature-card"><div class="nc-name">' + escapeHtml(f.name || f.featureType || 'Feature') + '</div>'; if (f.featureType && f.name !== f.featureType) h += '<div class="nc-detail">' + escapeHtml(f.featureType) + '</div>'; if (f.notes) h += '<div class="nc-detail" style="font-style:italic">' + escapeHtml(f.notes) + '</div>'; h += '</div>'; });
+  }
+  
+  if (p.animalHouses && p.animalHouses.length) {
+    h += '<div class="info-sec">Animal Houses (' + p.animalHouses.length + ')</div>';
+    p.animalHouses.forEach(ah => { const anList = Object.entries(ah.animals || {}).filter(([,n]) => n > 0).map(([a,n]) => n + ' ' + a).join(', '); h += '<div class="animal-card"><div class="nc-name">' + escapeHtml(ah.name || 'Animal House') + '</div>'; if (anList) h += '<div class="nc-detail">' + escapeHtml(anList) + '</div>'; if (ah.notes) h += '<div class="nc-detail" style="font-style:italic">' + escapeHtml(ah.notes) + '</div>'; h += '</div>'; });
+  }
+  
+  if (p.notes) h += '<div class="info-sec">Notes</div><div class="notes-block">' + escapeHtml(p.notes) + '</div>';
+  h += '<div style="margin-top:15px"><button class="btn danger sm" onclick="deletePlace(\'' + id + '\')">Delete</button></div></div>';
+  panel.innerHTML = h;
+}
+
+function openHHOverlay(placeId, hhName) {
+  const p = getPlace(placeId);
+  const meta = (p.households || {})[hhName] || {};
+  const { hhs } = getHHFromPeople(p.compKey || '');
+  const members = hhs[hhName] || [];
+  const hhType = meta.type || 'hut';
+  const sym = (HH_TYPES[hhType] || HH_TYPES.other).sym;
+  const typeOpts = Object.entries(HH_TYPES).map(([k,v]) => '<option value="' + k + '"' + (hhType === k ? ' selected' : '') + '>' + v.sym + ' ' + v.label + '</option>').join('');
+  let h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div style="font-size:1.6rem">' + sym + '</div><div><div style="font-family:\'Cinzel\',serif;font-size:.85rem;color:var(--acc)">' + escapeHtml(hhName) + '</div><div style="font-size:.72rem;color:var(--tdim)">' + breadcrumb(placeId) + '</div></div></div>';
+  h += '<div class="ef-label" style="margin-bottom:3px">Type</div><select class="ef-input" onchange="saveHHMeta(\'' + placeId + '\',\'' + escapeHtml(hhName) + '\',\'type\',this.value)" style="margin-bottom:8px">' + typeOpts + '</select>';
+  h += '<div class="info-sec">Occupants (' + members.length + ')</div>';
+  if (members.length) { h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">'; members.forEach(mid => { const d = getPersonDisplay(mid); h += '<div class="hh-card nocursor" style="cursor:default" data-stable-id="' + (d.stableId || '') + '"><div style="font-size:.78rem;color:var(--acc2)">' + escapeHtml(d.name || mid) + '</div><div style="font-size:.68rem;color:var(--tdim)">' + (d.gender || '') + (d.age ? ' · age ' + d.age : '') + (d.role ? ' · ' + d.role : '') + '</div></div>'; }); h += '</div>'; }
+  else h += '<div style="color:var(--tdim);font-size:.8rem;font-style:italic;margin-bottom:8px">No occupants linked</div>';
+  h += '<div class="ef-label" style="margin-bottom:3px">Household Notes</div><textarea class="ef-input" style="min-height:60px;resize:vertical" oninput="saveHHMeta(\'' + placeId + '\',\'' + escapeHtml(hhName) + '\',\'notes\',this.value)">' + escapeHtml(meta.notes || '') + '</textarea>';
+  document.getElementById('hh-overlay-content').innerHTML = h;
+  document.getElementById('hh-overlay').style.display = 'flex';
+}
+function closeOverlay() { document.getElementById('hh-overlay').style.display = 'none'; }
+function saveHHMeta(placeId, hhName, field, val) { const p = getPlace(placeId); const hhs = { ...(p.households || {}) }; if (!hhs[hhName]) hhs[hhName] = {}; hhs[hhName][field] = val; updatePlace(placeId, { households: hhs }); renderInfo(placeId); }
+
+function getChiefOptionsForPlace(placeId) {
+  const place = getPlace(placeId);
+  const chiefs = [];
+  const compoundKeys = [];
+  if (place.level === 'town' || place.level === 'village') {
+    Object.values(DATA.locations).forEach(loc => { if (loc.level === 'compound' && loc.parentId === placeId && loc.compKey) compoundKeys.push(loc.compKey); });
+  } else if (place.compKey) compoundKeys.push(place.compKey);
+  Object.keys(DATA.people).forEach(id => { const p = getPersonDisplay(id); if (p.ranks && p.ranks.some(r => r.value === 'Chief') && !p.deceased && compoundKeys.includes(p.birthComp)) chiefs.push({ id, stableId: p.stableId, name: p.name, deceased: p.deceased, comp: p.birthComp || '?', rankNum: p.ranks.find(r => r.value === 'Chief')?.number || 1 }); });
+  chiefs.sort((a, b) => a.name.localeCompare(b.name));
+  return chiefs;
+}
+
+function quickAddDistrict() { if (!activeId) { showToast('Select a location first'); return; } const currentPlace = getPlace(activeId); if (currentPlace.level !== 'country') { showToast('Can only add district under a country'); return; } openAddPlaceWithParent(activeId, 'district'); }
+function quickAddTown() { if (!activeId) { showToast('Select a location first'); return; } const currentPlace = getPlace(activeId); if (currentPlace.level !== 'district' && currentPlace.level !== 'country') { showToast('Can only add town under a district or country'); return; } openAddPlaceWithParent(activeId, 'town'); }
+function quickAddVillage() { if (!activeId) { showToast('Select a location first'); return; } const currentPlace = getPlace(activeId); if (currentPlace.level !== 'district' && currentPlace.level !== 'country') { showToast('Can only add village under a district or country'); return; } openAddPlaceWithParent(activeId, 'village'); }
+function quickAddCompound() { if (!activeId) { showToast('Select a location first'); return; } const currentPlace = getPlace(activeId); if (currentPlace.level !== 'town' && currentPlace.level !== 'village') { showToast('Can only add compound under a town or village'); return; } openAddPlaceWithParent(activeId, 'compound'); }
+function openAddPlaceWithParent(parentId, level) { document.getElementById('np-level').value = level; onLevelChange(); if (level === 'district') { const countrySelect = document.getElementById('np-par-country'); if (countrySelect) { for (let i = 0; i < countrySelect.options.length; i++) { if (countrySelect.options[i].value === parentId) { countrySelect.value = parentId; break; } } } } else if (level === 'town' || level === 'village') { const districtSelect = document.getElementById('np-par-district'); if (districtSelect) { for (let i = 0; i < districtSelect.options.length; i++) { if (districtSelect.options[i].value === parentId) { districtSelect.value = parentId; break; } } } } else if (level === 'compound') { const townSelect = document.getElementById('np-par-town'); if (townSelect) { for (let i = 0; i < townSelect.options.length; i++) { if (townSelect.options[i].value === parentId) { townSelect.value = parentId; break; } } } } document.getElementById('add-place-modal').style.display = 'flex'; }
+
+function toggleEditSection(key) { if (editCollapsed.has(key)) editCollapsed.delete(key); else editCollapsed.add(key); const body = document.getElementById('efsec-body-' + key); const arrow = document.getElementById('efsec-arrow-' + key); if (body) body.style.display = editCollapsed.has(key) ? 'none' : ''; if (arrow) arrow.textContent = editCollapsed.has(key) ? '▸' : '▾'; }
+
+function renderEdit(id) {
+  const panel = document.getElementById('panel-edit');
+  const p = getPlace(id);
+  const levelOpts = ['country','district','town','village','compound','sacred'].map(l => '<option value="' + l + '"' + (p.level === l ? ' selected' : '') + '>' + l + '</option>').join('');
+  const govOpts = GOV_TYPES.map(g => '<option value="' + g + '"' + (p.govType === g ? ' selected' : '') + '>' + g + '</option>').join('');
+  const statusOpts = STATUS_LIST.map(s => '<option value="' + s + '"' + (p.status === s ? ' selected' : '') + '>' + s + '</option>').join('');
+  const allPlaces = Object.entries(DATA.locations).filter(([pid]) => pid !== id).sort(([,a],[,b]) => (a.name || '').localeCompare(b.name || ''));
+  const parentOpts = '<option value="">— none —</option>' + allPlaces.map(([pid, pl]) => '<option value="' + pid + '"' + (p.parentId === pid ? ' selected' : '') + '>' + escapeHtml(pl.name) + (pl.level ? ' (' + pl.level + ')' : '') + '</option>').join('');
+  const typeChecks = PLACE_TYPE_TAGS.map(t => '<label style="display:flex;align-items:center;gap:4px;font-size:.75rem;cursor:pointer"><input type="checkbox" value="' + t + '"' + ((p.types || []).includes(t) ? ' checked' : '') + ' onchange="toggleType(\'' + id + '\',\'' + t + '\',this.checked)">' + escapeHtml(t) + '</label>').join('');
+  const chiefs = getChiefOptionsForPlace(id);
+  let chiefOpts = '<option value="">— none —</option>';
+  chiefs.forEach(chief => { const selected = p.ruler === chief.id || p.ruler === chief.stableId ? ' selected' : ''; const rankDisplay = chief.rankNum > 1 ? ` ${chief.rankNum}${getOrdinalSuffix(chief.rankNum)}` : ''; chiefOpts += `<option value="${chief.stableId || chief.id}" data-stable-id="${chief.stableId || ''}" ${selected}>${escapeHtml(chief.name)} (${escapeHtml(chief.comp)}) - Chief${rankDisplay}</option>`; });
+  let quickAddHtml = '';
+  if (p.level === 'country') quickAddHtml = '<div class="quick-add-buttons"><button class="quick-add-btn" onclick="quickAddDistrict()">+ Add District</button></div>';
+  else if (p.level === 'district') quickAddHtml = '<div class="quick-add-buttons"><button class="quick-add-btn" onclick="quickAddTown()">+ Add Town</button><button class="quick-add-btn" onclick="quickAddVillage()">+ Add Village</button></div>';
+  else if (p.level === 'town' || p.level === 'village') quickAddHtml = '<div class="quick-add-buttons"><button class="quick-add-btn primary" onclick="quickAddCompound()">+ Add Compound</button></div>';
+  const spots = p.communitySpots || [];
+  let spotsHtml = '';
+  spots.forEach((sp, i) => {
+    const primaryType = sp.spotType || '';
+    const wOpts = SPOT_PRIMARIES.map(t => '<option value="' + t + '"' + (primaryType === t ? ' selected' : '') + '>' + t + '</option>').join('');
+    const subtags = SPOT_SUBTAGS[primaryType] || [];
+    const activeSubtags = sp.subtags || [];
+    const subtagHtml = subtags.length ? '<div class="ef-label" style="font-size:.6rem;margin:4px 0 3px">Subtags</div><div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">' + subtags.map(st => '<button type="button" onclick="toggleSpotSubtag(\'' + id + '\',' + i + ',\'' + st + '\')" style="font-size:.6rem;padding:2px 7px;border-radius:8px;border:1px solid ' + (activeSubtags.includes(st) ? 'var(--acc)' : 'var(--bd)') + ';background:' + (activeSubtags.includes(st) ? 'var(--acc2)' : 'transparent') + ';cursor:pointer">' + escapeHtml(st) + '</button>').join('') + '</div>' : '';
+    const compKey = p.compKey || '';
+    const allPeopleHere = getPeopleInComp(compKey);
+    const notDeceased = pid => { const pd = DATA.people[pid] || {}; return !pd.deceased; };
+    const eligibleForRole = primaryType ? allPeopleHere.filter(pid => spotEligible(primaryType, pid)).filter(notDeceased) : allPeopleHere.filter(notDeceased);
+    const masterOpts = '<option value="">— none —</option>' + eligibleForRole.map(pid => { const pd = DATA.people[pid] || {}; const pname = pd.name || pid; const age = pd.age ? (' ' + pd.age) : ''; const stableId = pd.stableId || ''; return '<option value="' + (stableId || pid) + '"' + (sp.master === pid || sp.master === stableId ? ' selected' : '') + ' data-stable-id="' + stableId + '">' + escapeHtml(pname + age) + '</option>'; }).join('');
+    const workerChips = eligibleForRole.map(pid => { const pd = DATA.people[pid] || {}; const pname = pd.name || pid; const age = pd.age ? (' ' + pd.age) : ''; const stableId = pd.stableId || ''; const isWorker = (sp.workers || []).includes(pid) || (sp.workers || []).includes(stableId); return '<button type="button" onclick="toggleSpotWorker(\'' + id + '\',' + i + ',\'' + (stableId || pid) + '\')" style="font-size:.62rem;padding:3px 7px;border-radius:10px;border:1px solid ' + (isWorker ? 'var(--acc)' : 'var(--bd)') + ';background:' + (isWorker ? 'var(--acc2)' : 'transparent') + ';color:' + (isWorker ? 'var(--bg)' : 'var(--tdim)') + ';cursor:pointer" data-stable-id="' + stableId + '">' + escapeHtml(pname + age) + '</button>'; }).join('');
+    spotsHtml += '<div style="background:var(--bg2);border:1px solid var(--bd);border-radius:4px;padding:6px;margin-bottom:5px"><div class="ef-row"><div><div class="ef-label">Name</div><input class="ef-input" value="' + escapeHtml(sp.name || '') + '" oninput="editSpot(\'' + id + '\',' + i + ',\'name\',this.value)"></div><div><div class="ef-label">Type</div><select class="ef-input" onchange="editSpot(\'' + id + '\',' + i + ',\'spotType\',this.value);renderEdit(\'' + id + '\');"><option value="">—</option>' + wOpts + '</select></div></div>' + subtagHtml + '<div class="ef-label" style="margin-bottom:2px">Master</div><select class="ef-input" style="margin-bottom:5px" onchange="editSpot(\'' + id + '\',' + i + ',\'master\',this.value)"><option value="">— none —</option>' + masterOpts + '</select><div class="ef-label" style="margin-bottom:2px">Workers</div><div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">' + (workerChips || '<span style="color:var(--tdim);font-size:.72rem">No matching people</span>') + '</div><div class="ef-label">Notes</div><input class="ef-input" value="' + escapeHtml(sp.notes || '') + '" oninput="editSpot(\'' + id + '\',' + i + ',\'notes\',this.value)" style="margin-bottom:4px"><button class="btn sm danger" onclick="removeSpot(\'' + id + '\',' + i + ')">✕ Remove</button></div>';
+  });
+  const feats = p.naturalFeatures || [];
+  let featsHtml = '';
+  feats.forEach((f, i) => { const fOpts = NATURAL_TYPES.map(t => '<option value="' + t + '"' + (f.featureType === t ? ' selected' : '') + '>' + t + '</option>').join(''); featsHtml += '<div style="background:var(--bg2);border:1px solid var(--bd);border-radius:4px;padding:6px;margin-bottom:5px"><div class="ef-row"><div><div class="ef-label">Name / Label</div><input class="ef-input" value="' + escapeHtml(f.name || '') + '" oninput="editFeat(\'' + id + '\',' + i + ',\'name\',this.value)"></div><div><div class="ef-label">Type</div><select class="ef-input" onchange="editFeat(\'' + id + '\',' + i + ',\'featureType\',this.value)"><option value="">—</option>' + fOpts + '</select></div></div><div class="ef-label">Notes</div><input class="ef-input" value="' + escapeHtml(f.notes || '') + '" oninput="editFeat(\'' + id + '\',' + i + ',\'notes\',this.value)" style="margin-bottom:4px"><button class="btn sm danger" onclick="removeFeat(\'' + id + '\',' + i + ')">✕ Remove</button></div>'; });
+  const ahs = p.animalHouses || [];
+  let ahHtml = '';
+  ahs.forEach((ah, i) => { const anInputs = ANIMAL_LIST.map(a => '<label style="display:flex;align-items:center;gap:4px;font-size:.75rem;margin-bottom:2px">' + escapeHtml(a) + '<input type="number" min="0" style="width:55px;padding:2px 4px" value="' + ((ah.animals || {})[a] || 0) + '" oninput="editAnimal(\'' + id + '\',' + i + ',\'' + a + '\',+this.value)"></label>').join(''); ahHtml += '<div style="background:var(--bg2);border:1px solid var(--bd);border-radius:4px;padding:6px;margin-bottom:5px"><div class="ef-label">Name</div><input class="ef-input" value="' + escapeHtml(ah.name || '') + '" oninput="editAH(\'' + id + '\',' + i + ',\'name\',this.value)" style="margin-bottom:5px"><div class="ef-label">Animals</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 6px;margin-bottom:4px">' + anInputs + '</div><div class="ef-label">Notes</div><input class="ef-input" value="' + escapeHtml(ah.notes || '') + '" oninput="editAH(\'' + id + '\',' + i + ',\'notes\',this.value)" style="margin-bottom:4px"><button class="btn sm danger" onclick="removeAH(\'' + id + '\',' + i + ')">✕ Remove</button></div>'; });
+  panel.innerHTML = '<div class="edit-scroll"><div class="ef-sec">Image / Map</div>' + (p.image ? '<img src="' + escapeHtml(p.image) + '" style="max-width:100%;max-height:120px;object-fit:cover;border-radius:4px;border:1px solid var(--bd);margin-bottom:6px;display:block">' : '') + '<div style="display:flex;gap:5px;margin-bottom:8px"><input type="file" accept="image/*" style="font-size:.65rem;flex:1" onchange="handleImg(this,\'' + id + '\')">' + (p.image ? '<button class="btn sm danger" onclick="updatePlace(\'' + id + '\',{image:\'\'});renderInfo(\'' + id + '\');renderEdit(\'' + id + '\')">✕</button>' : '') + '</div>' + quickAddHtml + '<div class="ef-sec">Identity</div><div class="ef-label">Name</div><input class="ef-input" id="e-name" value="' + escapeHtml(p.name || '') + '" style="margin-bottom:5px"><div class="ef-row"><div><div class="ef-label">Level</div><select class="ef-input" id="e-level"><option value="">—</option>' + levelOpts + '</select></div><div><div class="ef-label">Status</div><select class="ef-input" id="e-status"><option value="">—</option>' + statusOpts + '</select></div></div><div class="ef-label" style="margin-bottom:3px">Additional Types</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">' + typeChecks + '</div><div class="ef-label">Parent Place</div><select class="ef-input" id="e-parent" style="margin-bottom:5px">' + parentOpts + '</select><div class="ef-sec" style="margin-top:10px; color:var(--acc2);">Variable Key</div><div class="ef-label">Data Key <span style="color:var(--deceased);">* for compounds</span></div><div class="key-input-group" style="margin-bottom:5px;"><input class="ef-input" id="e-compkey" value="' + escapeHtml(p.compKey || '') + '" placeholder="e.g. awa, van, ahi..." style="font-family:monospace;"><span class="key-badge">key</span></div><div class="ef-sec">Governance</div><div class="ef-row"><div><div class="ef-label">Gov. Type</div><select class="ef-input" id="e-govtype"><option value="">—</option>' + govOpts + '</select></div><div><div class="ef-label">Founded</div><input class="ef-input" id="e-founded" value="' + escapeHtml(p.founded || '') + '"></div></div><div class="ef-label">Ruler / Chief</div><select class="ef-input" id="e-ruler" style="margin-bottom:5px; font-family:inherit;">' + chiefOpts + '</select><div class="check-row"><input type="checkbox" id="e-occupied"' + (p.occupied ? ' checked' : '') + '><label for="e-occupied">Occupied / Colony</label></div><div id="e-occupy-wrap" style="' + (p.occupied ? '' : 'display:none') + ';margin-bottom:5px"><div class="ef-label">Occupying Power</div><input class="ef-input" id="e-occupyingCountry" value="' + escapeHtml(p.occupyingCountry || '') + '"></div><div class="ef-sec">Economy</div><div class="ef-label">Main Export</div><input class="ef-input" id="e-export" value="' + escapeHtml(p.export || '') + '" style="margin-bottom:5px"><div class="ef-label">Trade Partners</div><input class="ef-input" id="e-tradepartners" value="' + escapeHtml(p.tradepartners || '') + '" style="margin-bottom:5px"><div class="ef-sec">Geography & Culture</div><div class="ef-row"><div><div class="ef-label">Climate</div><input class="ef-input" id="e-climate" value="' + escapeHtml(p.climate || '') + '"></div><div><div class="ef-label">Terrain</div><input class="ef-input" id="e-terrain" value="' + escapeHtml(p.terrain || '') + '"></div></div><div class="ef-row"><div><div class="ef-label">Language</div><input class="ef-input" id="e-language" value="' + escapeHtml(p.language || '') + '"></div><div><div class="ef-label">Religion</div><input class="ef-input" id="e-religion" value="' + escapeHtml(p.religion || '') + '"></div></div><div class="ef-label">Pop. Override</div><input class="ef-input" id="e-pop" type="number" min="0" value="' + escapeHtml(p.population_override || '') + '" placeholder="auto" style="margin-bottom:5px"><div class="ef-sec" style="margin-top:10px">Animal Houses</div>' + ahHtml + '<button class="btn sm" onclick="addAH(\'' + id + '\')">+ Add Animal House</button><div class="ef-sec">Notes</div><textarea class="ef-input" id="e-notes" style="min-height:70px;resize:vertical">' + escapeHtml(p.notes || '') + '</textarea><div style="display:flex;gap:6px;margin-top:10px"><button class="btn primary" style="flex:1;padding:8px" onclick="saveEdit(\'' + id + '\')">Save</button><button class="btn danger" style="flex:0.5;padding:8px" onclick="deletePlace(\'' + id + '\')">Delete</button></div><div class="ef-sec collapsible" onclick="toggleEditSection(\'community\')" style="margin-top:12px">Community Spots' + (spots.length ? ' (' + spots.length + ')' : '') + '<span class="ef-sec-arrow" id="efsec-arrow-community">' + (editCollapsed.has('community') ? '▸' : '▾') + '</span></div><div id="efsec-body-community" style="display:' + (editCollapsed.has('community') ? 'none' : '') + '">' + spotsHtml + '<button class="btn sm" onclick="addSpot(\'' + id + '\')">+ Add Spot</button></div><div class="ef-sec collapsible" onclick="toggleEditSection(\'natural\')" style="margin-top:10px">Natural Features' + (feats.length ? ' (' + feats.length + ')' : '') + '<span class="ef-sec-arrow" id="efsec-arrow-natural">' + (editCollapsed.has('natural') ? '▸' : '▾') + '</span></div><div id="efsec-body-natural" style="display:' + (editCollapsed.has('natural') ? 'none' : '') + '">' + featsHtml + '<button class="btn sm" onclick="addFeat(\'' + id + '\')">+ Add Feature</button></div></div>';
+}
+function getOrdinalSuffix(n) { if (!n) return ''; const s = ['th','st','nd','rd']; const v = n % 100; return s[(v - 20) % 10] || s[v] || s[0]; }
+function toggleType(id, t, checked) { const p = getPlace(id); const types = (p.types || []).filter(x => x !== t); if (checked) types.push(t); updatePlace(id, { types }); renderInfo(id); }
+function saveEdit(id) { const occ = document.getElementById('e-occupied')?.checked || false; const ruler = document.getElementById('e-ruler')?.value || ''; const newCompKey = document.getElementById('e-compkey')?.value.trim().toLowerCase() || ''; const currentPlace = getPlace(id); if (newCompKey && newCompKey !== currentPlace.compKey) { const validation = validateCompoundKey(newCompKey, id); if (!validation.valid) { if (validation.formatted) { if (confirm(`Invalid key. Use "${validation.formatted}" instead?`)) document.getElementById('e-compkey').value = validation.formatted; else return; } else { alert(validation.message); return; } } } updatePlace(id, { name: document.getElementById('e-name')?.value.trim() || getPlace(id).name, level: document.getElementById('e-level')?.value || '', status: document.getElementById('e-status')?.value || '', parentId: document.getElementById('e-parent')?.value || '', compKey: document.getElementById('e-compkey')?.value.trim().toLowerCase() || '', ruler: ruler, govType: document.getElementById('e-govtype')?.value || '', founded: document.getElementById('e-founded')?.value.trim() || '', occupied: occ, occupyingCountry: occ ? (document.getElementById('e-occupyingCountry')?.value.trim() || '') : '', export: document.getElementById('e-export')?.value.trim() || '', tradepartners: document.getElementById('e-tradepartners')?.value.trim() || '', climate: document.getElementById('e-climate')?.value.trim() || '', terrain: document.getElementById('e-terrain')?.value.trim() || '', language: document.getElementById('e-language')?.value.trim() || '', religion: document.getElementById('e-religion')?.value.trim() || '', population_override: document.getElementById('e-pop')?.value.trim() || '', notes: document.getElementById('e-notes')?.value || '' }); buildList(document.getElementById('search').value); renderInfo(id); showToast('Saved'); }
+function handleImg(input, id) { const file = input.files[0]; if (!file) return; const r = new FileReader(); r.onload = e => { updatePlace(id, { image: e.target.result }); renderInfo(id); renderEdit(id); showToast('Image saved'); }; r.readAsDataURL(file); }
+function addSpot(id) { const p = getPlace(id); const spots = [...p.communitySpots, { name: '', spotType: '', master: '', workers: [], notes: '', subtags: [] }]; updatePlace(id, { communitySpots: spots }); renderEdit(id); renderInfo(id); }
+function removeSpot(id, i) { const p = getPlace(id); const spots = p.communitySpots.filter((_,j) => j !== i); updatePlace(id, { communitySpots: spots }); renderEdit(id); renderInfo(id); }
+function toggleSpotSubtag(id, i, st) { const p = getPlace(id); const spots = [...p.communitySpots]; const tags = [...(spots[i].subtags || [])]; const idx = tags.indexOf(st); if (idx >= 0) tags.splice(idx, 1); else tags.push(st); spots[i] = { ...spots[i], subtags: tags }; updatePlace(id, { communitySpots: spots }); renderEdit(id); renderInfo(id); }
+function toggleSpotWorker(id, i, pid) { const p = getPlace(id); const spots = [...p.communitySpots]; const workers = [...(spots[i].workers || [])]; const actualPid = getPersonId(pid); const stableId = getStableIdByHumanId(actualPid) || actualPid; const idx = workers.indexOf(pid) !== -1 ? workers.indexOf(pid) : workers.indexOf(stableId); if (idx >= 0) workers.splice(idx, 1); else workers.push(stableId); spots[i] = { ...spots[i], workers }; updatePlace(id, { communitySpots: spots }); renderEdit(id); renderInfo(id); }
+function editSpot(id, i, field, val) { const p = getPlace(id); const spots = [...p.communitySpots]; spots[i] = { ...spots[i], [field]: val }; updatePlace(id, { communitySpots: spots }); renderInfo(id); }
+function spotEligible(spotPrimary, pid) { const eligible = SPOT_ELIGIBLE_PROFS[spotPrimary]; if (!eligible) return true; const p = DATA.people[pid] || {}; const prof = p.role || ''; return eligible.some(ep => prof.includes(ep)); }
+function addFeat(id) { const p = getPlace(id); const feats = [...p.naturalFeatures, { name: '', featureType: '', notes: '' }]; updatePlace(id, { naturalFeatures: feats }); renderEdit(id); renderInfo(id); }
+function removeFeat(id, i) { const p = getPlace(id); const feats = p.naturalFeatures.filter((_,j) => j !== i); updatePlace(id, { naturalFeatures: feats }); renderEdit(id); renderInfo(id); }
+function editFeat(id, i, field, val) { const p = getPlace(id); const feats = [...p.naturalFeatures]; feats[i] = { ...feats[i], [field]: val }; updatePlace(id, { naturalFeatures: feats }); renderInfo(id); }
+function addAH(id) { const p = getPlace(id); const ahs = [...p.animalHouses, { name: '', animals: {}, notes: '' }]; updatePlace(id, { animalHouses: ahs }); renderEdit(id); renderInfo(id); }
+function removeAH(id, i) { const p = getPlace(id); const ahs = p.animalHouses.filter((_,j) => j !== i); updatePlace(id, { animalHouses: ahs }); renderEdit(id); renderInfo(id); }
+function editAH(id, i, field, val) { const p = getPlace(id); const ahs = [...p.animalHouses]; ahs[i] = { ...ahs[i], [field]: val }; updatePlace(id, { animalHouses: ahs }); renderInfo(id); }
+function editAnimal(id, i, animal, val) { const p = getPlace(id); const ahs = [...p.animalHouses]; const animals = { ...(ahs[i].animals || {}) }; animals[animal] = val; ahs[i] = { ...ahs[i], animals }; updatePlace(id, { animalHouses: ahs }); renderInfo(id); }
+function deletePlace(id) { if (!confirm('Delete ' + getPlace(id).name + '? This will remove all references from people.')) return; const place = getPlace(id); const compKey = place.compKey; if (compKey) { Object.keys(DATA.people).forEach(pid => { const p = DATA.people[pid]; let changed = false; if (p.currComp === compKey) { p.currComp = ''; changed = true; } if (p.birthComp === compKey) { p.birthComp = ''; changed = true; } }); } Object.keys(DATA.locations).forEach(lid => { if (DATA.locations[lid].parentId === id) DATA.locations[lid].parentId = ''; }); delete DATA.locations[id]; saveData(); if (activeId === id) { activeId = null; document.getElementById('panel-info').innerHTML = '<div class="panel-empty">select a location</div>'; document.getElementById('panel-edit').innerHTML = '<div class="panel-empty">select a location</div>'; } buildList(document.getElementById('search').value); showToast('Deleted and cleaned up references'); }
+function onLevelChange() { const level = document.getElementById('np-level').value; document.querySelectorAll('.add-step').forEach(el => el.classList.remove('visible')); const map = { country:'add-country-step', district:'add-district-step', town:'add-town-step', village:'add-town-step', compound:'add-compound-step', sacred:'add-sacred-step' }; if (map[level]) document.getElementById(map[level]).classList.add('visible'); if (level === 'district') { const sel = document.getElementById('np-par-country'); sel.innerHTML = '<option value="">— select country —</option>' + byLevel('country').sort((a,b) => (a.name || '').localeCompare(b.name || '')).map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join(''); } if (level === 'town' || level === 'village') { const sel = document.getElementById('np-par-district'); const ds = [...byLevel('district'), ...byLevel('country')].sort((a,b) => (a.name || '').localeCompare(b.name || '')); sel.innerHTML = '<option value="">— select district —</option>' + ds.map(d => '<option value="' + d.id + '">' + escapeHtml(d.name) + '</option>').join(''); } if (level === 'compound') { const sel = document.getElementById('np-par-town'); const ts = [...byLevel('town'), ...byLevel('village')].sort((a,b) => (a.name || '').localeCompare(b.name || '')); sel.innerHTML = '<option value="">— select town/village —</option>' + ts.map(t => '<option value="' + t.id + '">' + escapeHtml(t.name) + '</option>').join(''); } if (level === 'sacred') { const sel = document.getElementById('np-par-sacred'); sel.innerHTML = '<option value="">— optional —</option>' + Object.entries(DATA.locations).sort(([,a],[,b]) => (a.name || '').localeCompare(b.name || '')).map(([pid, pl]) => '<option value="' + pid + '">' + escapeHtml(pl.name) + '</option>').join(''); } document.getElementById('np-type-checks').innerHTML = PLACE_TYPE_TAGS.map(t => '<label style="display:flex;align-items:center;gap:4px;font-size:.75rem;cursor:pointer"><input type="checkbox" class="np-type-cb" value="' + t + '">' + escapeHtml(t) + '</label>').join(''); }
+function openAddPlace() { document.getElementById('add-place-modal').style.display = 'flex'; document.getElementById('np-level').value = ''; document.querySelectorAll('.add-step').forEach(el => el.classList.remove('visible')); document.getElementById('np-type-checks').innerHTML = ''; document.getElementById('np-country-key').value = ''; document.getElementById('np-district-key').value = ''; document.getElementById('np-town-key').value = ''; document.getElementById('np-compkey').value = ''; document.getElementById('np-sacred-key').value = ''; }
+function closeAddPlace() { document.getElementById('add-place-modal').style.display = 'none'; }
+function createPlace() { const level = document.getElementById('np-level').value; if (!level) { alert('Select a level.'); return; } let name = '', parentId = '', compKey = ''; if (level === 'country') { name = document.getElementById('np-country-name').value.trim(); compKey = document.getElementById('np-country-key').value.trim().toLowerCase(); } else if (level === 'district') { name = document.getElementById('np-district-name').value.trim(); parentId = document.getElementById('np-par-country').value; compKey = document.getElementById('np-district-key').value.trim().toLowerCase(); } else if (level === 'town' || level === 'village') { name = document.getElementById('np-town-name').value.trim(); parentId = document.getElementById('np-par-district').value; compKey = document.getElementById('np-town-key').value.trim().toLowerCase(); } else if (level === 'compound') { name = document.getElementById('np-compound-name').value.trim(); parentId = document.getElementById('np-par-town').value; compKey = document.getElementById('np-compkey').value.trim().toLowerCase(); const validation = validateCompoundKey(compKey); if (!validation.valid) { if (validation.formatted) { if (confirm(`Invalid key. Use "${validation.formatted}" instead?`)) compKey = validation.formatted; else return; } else { alert(validation.message); return; } } } else if (level === 'sacred') { name = document.getElementById('np-sacred-name').value.trim(); parentId = document.getElementById('np-par-sacred').value; compKey = document.getElementById('np-sacred-key').value.trim().toLowerCase(); } if (!name) { alert('Name required.'); return; } const needsParent = { district: true, town: true, village: true, compound: true }; if (needsParent[level] && !parentId) { alert('Parent location required.'); return; } const types = Array.from(document.querySelectorAll('.np-type-cb:checked')).map(cb => cb.value); const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/_+$/, ''); let uid = base; let n = 2; while (DATA.locations[uid]) { uid = base + n; n++; } updatePlace(uid, { name, level, types, parentId, compKey, households: {}, communitySpots: [], naturalFeatures: [], animalHouses: [] }); buildList(document.getElementById('search').value); selectPlace(uid); closeAddPlace(); showToast('Added: ' + name + (compKey ? ` [${compKey}]` : '')); }
+function openPeopleSearch() { document.getElementById('ps-modal').style.display = 'flex'; const q = document.getElementById('ps-q'); q.value = ''; q.focus(); document.getElementById('ps-out').innerHTML = ''; }
+function runPS() { const q = (document.getElementById('ps-q').value || '').toLowerCase().trim(); const out = document.getElementById('ps-out'); if (q.length < 2) { out.innerHTML = '<div style="color:var(--tdim);font-size:.8rem;font-style:italic;padding:5px">Type at least 2 characters…</div>'; return; } const hits = []; Object.entries(DATA.people).forEach(([id, p]) => { const name = p.name || ''; if (!name.toLowerCase().includes(q)) return; const compKey = p.currComp || p.birthComp || ''; const hh = p.household || ''; const plEntry = Object.entries(DATA.locations).find(([,pl]) => pl.compKey === compKey); const plId = plEntry ? plEntry[0] : ''; const plName = plEntry ? plEntry[1].name : (compKey || 'Unknown'); const keyDisplay = compKey ? `<span class="compound-badge" style="margin-left:3px;">${compKey}</span>` : ''; const crumb = plId ? breadcrumb(plId) : plName; const stableId = p.stableId || ''; hits.push({ id, name, p, compKey, hh, plId, crumb, keyDisplay, stableId }); }); hits.sort((a,b) => a.name.localeCompare(b.name)); if (!hits.length) { out.innerHTML = '<div style="color:var(--tdim);font-size:.8rem;font-style:italic;padding:5px">No matches</div>'; return; } let h = '<div style="font-size:.65rem;color:var(--tdim);margin-bottom:5px">' + hits.length + ' result' + (hits.length !== 1 ? 's' : '') + '</div>'; hits.forEach(m => { const gSym = { male: '♂', female: '♀' }[m.p.gender] || '·'; const age = m.p.age ? ' · ' + m.p.age : ''; const dead = m.p.deceased ? '<span style="color:var(--deceased)"> †</span>' : ''; const hhStr = m.hh ? '<span style="color:var(--tdim);font-size:.68rem"> · 🏠 ' + escapeHtml(m.hh) + '</span>' : ''; const profStr = m.p.role ? '<span style="color:var(--acc-dim);font-size:.68rem"> · ' + escapeHtml(m.p.role) + '</span>' : ''; const clickable = m.plId ? 'cursor:pointer' : 'cursor:default'; h += '<div style="background:var(--bg2);border:1px solid var(--bd);border-radius:4px;padding:6px 8px;margin-bottom:4px;' + clickable + '" ' + (m.plId ? 'onclick="psNav(\'' + m.plId + '\')"' : '') + ' data-stable-id="' + m.stableId + '"><div style="font-family:\'Cinzel\',serif;font-size:.75rem;color:var(--acc)">' + escapeHtml(m.name) + dead + m.keyDisplay + '</div><div style="font-size:.72rem;color:var(--tdim);margin-top:2px">' + gSym + age + profStr + hhStr + '</div><div style="font-size:.68rem;color:var(--tdim);margin-top:1px">' + escapeHtml(m.crumb) + '</div></div>'; }); out.innerHTML = h; }
+function psNav(plId) { document.getElementById('ps-modal').style.display = 'none'; selectPlace(plId); }
+function floatSave() { if (activeId) saveEdit(activeId); const btn = document.getElementById('float-save'); const topBtn = document.getElementById('top-save-btn'); if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => btn.textContent = '💾 Save', 1500); } if (topBtn) { topBtn.textContent = '✓ Saved'; setTimeout(() => topBtn.textContent = '💾 Save', 1500); } showToast('Changes saved'); }
+function showFloatSave() { const btn = document.getElementById('float-save'); const topBtn = document.getElementById('top-save-btn'); if (btn) btn.classList.remove('hidden'); if (topBtn) topBtn.classList.remove('hidden'); }
+function startFresh() { document.getElementById('import-hint').style.display = 'none'; document.getElementById('app').classList.add('visible'); collapseTopLevel(); buildList(); }
+let _filterTimer = null; function debouncedFilter(v) { clearTimeout(_filterTimer); _filterTimer = setTimeout(() => buildList(v), 120); }
+function saveData() { try { DATA.lastSaved = new Date().toISOString(); localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA, null, 2)); } catch(e) { console.error('Save failed:', e); } }
+function loadData() { try { const saved = localStorage.getItem(STORAGE_KEY); if (saved) { const loaded = JSON.parse(saved); DATA = { version: "1.0", lastSaved: loaded.lastSaved, currentYear: loaded.currentYear || 1560, people: loaded.people || {}, relationships: loaded.relationships || {}, locations: loaded.locations || {}, professions: loaded.professions || [], stableIdIndex: loaded.stableIdIndex || {}, metadata: loaded.metadata || {} }; if (!DATA.stableIdIndex || Object.keys(DATA.stableIdIndex).length === 0) rebuildStableIdIndex(); return true; } } catch(e) { console.error('Load failed:', e); } return false; }
+function handleImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const imported = JSON.parse(e.target.result); if (imported.people) { Object.keys(imported.people).forEach(id => { const actualId = getPersonId(id); if (!DATA.people[actualId]) DATA.people[actualId] = {}; Object.keys(imported.people[id]).forEach(field => { if (field === 'ranks') { if (!DATA.people[actualId].ranks) DATA.people[actualId].ranks = []; imported.people[id].ranks.forEach(newRank => { const exists = DATA.people[actualId].ranks.some(r => r.type === newRank.type && r.value === newRank.value); if (!exists) DATA.people[actualId].ranks.push(newRank); }); } else { DATA.people[actualId][field] = imported.people[id][field]; } }); if (!DATA.people[actualId].stableId) DATA.people[actualId].stableId = generateStableId(); }); } if (imported.relationships) { Object.keys(imported.relationships).forEach(id => { const actualId = getPersonId(id); if (!DATA.relationships[actualId]) DATA.relationships[actualId] = {}; Object.assign(DATA.relationships[actualId], imported.relationships[id]); }); } if (imported.locations) DATA.locations = { ...DATA.locations, ...imported.locations }; if (imported.professions) { DATA.professions = DATA.professions || []; imported.professions.forEach(prof => { if (!DATA.professions.some(p => p.id === prof.id)) DATA.professions.push(prof); }); } if (imported.currentYear) DATA.currentYear = imported.currentYear; rebuildStableIdIndex(); saveData(); document.getElementById('import-hint').style.display = 'none'; document.getElementById('app').classList.add('visible'); collapseTopLevel(); buildList(); showToast('Import complete - data merged!'); } catch (err) { alert("Invalid JSON file: " + err.message); console.error(err); } }; reader.readAsText(file); event.target.value = ''; }
+function exportJSON() { rebuildStableIdIndex(); const exportData = { version: "1.0", exportDate: new Date().toISOString(), currentYear: DATA.currentYear, people: DATA.people, relationships: DATA.relationships, locations: DATA.locations, professions: DATA.professions, stableIdIndex: DATA.stableIdIndex, metadata: DATA.metadata }; const dataStr = JSON.stringify(exportData, null, 2); const blob = new Blob([dataStr], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `stillwaters_locations_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`; a.click(); URL.revokeObjectURL(url); showToast('Exported'); }
+window.addEventListener('load', () => { const hasData = loadData(); if (hasData) { const pc = Object.keys(DATA.people).length; const lc = Object.keys(DATA.locations).length; document.getElementById('import-hint').querySelector('p').textContent = 'Saved: ' + pc + ' people, ' + lc + ' places.'; const box = document.getElementById('import-hint-box'); if (!document.getElementById('btn-cont')) { const btn = document.createElement('button'); btn.id = 'btn-cont'; btn.className = 'btn primary'; btn.style.cssText = 'margin-top:8px;display:block;width:100%;padding:8px'; btn.textContent = 'Continue'; btn.onclick = () => { document.getElementById('import-hint').style.display = 'none'; document.getElementById('app').classList.add('visible'); collapseTopLevel(); buildList(); if (window.innerWidth <= 700) showMobileTab('list'); }; box.appendChild(btn); } } if (window.innerWidth <= 700) showMobileTab('list'); });
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>Still Waters — Locations</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#090c12;
