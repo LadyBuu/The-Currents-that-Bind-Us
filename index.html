@@ -567,25 +567,77 @@
 </footer>
 
 <script>
-  // ====================== TOOL CARDS ======================
+  // ====================== TOOL CARDS WITH RELATIVE PATHS ======================
   const tools = [
-    { name: "Census & Analytics", desc: "Population statistics, age distribution, compound viewer.", icon: "📊", file: "Census.html", tags: ["stats", "filter", "charts"] },
-    { name: "Character Manager", desc: "Create, edit, ranks, relationships, professions, friendships.", icon: "👥", file: "Character Manager3.html", tags: ["editor", "family", "romance"] },
-    { name: "Gatherings", desc: "Festival seating, council of elders by district.", icon: "⛩️", file: "gatherings.html", tags: ["festival", "council", "diagram"] },
-    { name: "Locations", desc: "Hierarchical map: countries, districts, towns, compounds.", icon: "🗺️", file: "Locations.html", tags: ["geography", "households"] },
-    { name: "Family Tree", desc: "Ancestors, descendants, relationship finder.", icon: "🌳", file: "Tree.html", tags: ["genealogy", "historical"] },
-    { name: "Professions Editor", desc: "Daily & ritual roles, specializations, associated spots.", icon: "⚒️", file: "Professions_standalone(1).html", tags: ["crafts", "jobs"] }
+    { 
+      name: "Census & Analytics", 
+      desc: "Population statistics, age distribution, compound viewer.", 
+      icon: "📊", 
+      file: "Census.html", 
+      tags: ["stats", "filter", "charts"] 
+    },
+    { 
+      name: "Character Manager", 
+      desc: "Create, edit, ranks, relationships, professions, friendships.", 
+      icon: "👥", 
+      file: "Character Manager3.html", 
+      tags: ["editor", "family", "romance"] 
+    },
+    { 
+      name: "Gatherings", 
+      desc: "Festival seating, council of elders by district.", 
+      icon: "⛩️", 
+      file: "gatherings.html", 
+      tags: ["festival", "council", "diagram"] 
+    },
+    { 
+      name: "Locations", 
+      desc: "Hierarchical map: countries, districts, towns, compounds.", 
+      icon: "🗺️", 
+      file: "Locations.html", 
+      tags: ["geography", "households"] 
+    },
+    { 
+      name: "Family Tree", 
+      desc: "Ancestors, descendants, relationship finder.", 
+      icon: "🌳", 
+      file: "Tree.html", 
+      tags: ["genealogy", "historical"] 
+    },
+    { 
+      name: "Professions Editor", 
+      desc: "Daily & ritual roles, specializations, associated spots.", 
+      icon: "⚒️", 
+      file: "Professions_standalone(1).html", 
+      tags: ["crafts", "jobs"] 
+    }
   ];
 
   const grid = document.getElementById('toolsGrid');
+  
   tools.forEach(tool => {
     const card = document.createElement('div');
     card.className = 'tool-card';
-    card.onclick = () => window.open(tool.file, '_blank');
+    // Use relative path - open in new tab
+    card.onclick = () => {
+      window.open(tool.file, '_blank');
+    };
     card.innerHTML = `
-      <div class="card-header"><h2><span class="icon">${tool.icon}</span> ${tool.name}</h2></div>
-      <div class="card-body"><p>${tool.desc}</p><div class="badge-group">${tool.tags.map(t => `<span class="badge">${t}</span>`).join('')}</div></div>
-      <div class="card-footer"><span class="btn primary">Launch →</span></div>
+      <div class="card-header">
+        <h2>
+          <span class="icon">${tool.icon}</span> 
+          ${tool.name}
+        </h2>
+      </div>
+      <div class="card-body">
+        <p>${tool.desc}</p>
+        <div class="badge-group">
+          ${tool.tags.map(t => `<span class="badge">${t}</span>`).join('')}
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="btn primary">Launch →</span>
+      </div>
     `;
     grid.appendChild(card);
   });
@@ -606,7 +658,7 @@
     reader.readAsText(file);
   }
 
-  // Merge logic (simplified but robust)
+  // Merge logic
   function deepMerge(base, incoming, peopleStrategy, relsStrategy) {
     const result = JSON.parse(JSON.stringify(base));
     if (!result.people) result.people = {};
@@ -681,7 +733,7 @@
     updateMergePreview();
   }
 
-  // Validation & Stable ID (works on loaded diagData)
+  // Validation & Stable ID
   function generateStableId() { const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let id=''; for(let i=0;i<9;i++){ if(i===3||i===6)id+='-'; else id+=c[Math.floor(Math.random()*c.length)];} return id; }
   function rebuildStableIndex(data) { let idx = {}; Object.entries(data.people).forEach(([pid, p]) => { if(p.stableId) idx[p.stableId]=pid; }); return idx; }
   function migrateStableIds(data) { let migrated=0; Object.keys(data.people).forEach(id => { if(!data.people[id].stableId) { data.people[id].stableId = generateStableId(); migrated++; } }); data.stableIdIndex = rebuildStableIndex(data); return migrated; }
@@ -721,7 +773,6 @@
     document.getElementById('diagnosticLog').value = log;
   }
 
-  // Storage & import for validation pane
   function loadFromStorageForDiag() {
     const keys = ['stillwaters_editor','stillwaters_connections','stillwaters_locations','stillwaters_tree','stillwaters_professions'];
     for(let k of keys) {
@@ -733,7 +784,7 @@
     document.getElementById('validateMessage').innerHTML = `<span style="color:var(--warn)">⚠️ No Still Waters data found in localStorage.</span>`;
   }
 
-  // Attach events after DOM ready
+  // Attach events
   document.addEventListener('DOMContentLoaded', () => {
     // Merger file handlers
     const leftInput = document.getElementById('mergeLeftFile');
@@ -761,7 +812,6 @@
         if(panes[targetPane]) panes[targetPane].classList.add('active');
       });
     });
-    // initial load if any storage
     loadFromStorageForDiag();
   });
 </script>
