@@ -3,61 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>Still Waters — The Currents That Bind Us</title>
+  <title>Worldbuilding - The Currents That Bind Us</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="stillwaters.css">
   <style>
     /* ============================================
-       LANDING PAGE - UNIQUE STYLES
+       LANDING PAGE - MINIMAL STRUCTURAL OVERRIDES
+       All visual styles (colors, typography, buttons, badges, borders)
+       are pulled directly from stillwaters.css
        ============================================ */
 
-    /* Hero Section */
+    /* Hero Section - extends base background, spacing only */
     .hero {
       position: relative;
-      padding: 40px 20px 30px;
+      padding: 48px 20px 40px;
       text-align: center;
       border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(9,12,18,0.95) 0%, var(--bg) 100%);
+      background: linear-gradient(180deg, rgba(9,12,18,0.96) 0%, var(--bg) 100%);
     }
 
     .hero h1 {
       font-family: 'Cinzel', serif;
-      font-size: 1.8rem;
-      letter-spacing: 0.2em;
-      color: var(--accent);
-      text-transform: uppercase;
+      font-size: 2rem;
+      letter-spacing: 0.22em;
       margin-bottom: 12px;
-      text-shadow: 0 0 10px rgba(106,158,207,0.2);
+      text-shadow: 0 0 12px rgba(106,158,207,0.25);
     }
 
     .hero .sub {
-      font-size: 0.7rem;
-      letter-spacing: 0.3em;
-      color: var(--tdim);
-      text-transform: uppercase;
-      margin-bottom: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 0.35em;
+      margin-bottom: 24px;
     }
 
     .hero .tagline {
       font-size: 0.9rem;
       font-style: italic;
-      color: var(--tmut);
-      max-width: 600px;
+      max-width: 620px;
       margin: 0 auto;
+      border-top: 1px dashed var(--border2);
+      padding-top: 20px;
+      display: inline-block;
     }
 
-    /* Main Grid */
+    /* Tools Grid - layout only, colors from base */
     .tools-grid {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 30px 20px 40px;
+      padding: 48px 24px 56px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 28px;
     }
 
-    /* Tool Cards */
+    /* Tool Cards - using base background/border from CSS variables */
     .tool-card {
       background: var(--bg2);
       border: 1px solid var(--border);
@@ -74,10 +74,11 @@
       transform: translateY(-4px);
       border-color: var(--accent2);
       box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+      background: var(--bg3);
     }
 
     .card-header {
-      padding: 18px 20px 12px;
+      padding: 20px 24px 14px;
       border-bottom: 1px solid var(--border);
       background: var(--bg3);
     }
@@ -90,15 +91,16 @@
       text-transform: uppercase;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      margin: 0;
     }
 
     .card-header .icon {
-      font-size: 1.4rem;
+      font-size: 1.5rem;
     }
 
     .card-body {
-      padding: 18px 20px;
+      padding: 20px 24px;
       flex: 1;
     }
 
@@ -106,9 +108,10 @@
       font-size: 0.85rem;
       color: var(--tdim);
       line-height: 1.5;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
+    /* Badge group layout - actual badge styles come from stillwaters.css */
     .badge-group {
       display: flex;
       flex-wrap: wrap;
@@ -116,151 +119,111 @@
       margin-top: 12px;
     }
 
+    /* Ensure badge uses the base .badge class from stillwaters.css */
     .badge {
-      font-size: 0.6rem;
-      padding: 4px 10px;
-      border-radius: 20px;
-      background: var(--bg);
-      border: 1px solid var(--border2);
-      color: var(--tdim);
-      font-family: 'Cinzel', serif;
-      letter-spacing: 0.05em;
-    }
-
-    .badge.accent {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: var(--accent-dim);
-    }
-
-    .badge.warning {
-      border-color: var(--warning);
-      color: var(--warning);
-      background: rgba(200,112,64,0.1);
+      /* inherits all from stillwaters.css */
     }
 
     .card-footer {
-      padding: 14px 20px 20px;
+      padding: 16px 24px 24px;
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: flex-end;
     }
 
+    /* Button styles fully inherited from stillwaters.css, just ensure spacing */
     .btn {
-      background: transparent;
-      border: 1px solid var(--border2);
-      border-radius: 30px;
-      color: var(--tdim);
-      padding: 8px 20px;
-      font-family: 'Cinzel', serif;
-      font-size: 0.65rem;
-      letter-spacing: 0.1em;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: var(--accent-dim);
-      transform: scale(0.98);
-    }
-
-    .btn.primary {
-      background: var(--accent-dim);
-      border-color: var(--accent2);
-      color: var(--accent);
-    }
-
-    .btn.primary:hover {
-      background: rgba(74,122,176,0.25);
+      /* base styles come from stillwaters.css */
     }
 
     footer {
       text-align: center;
-      padding: 24px;
+      padding: 28px 20px;
       border-top: 1px solid var(--border);
-      font-size: 0.6rem;
-      color: var(--tmut);
-      letter-spacing: 0.1em;
+      font-family: 'Cinzel', serif;
     }
 
-    @media (max-width: 700px) {
-      .hero h1 { font-size: 1.2rem; letter-spacing: 0.1em; }
-      .tools-grid { grid-template-columns: 1fr; gap: 16px; padding: 20px; }
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 1.4rem; letter-spacing: 0.12em; }
+      .tools-grid { grid-template-columns: 1fr; gap: 20px; padding: 28px 18px; }
+      .card-header h2 { font-size: 0.85rem; }
+    }
+
+    @media (max-width: 480px) {
+      .hero { padding: 32px 16px; }
+      .hero h1 { font-size: 1.2rem; }
     }
   </style>
 </head>
 <body>
 
 <div class="hero">
-  <h1>STILL WATERS</h1>
+  <h1>Worldbuilding</h1>
   <div class="sub">the currents that bind us</div>
-  <div class="tagline">census · characters · gatherings · locations · family tree · professions</div>
+  <div class="tagline">chronicle · lineage · governance · census · diagnostics</div>
 </div>
 
 <div class="tools-grid" id="toolsGrid"></div>
-
 <footer>
-  STILL WATERS — Tools for worldbuilding & chronicle keeping
+ Tool for Worldbuilding
 </footer>
 
 <script>
-  // ====================== TOOL CARDS ======================
+  // ============================================================
+  // CORE TOOL LIST — structured according to required separate links:
+  // Character Manager, Locations, Roles, Ranks, Diagnostics, Census, Family Tree
+  // ============================================================
   const tools = [
     { 
-      name: "Census & Analytics", 
-      desc: "Population statistics, age distribution, compound viewer, and demographic charts.", 
-      icon: "📊", 
-      file: "Census.html", 
-      tags: ["stats", "filter", "charts", "demographics"] 
-    },
-    { 
       name: "Character Manager", 
-      desc: "Create, edit, ranks, relationships, professions, friendships, and life events.", 
+      desc: "Create and edit characters, manage relationships, life events, professions, friendships, and intimate bonds. Deep profile editor for all denizens.", 
       icon: "👥", 
       file: "character-manager.html", 
-      tags: ["editor", "family", "romance", "professions"] 
-    },
-    { 
-      name: "Gatherings", 
-      desc: "Festival seating diagram and Council of Elders view by district.", 
-      icon: "⛩️", 
-      file: "gatherings.html", 
-      tags: ["festival", "council", "diagram", "ceremony"] 
+      tags: ["editor", "relationships", "biography", "portraits"] 
     },
     { 
       name: "Locations", 
-      desc: "Hierarchical map: countries, districts, towns, compounds, with household management.", 
+      desc: "Hierarchical geography: countries, districts, towns, compounds, and households. Manage settlements, landmarks, and administrative zones.", 
       icon: "🗺️", 
       file: "Locations.html", 
-      tags: ["geography", "households", "map", "compounds"] 
+      tags: ["map", "compounds", "households", "territory"] 
+    },
+    { 
+      name: "Roles", 
+      desc: "Daily & ritual roles, specializations, associated stations, apprenticeship paths, and guild assignments. Define ceremonial duties and vocational tracks.", 
+      icon: "⚒️", 
+      file: "Professions_standalone(1).html", 
+      tags: ["vocations", "crafts", "specializations", "apprentices"] 
+    },
+    { 
+      name: "Ranks", 
+      desc: "Hierarchy of power. Rank color codes, privileges, and succession tracking.", 
+      icon: "🏅", 
+      file: "Ranks.html", 
+      tags: ["hierarchy", "privilege", "succession", "social standing"],
+      accent: true
+    },
+    { 
+      name: "Diagnostics", 
+      desc: "Inconsistency scanner: age anomalies, orphan detection, timeline conflicts, rank mismatches, broken relationships, location orphans, and fix suggestions.", 
+      icon: "🔍", 
+      file: "inconsistencies.html", 
+      tags: ["validator", "data quality", "errors", "cleanup", "fixer"],
+      warning: true
+    },
+    { 
+      name: "Census", 
+      desc: "Population analytics, age pyramids, compound demographics, mortality trends, gender distribution, and interactive charts for the whole realm.", 
+      icon: "📊", 
+      file: "Census.html", 
+      tags: ["statistics", "demographics", "charts", "population"] 
     },
     { 
       name: "Family Tree", 
-      desc: "Ancestors, descendants, relationship finder, and historical population view.", 
+      desc: "Ancestral lineages, descendants web, relationship finder, historical bloodlines, and multi-generation viewer. Discover how blood binds the world.", 
       icon: "🌳", 
       file: "Tree.html", 
-      tags: ["genealogy", "historical", "ancestors", "finder"] 
-    },
-    { 
-      name: "Professions Editor", 
-      desc: "Daily & ritual roles, specializations, associated spots, and apprenticeship management.", 
-      icon: "⚒️", 
-      file: "Professions_standalone(1).html", 
-      tags: ["crafts", "jobs", "skills", "specializations"] 
-    },
-    { 
-      name: "Inconsistencies Checker", 
-      desc: "Find and fix data issues: age problems, unpartnered parents, orphans, timeline errors, rank conflicts, location issues, and more.", 
-      icon: "🔍", 
-      file: "inconsistencies.html", 
-      tags: ["validation", "cleanup", "errors", "data quality", "fixer"],
-      warning: true
+      tags: ["genealogy", "ancestors", "descendants", "heritage"] 
     }
   ];
 
@@ -269,11 +232,25 @@
   tools.forEach(tool => {
     const card = document.createElement('div');
     card.className = 'tool-card';
+    // Open in new tab when clicking anywhere on card
     card.onclick = () => {
       window.open(tool.file, '_blank');
     };
     
-    const warningBadge = tool.warning ? '<span class="badge warning">⚠️ Checker</span>' : '';
+    // Optional badges for special categories
+    let extraBadges = '';
+    if (tool.accent) {
+      extraBadges += '<span class="badge accent">Rank authority</span>';
+    }
+    if (tool.warning) {
+      extraBadges += '<span class="badge warning">Integrity scan</span>';
+    }
+    if (tool.name === "Roles") {
+      extraBadges += '<span class="badge">Professions & duties</span>';
+    }
+    if (tool.name === "Ranks") {
+      extraBadges += '<span class="badge accent">Hierarchy</span>';
+    }
     
     card.innerHTML = `
       <div class="card-header">
@@ -286,11 +263,11 @@
         <p>${tool.desc}</p>
         <div class="badge-group">
           ${tool.tags.map(t => `<span class="badge">${t}</span>`).join('')}
-          ${warningBadge}
+          ${extraBadges}
         </div>
       </div>
       <div class="card-footer">
-        <span class="btn primary">Launch →</span>
+        <span class="btn primary">Enter →</span>
       </div>
     `;
     grid.appendChild(card);
