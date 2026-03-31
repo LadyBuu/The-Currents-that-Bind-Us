@@ -8,14 +8,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="stillwaters.css">
   <style>
-    /* locations-specific layout */
     .locations-app {
       display: flex;
       height: calc(100vh - 44px);
       overflow: hidden;
     }
     
-    /* Sidebar */
     .sidebar {
       width: 340px;
       background: var(--bg2);
@@ -23,7 +21,6 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: transform 0.3s ease;
     }
     
     .sidebar-header {
@@ -50,7 +47,6 @@
       padding: 12px;
     }
     
-    /* hierarchical tree */
     .tree-node {
       margin-left: 0;
       list-style: none;
@@ -107,14 +103,12 @@
     .tree-children {
       margin-left: 24px;
       overflow: hidden;
-      transition: max-height 0.2s;
     }
     
     .tree-children.collapsed {
       display: none;
     }
     
-    /* Main Panel */
     .main-panel {
       flex: 1;
       display: flex;
@@ -230,6 +224,15 @@
       font-style: italic;
     }
     
+    .id-display {
+      font-family: monospace;
+      font-size: 0.6rem;
+      color: var(--tmut);
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    
     @media (max-width: 768px) {
       .locations-app {
         flex-direction: column;
@@ -238,38 +241,10 @@
       .sidebar {
         width: 100%;
         max-height: 300px;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
       }
-      .sidebar.collapsed {
-        display: none;
+      .form-row {
+        grid-template-columns: 1fr;
       }
-      .mobile-toggle {
-        display: block;
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 100;
-      }
-    }
-    
-    .mobile-toggle {
-      display: none;
-    }
-    
-    @media (max-width: 768px) {
-      .mobile-toggle {
-        display: block;
-      }
-    }
-    
-    .id-display {
-      font-family: monospace;
-      font-size: 0.6rem;
-      color: var(--tmut);
-      background: var(--bg);
-      padding: 2px 6px;
-      border-radius: 4px;
     }
   </style>
 </head>
@@ -283,7 +258,7 @@
 </div>
 
 <div class="locations-app">
-  <div class="sidebar" id="sidebar">
+  <div class="sidebar">
     <div class="sidebar-header">
       <h3>🏛️ PLACE HIERARCHY</h3>
       <div class="sidebar-actions">
@@ -306,30 +281,120 @@
   </div>
 </div>
 
-<button class="mobile-toggle btn small" id="mobileToggle">☰ Places</button>
-
 <script>
-  // ==================== DATA STRUCTURES ====================
-  let locationTypes = [];
-  let governments = [];
-  let places = [];
-  let ranks = [];
-  let characters = [];
+  // ==================== UNIFIED DATA STRUCTURE ====================
+  let masterData = {
+    version: "2.0",
+    lastUpdated: new Date().toISOString(),
+    data: {
+      characters: [],
+      locationTypes: [],
+      governments: [],
+      places: [],
+      ranks: [],
+      roles: [],
+      nameLists: {},
+      cityNameParts: { prefixes: [], roots: [], suffixes: [] },
+      currentYear: 1250
+    }
+  };
   
-  // Helper: generate unique ID
-  function generateId() { 
-    return 'loc_' + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 12));
+  let currentPlaceId = null;
+  
+  function generateId() { return 'loc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
+  
+  // ==================== LOAD FROM UNIFIED STORAGE ====================
+  function loadMasterData() {
+    const stored = localStorage.getItem('stillwaters_master');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        masterData = {
+          version: parsed.version || "2.0",
+          lastUpdated: parsed.lastUpdated || new Date().toISOString(),
+          data: {
+            characters: parsed.data?.characters || [],
+            locationTypes: parsed.data?.locationTypes || [],
+            governments: parsed.data?.governments || [],
+            places: parsed.data?.places || [],
+            ranks: parsed.data?.ranks || [],
+            roles: parsed.data?.roles || [],
+            nameLists: parsed.data?.nameLists || {},
+            cityNameParts: parsed.data?.cityNameParts || { prefixes: [], roots: [], suffixes: [] },
+            currentYear: parsed.data?.currentYear || 1250
+          }
+        };
+      } catch(e) { console.error('Error loading master data', e); }
+    } else {
+      // Initialize with default data
+      const countryId = generateId();
+      const districtId = generateId();
+      const townId = generateId();
+      
+      masterData.data.locationTypes = [
+        { id: generateId(), displayName: 'Country', priority: 1 },
+        { id: generateId(), displayName: 'District', priority: 2 },
+        { id: generateId(), displayName: 'Town', priority: 3 },
+        { id: generateId(), displayName: 'Compound', priority: 4 }
+      ];
+      
+      masterData.data.governments = [
+        { id: generateId(), displayName: 'Monarchy', priority: 1, leaderRankId: null },
+        { id: generateId(), displayName: 'Chiefdom', priority: 2, leaderRankId: null },
+        { id: generateId(), displayName: 'Republic', priority: 3, leaderRankId: null }
+      ];
+      
+      masterData.data.places = [
+        { 
+          id: countryId, displayName: 'Aethelgard', typeId: masterData.data.locationTypes[0].id, parentId: null, 
+          variableKey: 'aethelgard', status: 'active', isCapital: true, leaderId: null, 
+          leaderHistory: [], subtype: 'Imperial Seat', economy: 'Trade hub', 
+          export: 'Textiles, Grain', notes: 'Heart of the realm', governmentId: masterData.data.governments[0].id,
+          nameListId: null, cityNameStyle: null
+        },
+        { 
+          id: districtId, displayName: 'Ironhold', typeId: masterData.data.locationTypes[1].id, parentId: countryId, 
+          variableKey: 'ironhold', status: 'active', isCapital: false, leaderId: null, 
+          leaderHistory: [], subtype: 'Mining region', economy: 'Mining', 
+          export: 'Iron ore', notes: '', governmentId: null,
+          nameListId: null, cityNameStyle: null
+        },
+        { 
+          id: townId, displayName: 'Riversmeet', typeId: masterData.data.locationTypes[2].id, parentId: districtId, 
+          variableKey: 'riversmeet', status: 'active', isCapital: false, leaderId: null, 
+          leaderHistory: [], subtype: 'Fishing village', economy: 'Fishing', 
+          export: 'Fish', notes: '', governmentId: null,
+          nameListId: null, cityNameStyle: null
+        }
+      ];
+      
+      saveMasterData();
+    }
   }
   
-  // ==================== NAME LIST HELPER FUNCTIONS ====================
+  function saveMasterData() {
+    masterData.lastUpdated = new Date().toISOString();
+    localStorage.setItem('stillwaters_master', JSON.stringify(masterData));
+  }
+  
+  // ==================== GETTERS ====================
+  function getLocationTypes() { return masterData.data.locationTypes; }
+  function setLocationTypes(types) { masterData.data.locationTypes = types; saveMasterData(); }
+  
+  function getGovernments() { return masterData.data.governments; }
+  function setGovernments(govs) { masterData.data.governments = govs; saveMasterData(); }
+  
+  function getPlaces() { return masterData.data.places; }
+  function setPlaces(places) { masterData.data.places = places; saveMasterData(); }
+  
+  function getPlaceById(id) { return getPlaces().find(p => p.id === id); }
+  function getTypeById(id) { return getLocationTypes().find(t => t.id === id); }
+  function getGovernmentById(id) { return getGovernments().find(g => g.id === id); }
+  function getCharacterById(id) { return masterData.data.characters.find(c => c.id === id); }
+  
+  // ==================== NAME LIST HELPERS ====================
   function getNameListOptions(selectedId) {
-    const storedNames = localStorage.getItem('stillwaters_namelists');
-    let nameLists = {};
-    if (storedNames) {
-      const parsed = JSON.parse(storedNames);
-      nameLists = parsed.nameLists || {};
-    }
-    
+    const nameLists = masterData.data.nameLists;
     const countriesWithLists = Object.keys(nameLists).filter(countryId => {
       const lists = nameLists[countryId];
       return lists && (lists.male?.length || lists.female?.length || lists.surnames?.length);
@@ -349,12 +414,8 @@
   }
   
   function generateRandomPlaceName(countryId, style) {
-    const storedNames = localStorage.getItem('stillwaters_namelists');
-    if (!storedNames) return null;
-    
-    const parsed = JSON.parse(storedNames);
-    const nameLists = parsed.nameLists;
-    const cityNameParts = parsed.cityNameParts || { prefixes: [], roots: [], suffixes: [] };
+    const cityNameParts = masterData.data.cityNameParts;
+    const nameLists = masterData.data.nameLists;
     
     let prefixes = [...(cityNameParts.prefixes || [])];
     let roots = [...(cityNameParts.roots || [])];
@@ -372,12 +433,10 @@
     let name = '';
     switch(style) {
       case 'prefix_root':
-        name = prefixes[Math.floor(Math.random() * prefixes.length)] + 
-               roots[Math.floor(Math.random() * roots.length)];
+        name = prefixes[Math.floor(Math.random() * prefixes.length)] + roots[Math.floor(Math.random() * roots.length)];
         break;
       case 'prefix_root_suffix':
-        name = prefixes[Math.floor(Math.random() * prefixes.length)] + 
-               roots[Math.floor(Math.random() * roots.length)];
+        name = prefixes[Math.floor(Math.random() * prefixes.length)] + roots[Math.floor(Math.random() * roots.length)];
         if (suffixes.length) name += suffixes[Math.floor(Math.random() * suffixes.length)];
         break;
       case 'root_suffix':
@@ -389,110 +448,15 @@
         if (suffixes.length) name += suffixes[Math.floor(Math.random() * suffixes.length)];
         break;
       default:
-        name = prefixes[Math.floor(Math.random() * prefixes.length)] + 
-               roots[Math.floor(Math.random() * roots.length)];
+        name = prefixes[Math.floor(Math.random() * prefixes.length)] + roots[Math.floor(Math.random() * roots.length)];
     }
     
     return name.charAt(0).toUpperCase() + name.slice(1);
   }
   
-  // ==================== LOAD/SAVE ====================
-  function loadAllData() {
-    const storedTypes = localStorage.getItem('stillwaters_locationTypes');
-    if (storedTypes) locationTypes = JSON.parse(storedTypes);
-    else {
-      locationTypes = [
-        { id: generateId(), displayName: 'Country', priority: 1 },
-        { id: generateId(), displayName: 'District', priority: 2 },
-        { id: generateId(), displayName: 'Town', priority: 3 },
-        { id: generateId(), displayName: 'Compound', priority: 4 }
-      ];
-    }
-    
-    const storedGovs = localStorage.getItem('stillwaters_governments');
-    if (storedGovs) governments = JSON.parse(storedGovs);
-    else {
-      governments = [
-        { id: generateId(), displayName: 'Monarchy', priority: 1, leaderRankId: null },
-        { id: generateId(), displayName: 'Chiefdom', priority: 2, leaderRankId: null },
-        { id: generateId(), displayName: 'Republic', priority: 3, leaderRankId: null }
-      ];
-    }
-    
-    const storedPlaces = localStorage.getItem('stillwaters_places');
-    if (storedPlaces) {
-      places = JSON.parse(storedPlaces);
-      places = places.map(p => ({
-        ...p,
-        nameListId: p.nameListId || null,
-        cityNameStyle: p.cityNameStyle || null
-      }));
-    } else {
-      const countryId = generateId();
-      const districtId = generateId();
-      const townId = generateId();
-      
-      places = [
-        { 
-          id: countryId, displayName: 'Aethelgard', typeId: locationTypes[0].id, parentId: null, 
-          variableKey: 'aethelgard', status: 'active', isCapital: true, leaderId: null, 
-          leaderHistory: [], subtype: 'Imperial Seat', economy: 'Trade hub', 
-          export: 'Textiles, Grain', notes: 'Heart of the realm', governmentId: governments[0].id,
-          nameListId: null, cityNameStyle: null
-        },
-        { 
-          id: districtId, displayName: 'Ironhold', typeId: locationTypes[1].id, parentId: countryId, 
-          variableKey: 'ironhold', status: 'active', isCapital: false, leaderId: null, 
-          leaderHistory: [], subtype: 'Mining region', economy: 'Mining', 
-          export: 'Iron ore', notes: '', governmentId: null,
-          nameListId: null, cityNameStyle: null
-        },
-        { 
-          id: townId, displayName: 'Riversmeet', typeId: locationTypes[2].id, parentId: districtId, 
-          variableKey: 'riversmeet', status: 'active', isCapital: false, leaderId: null, 
-          leaderHistory: [], subtype: 'Fishing village', economy: 'Fishing', 
-          export: 'Fish', notes: '', governmentId: null,
-          nameListId: null, cityNameStyle: null
-        }
-      ];
-    }
-    
-    const storedRanks = localStorage.getItem('stillwaters_ranks');
-    if (storedRanks) ranks = JSON.parse(storedRanks);
-    else ranks = [];
-    
-    const storedChars = localStorage.getItem('stillwaters_characters');
-    if (storedChars) characters = JSON.parse(storedChars);
-    else characters = [];
-    
-    saveAllData();
-  }
-  
-  function saveAllData() {
-    localStorage.setItem('stillwaters_locationTypes', JSON.stringify(locationTypes));
-    localStorage.setItem('stillwaters_governments', JSON.stringify(governments));
-    localStorage.setItem('stillwaters_places', JSON.stringify(places));
-  }
-  
-  // ==================== HELPER FUNCTIONS ====================
-  function getPlaceById(id) {
-    return places.find(p => p.id === id);
-  }
-  
-  function getTypeById(id) {
-    return locationTypes.find(t => t.id === id);
-  }
-  
-  function getGovernmentById(id) {
-    return governments.find(g => g.id === id);
-  }
-  
-  function getCharacterById(id) {
-    return characters.find(c => c.id === id);
-  }
-  
   // ==================== HIERARCHY BUILDING ====================
   function buildHierarchy() {
+    const places = getPlaces();
     const placeMap = new Map();
     places.forEach(p => placeMap.set(p.id, { ...p, children: [] }));
     const roots = [];
@@ -563,36 +527,21 @@
     });
   }
   
-  // ==================== POPULATION CALCULATION ====================
-  function calculatePopulation(placeId) {
-    const place = getPlaceById(placeId);
-    if (!place) return 0;
-    
-    let count = characters.filter(c => c.locationId === placeId).length;
-    const children = places.filter(p => p.parentId === placeId);
-    children.forEach(child => { count += calculatePopulation(child.id); });
-    
-    return count;
-  }
-  
   // ==================== SELECT PLACE & RENDER ====================
-  let currentPlaceId = null;
-  
   function selectPlace(placeId) {
     currentPlaceId = placeId;
-    const place = getPlaceById(placeId);
-    if (!place) return;
-    renderViewTab(place);
-    document.querySelector('.tab-btn[data-tab="view"]').click();
+    renderPlaceList();
+    renderViewTab();
   }
   
-  function renderViewTab(place) {
+  function renderViewTab() {
+    const place = getPlaceById(currentPlaceId);
+    if (!place) return;
+    
     const type = getTypeById(place.typeId);
     const parent = getPlaceById(place.parentId);
     const gov = getGovernmentById(place.governmentId);
     const leader = getCharacterById(place.leaderId);
-    const population = calculatePopulation(place.id);
-    const assignedChars = characters.filter(c => c.locationId === place.id);
     const nameListPlace = place.nameListId ? getPlaceById(place.nameListId) : null;
     
     const content = `
@@ -617,31 +566,23 @@
           <div class="info-label">Main Export</div><div class="info-value">${place.export || '—'}</div>
           <div class="info-label">Notes</div><div class="info-value">${place.notes || '—'}</div>
         </div>
-        <div class="population-stat">
-          <strong>📊 Population</strong><br>
-          <span style="font-size:1.5rem; color:var(--accent);">${population}</span> inhabitants (including all sub-regions)<br>
-          <small>${assignedChars.length} characters directly assigned to this location</small>
-        </div>
         ${place.leaderHistory?.length ? `<div class="info-grid"><div class="info-label">Former Leaders</div><div class="info-value">${place.leaderHistory.map(h => `${h.name} (${h.period})`).join(', ')}</div></div>` : ''}
       </div>
     `;
     document.getElementById('panelContent').innerHTML = content;
   }
   
-  function renderEditTab(place) {
+  function renderEditTab() {
+    const place = getPlaceById(currentPlaceId);
+    if (!place) return;
+    
+    const locationTypes = getLocationTypes();
+    const places = getPlaces();
+    const governments = getGovernments();
+    
     const typeOptions = locationTypes.map(t => `<option value="${t.id}" ${place.typeId === t.id ? 'selected' : ''}>${escapeHtml(t.displayName)} (Prio ${t.priority})</option>`).join('');
     const parentOptions = `<option value="">— None (Root) —</option>${places.filter(p => p.id !== place.id).map(p => `<option value="${p.id}" ${place.parentId === p.id ? 'selected' : ''}>${escapeHtml(p.displayName)}</option>`).join('')}`;
     const govOptions = `<option value="">— None —</option>${governments.map(g => `<option value="${g.id}" ${place.governmentId === g.id ? 'selected' : ''}>${escapeHtml(g.displayName)}</option>`).join('')}`;
-    
-    let eligibleChars = characters;
-    if (place.governmentId) {
-      const gov = getGovernmentById(place.governmentId);
-      if (gov && gov.leaderRankId) {
-        eligibleChars = characters.filter(c => c.rankId === gov.leaderRankId);
-      }
-    }
-    const leaderOptions = `<option value="">— Vacant —</option>${eligibleChars.map(c => `<option value="${c.id}" ${place.leaderId === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}`;
-    
     const nameListOptions = getNameListOptions(place.nameListId);
     
     const content = `
@@ -674,7 +615,7 @@
           <div class="form-group"><label>Variable Key (for character assignment)</label><input type="text" id="editVariableKey" value="${place.variableKey || ''}" placeholder="e.g., aethelgard"></div>
           <div class="form-row">
             <div class="form-group"><label>Government Type</label><select id="editGovernmentId">${govOptions}</select></div>
-            <div class="form-group"><label>Current Leader</label><select id="editLeaderId">${leaderOptions}</select></div>
+            <div class="form-group"><label>Current Leader</label><select id="editLeaderId"><option value="">— Vacant —</option></select></div>
           </div>
           <div class="form-group">
             <label>🏷️ Name List for Places</label>
@@ -710,41 +651,23 @@
     `;
     document.getElementById('panelContent').innerHTML = content;
     
-    const randomBtn = document.getElementById('randomizeNameBtn');
-    if (randomBtn) {
-      randomBtn.addEventListener('click', () => {
-        const nameListId = document.getElementById('editNameListId')?.value;
-        const style = document.getElementById('editCityNameStyle')?.value;
-        const randomName = generateRandomPlaceName(nameListId, style);
-        if (randomName) {
-          document.getElementById('editDisplayName').value = randomName;
-          showToast(`Random name generated: ${randomName}`);
-        } else {
-          showToast('No name list available. Create one in Names Manager first.');
-        }
-      });
-    }
+    document.getElementById('randomizeNameBtn')?.addEventListener('click', () => {
+      const nameListId = document.getElementById('editNameListId')?.value;
+      const style = document.getElementById('editCityNameStyle')?.value;
+      const randomName = generateRandomPlaceName(nameListId, style);
+      if (randomName) {
+        document.getElementById('editDisplayName').value = randomName;
+        showToast(`Random name generated: ${randomName}`);
+      } else {
+        showToast('No name list available. Create one in Names Manager first.');
+      }
+    });
     
     document.getElementById('editPlaceForm').addEventListener('submit', (e) => {
       e.preventDefault();
       savePlaceEdit(place.id);
     });
     document.getElementById('deletePlaceBtn').addEventListener('click', () => deletePlace(place.id));
-    
-    const govSelect = document.getElementById('editGovernmentId');
-    if (govSelect) {
-      govSelect.addEventListener('change', () => {
-        const newGovId = document.getElementById('editGovernmentId').value;
-        const gov = getGovernmentById(newGovId);
-        let filteredChars = characters;
-        if (gov && gov.leaderRankId) {
-          filteredChars = characters.filter(c => c.rankId === gov.leaderRankId);
-        }
-        const leaderSelect = document.getElementById('editLeaderId');
-        const currentLeader = leaderSelect.value;
-        leaderSelect.innerHTML = `<option value="">— Vacant —</option>${filteredChars.map(c => `<option value="${c.id}" ${currentLeader === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}`;
-      });
-    }
   }
   
   function savePlaceEdit(placeId) {
@@ -762,150 +685,85 @@
     place.governmentId = document.getElementById('editGovernmentId').value || null;
     place.nameListId = document.getElementById('editNameListId')?.value || null;
     place.cityNameStyle = document.getElementById('editCityNameStyle')?.value || null;
-    
-    const newLeaderId = document.getElementById('editLeaderId').value || null;
-    if (newLeaderId !== place.leaderId && newLeaderId) {
-      if (!place.leaderHistory) place.leaderHistory = [];
-      if (place.leaderId) {
-        const oldLeader = getCharacterById(place.leaderId);
-        if (oldLeader) {
-          place.leaderHistory.unshift({ 
-            id: place.leaderId, 
-            name: oldLeader.name, 
-            period: 'until ' + new Date().toLocaleDateString() 
-          });
-        }
-      }
-      place.leaderId = newLeaderId;
-    }
-    
     place.subtype = document.getElementById('editSubtype').value;
     place.economy = document.getElementById('editEconomy').value;
     place.export = document.getElementById('editExport').value;
     place.notes = document.getElementById('editNotes').value;
     
-    saveAllData();
+    setPlaces(getPlaces());
     renderPlaceList();
     selectPlace(placeId);
-    
-    if (oldName !== newDisplayName) {
-      showToast(`Place renamed from "${oldName}" to "${newDisplayName}". All references intact.`);
-    } else {
-      showToast(`Place "${newDisplayName}" saved successfully.`);
-    }
+    showToast(oldName !== newDisplayName ? `Place renamed from "${oldName}" to "${newDisplayName}"` : `Place saved`);
   }
   
   function deletePlace(placeId) {
-    const place = getPlaceById(placeId);
-    if (!place) return;
-    
-    const assignedChars = characters.filter(c => c.locationId === placeId);
-    if (assignedChars.length > 0) {
-      if (!confirm(`Warning: ${assignedChars.length} character(s) are assigned to this place. Deleting will remove their location reference. Continue?`)) {
-        return;
-      }
-    }
-    
-    if (!confirm(`Delete "${place.displayName}" and all its sub-places? This cannot be undone.`)) return;
-    
+    if (!confirm('Delete this place and all its sub-places?')) return;
+    const places = getPlaces();
     const toDelete = [placeId];
     const findChildren = (parentId) => {
-      const children = places.filter(p => p.parentId === parentId);
-      children.forEach(child => {
+      places.filter(p => p.parentId === parentId).forEach(child => {
         toDelete.push(child.id);
         findChildren(child.id);
       });
     };
     findChildren(placeId);
-    
-    characters.forEach(c => {
-      if (toDelete.includes(c.locationId)) {
-        c.locationId = null;
-      }
-    });
-    
-    places = places.filter(p => !toDelete.includes(p.id));
-    saveAllData();
-    localStorage.setItem('stillwaters_characters', JSON.stringify(characters));
+    setPlaces(places.filter(p => !toDelete.includes(p.id)));
     renderPlaceList();
     document.getElementById('panelContent').innerHTML = '<div class="empty-selection">Place deleted. Select another from the list.</div>';
     currentPlaceId = null;
   }
   
   // ==================== MODALS ====================
-  function showAddTypeModal() {
-    const name = prompt('Enter type name (e.g., Region, Province, Barony):');
+  function addLocationType() {
+    const name = prompt('Enter type name:');
     if (!name) return;
-    const priority = parseInt(prompt('Priority (1 = highest):', locationTypes.length + 1) || '10');
-    locationTypes.push({ id: generateId(), displayName: name, priority });
-    saveAllData();
+    const priority = parseInt(prompt('Priority (1 = highest):', getLocationTypes().length + 1) || '10');
+    const types = getLocationTypes();
+    types.push({ id: generateId(), displayName: name, priority });
+    setLocationTypes(types);
     renderPlaceList();
     showToast(`Added location type: ${name}`);
   }
   
-  function showAddGovModal() {
-    const name = prompt('Enter government type (e.g., Republic, Theocracy, Merchant League):');
+  function addGovernment() {
+    const name = prompt('Enter government type:');
     if (!name) return;
-    const priority = parseInt(prompt('Priority:', governments.length + 1) || '10');
-    const rankOptions = ranks.map(r => `${r.name}`).join(', ');
-    let leaderRankId = null;
-    if (ranks.length) {
-      const rankName = prompt(`Optional: assign leader rank (from ranks list)\nAvailable: ${rankOptions || 'none'}\nEnter rank name or leave blank:`);
-      const leaderRank = ranks.find(r => r.name.toLowerCase() === rankName?.toLowerCase());
-      leaderRankId = leaderRank?.id || null;
-    }
-    governments.push({ id: generateId(), displayName: name, priority, leaderRankId });
-    saveAllData();
+    const priority = parseInt(prompt('Priority:', getGovernments().length + 1) || '10');
+    const govs = getGovernments();
+    govs.push({ id: generateId(), displayName: name, priority, leaderRankId: null });
+    setGovernments(govs);
     showToast(`Added government: ${name}`);
   }
   
-  function showAddPlaceModal() {
+  function addPlace() {
     let name = prompt('Place name (or leave blank for random):');
-    
     if (!name || name.trim() === '') {
       const useRandom = confirm('Generate random name?');
       if (useRandom) {
-        const countryOptions = places.filter(p => {
-          const type = getTypeById(p.typeId);
-          return type && type.displayName === 'Country';
-        }).map(c => c.displayName).join(', ');
-        
-        let countryId = null;
-        if (countryOptions) {
-          const countryName = prompt(`Which country's naming style? (${countryOptions})\nLeave blank for default:`, '');
-          const country = places.find(c => c.displayName.toLowerCase() === countryName?.toLowerCase());
-          if (country) countryId = country.id;
-        }
-        
-        const style = prompt('Name style: prefix_root, prefix_root_suffix, root_suffix, prefix_suffix (default: prefix_root)', 'prefix_root');
-        const randomName = generateRandomPlaceName(countryId, style);
-        if (randomName) {
-          name = randomName;
-        } else {
-          name = prompt('Enter place name:', 'New Place');
-          if (!name) return;
-        }
+        const randomName = generateRandomPlaceName(null, 'prefix_root');
+        if (randomName) name = randomName;
+        else name = prompt('Enter place name:', 'New Place');
+        if (!name) return;
       } else {
         name = prompt('Enter place name:', 'New Place');
         if (!name) return;
       }
     }
     
-    if (!locationTypes.length) {
-      alert('Please add a location type first.');
-      return;
-    }
+    const types = getLocationTypes();
+    if (!types.length) { alert('Please add a location type first.'); return; }
     
-    const typeOptions = locationTypes.map(t => `${t.displayName} (Prio ${t.priority})`).join(', ');
+    const typeOptions = types.map(t => `${t.displayName} (Prio ${t.priority})`).join(', ');
     const typeName = prompt(`Select type:\n${typeOptions}`);
-    const type = locationTypes.find(t => t.displayName.toLowerCase() === typeName?.toLowerCase());
+    const type = types.find(t => t.displayName.toLowerCase() === typeName?.toLowerCase());
     if (!type) { alert('Invalid type'); return; }
     
+    const places = getPlaces();
     const parentOptions = places.map(p => p.displayName).join(', ');
-    const parentName = prompt(`Parent place (optional, leave blank for root):\n${parentOptions || 'No existing places'}`);
+    const parentName = prompt(`Parent place (optional):\n${parentOptions || 'No existing places'}`);
     const parent = places.find(p => p.displayName.toLowerCase() === parentName?.toLowerCase());
     
-    const variableKey = prompt('Variable key (optional, for character assignment):', name.toLowerCase().replace(/\s/g, '_'));
+    const variableKey = prompt('Variable key:', name.toLowerCase().replace(/\s/g, '_'));
     
     const newPlace = {
       id: generateId(),
@@ -927,30 +785,31 @@
     };
     
     places.push(newPlace);
-    saveAllData();
+    setPlaces(places);
     renderPlaceList();
     selectPlace(newPlace.id);
-    showToast(`Added place: ${name} (ID: ${newPlace.id.slice(-6)})`);
+    showToast(`Added place: ${name}`);
   }
   
-  // ==================== IMPORT/EXPORT ====================
+  // ==================== IMPORT/EXPORT (UNIFIED) ====================
   function exportData() {
-    const exportObj = { 
-      locationTypes, 
-      governments, 
-      places,
-      version: '2.0',
+    const exportObj = {
+      type: "locations",
+      version: "2.0",
       exportDate: new Date().toISOString(),
-      note: 'Places use permanent IDs. Characters reference places by these IDs, not by names.'
+      data: {
+        locationTypes: getLocationTypes(),
+        governments: getGovernments(),
+        places: getPlaces()
+      }
     };
     const dataStr = JSON.stringify(exportObj, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `stillwaters_locations_${new Date().toISOString().slice(0,19)}.json`;
+    a.href = URL.createObjectURL(blob);
+    a.download = `stillwaters_locations_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
     a.click();
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(a.href);
     showToast('Locations exported successfully');
   }
   
@@ -964,20 +823,68 @@
       reader.onload = (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
-          if (imported.locationTypes) locationTypes = imported.locationTypes;
-          if (imported.governments) governments = imported.governments;
-          if (imported.places) {
-            places = imported.places.map(p => ({
-              ...p,
-              nameListId: p.nameListId || null,
-              cityNameStyle: p.cityNameStyle || null
-            }));
+          let newTypes = null, newGovs = null, newPlaces = null;
+          
+          // Case 1: New unified format with type field
+          if (imported.type === 'locations' && imported.data) {
+            newTypes = imported.data.locationTypes;
+            newGovs = imported.data.governments;
+            newPlaces = imported.data.places;
           }
-          saveAllData();
+          // Case 2: Old format with separate arrays
+          else if (imported.locationTypes || imported.governments || imported.places) {
+            newTypes = imported.locationTypes;
+            newGovs = imported.governments;
+            newPlaces = imported.places;
+          }
+          // Case 3: Master data format
+          else if (imported.data && (imported.data.locationTypes || imported.data.places)) {
+            newTypes = imported.data.locationTypes;
+            newGovs = imported.data.governments;
+            newPlaces = imported.data.places;
+          }
+          
+          // MERGE location types
+          if (newTypes && newTypes.length) {
+            const currentTypes = getLocationTypes();
+            newTypes.forEach(importedType => {
+              const existing = currentTypes.find(t => t.id === importedType.id);
+              if (!existing && importedType.id) currentTypes.push(importedType);
+              else if (!existing) currentTypes.push({ ...importedType, id: generateId() });
+            });
+            setLocationTypes(currentTypes);
+          }
+          
+          // MERGE governments
+          if (newGovs && newGovs.length) {
+            const currentGovs = getGovernments();
+            newGovs.forEach(importedGov => {
+              const existing = currentGovs.find(g => g.id === importedGov.id);
+              if (!existing && importedGov.id) currentGovs.push(importedGov);
+              else if (!existing) currentGovs.push({ ...importedGov, id: generateId() });
+            });
+            setGovernments(currentGovs);
+          }
+          
+          // MERGE places
+          if (newPlaces && newPlaces.length) {
+            const currentPlaces = getPlaces();
+            newPlaces.forEach(importedPlace => {
+              const existing = currentPlaces.find(p => p.id === importedPlace.id);
+              if (existing) {
+                Object.assign(existing, importedPlace);
+              } else {
+                if (!importedPlace.id) importedPlace.id = generateId();
+                currentPlaces.push(importedPlace);
+              }
+            });
+            setPlaces(currentPlaces);
+          }
+          
           renderPlaceList();
-          showToast(`Imported ${places.length} places, ${locationTypes.length} types, ${governments.length} governments`);
+          showToast(`Imported and merged locations data`);
         } catch(err) { 
-          alert('Invalid JSON format'); 
+          alert('Invalid JSON: ' + err.message); 
         }
       };
       reader.readAsText(file);
@@ -999,50 +906,39 @@
     setTimeout(() => toast.remove(), 2500);
   }
   
-  function escapeHtml(str) { 
-    if (!str) return ''; 
-    return str.replace(/[&<>]/g, function(m) { 
-      if (m === '&') return '&amp;'; 
-      if (m === '<') return '&lt;'; 
-      if (m === '>') return '&gt;'; 
-      return m; 
-    });
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m);
   }
   
   // ==================== INIT ====================
   function init() {
-    loadAllData();
+    loadMasterData();
     renderPlaceList();
     
-    document.getElementById('addTypeBtn').addEventListener('click', showAddTypeModal);
-    document.getElementById('addGovBtn').addEventListener('click', showAddGovModal);
-    document.getElementById('addPlaceBtn').addEventListener('click', showAddPlaceModal);
+    document.getElementById('addTypeBtn').addEventListener('click', addLocationType);
+    document.getElementById('addGovBtn').addEventListener('click', addGovernment);
+    document.getElementById('addPlaceBtn').addEventListener('click', addPlace);
     document.getElementById('importLocBtn').addEventListener('click', importData);
     document.getElementById('exportLocBtn').addEventListener('click', exportData);
-    document.getElementById('mobileToggle').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('collapsed');
-    });
     
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         if (currentPlaceId) {
-          const place = getPlaceById(currentPlaceId);
-          if (place) {
-            if (btn.getAttribute('data-tab') === 'view') renderViewTab(place);
-            else renderEditTab(place);
-          }
+          if (btn.getAttribute('data-tab') === 'view') renderViewTab();
+          else renderEditTab();
         }
       });
     });
     
     window.addEventListener('storage', (e) => {
-      if (e.key === 'stillwaters_characters' || e.key === 'stillwaters_ranks' || e.key === 'stillwaters_namelists') {
-        loadAllData();
-        if (currentPlaceId) {
-          const place = getPlaceById(currentPlaceId);
-          if (place) renderViewTab(place);
+      if (e.key === 'stillwaters_master') {
+        loadMasterData();
+        renderPlaceList();
+        if (currentPlaceId && getPlaceById(currentPlaceId)) {
+          renderViewTab();
         }
       }
     });
