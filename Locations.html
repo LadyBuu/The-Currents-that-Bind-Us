@@ -17,7 +17,7 @@
     
     /* Sidebar */
     .sidebar {
-      width: 320px;
+      width: 340px;
       background: var(--bg2);
       border-right: 1px solid var(--border);
       display: flex;
@@ -95,6 +95,13 @@
       padding: 2px 6px;
       border-radius: 12px;
       background: var(--bg);
+    }
+    
+    .tree-header .id-hint {
+      font-size: 0.5rem;
+      color: var(--tmut);
+      font-family: monospace;
+      margin-left: 4px;
     }
     
     .tree-children {
@@ -207,6 +214,22 @@
       color: var(--dim);
     }
     
+    .warning-badge {
+      background: rgba(200,112,64,0.2);
+      border: 1px solid var(--warn);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 0.7rem;
+      margin-bottom: 16px;
+    }
+    
+    .helper-text {
+      font-size: 0.6rem;
+      color: var(--tmut);
+      margin-top: 4px;
+      font-style: italic;
+    }
+    
     @media (max-width: 768px) {
       .locations-app {
         flex-direction: column;
@@ -238,6 +261,15 @@
       .mobile-toggle {
         display: block;
       }
+    }
+    
+    .id-display {
+      font-family: monospace;
+      font-size: 0.6rem;
+      color: var(--tmut);
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -278,44 +310,157 @@
 
 <script>
   // ==================== DATA STRUCTURES ====================
-  let locationTypes = [];      // { id, name, priority }
-  let governments = [];        // { id, name, priority, leaderRankId }
-  let places = [];             // { id, name, typeId, parentId, variableKey, status, isCapital, leaderId, leaderHistory, subtype, economy, export, notes }
-  let ranks = [];              // pulled from shared ranks storage
-  let characters = [];         // pulled from shared characters storage
+  let locationTypes = [];
+  let governments = [];
+  let places = [];
+  let ranks = [];
+  let characters = [];
   
-  // Helper: generate ID
-  function generateId() { return 'loc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
+  // Helper: generate unique ID
+  function generateId() { 
+    return 'loc_' + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 12));
+  }
+  
+  // ==================== NAME LIST HELPER FUNCTIONS ====================
+  function getNameListOptions(selectedId) {
+    const storedNames = localStorage.getItem('stillwaters_namelists');
+    let nameLists = {};
+    if (storedNames) {
+      const parsed = JSON.parse(storedNames);
+      nameLists = parsed.nameLists || {};
+    }
+    
+    const countriesWithLists = Object.keys(nameLists).filter(countryId => {
+      const lists = nameLists[countryId];
+      return lists && (lists.male?.length || lists.female?.length || lists.surnames?.length);
+    });
+    
+    if (!countriesWithLists.length) {
+      return '<option value="" disabled>No name lists found. Create in Names Manager first.</option>';
+    }
+    
+    return countriesWithLists.map(countryId => {
+      const country = getPlaceById(countryId);
+      const lists = nameLists[countryId];
+      const nameCount = (lists.male?.length || 0) + (lists.female?.length || 0) + (lists.surnames?.length || 0);
+      const countryName = country ? country.displayName : countryId.slice(-6);
+      return `<option value="${countryId}" ${selectedId === countryId ? 'selected' : ''}>${escapeHtml(countryName)} (${nameCount} names)</option>`;
+    }).join('');
+  }
+  
+  function generateRandomPlaceName(countryId, style) {
+    const storedNames = localStorage.getItem('stillwaters_namelists');
+    if (!storedNames) return null;
+    
+    const parsed = JSON.parse(storedNames);
+    const nameLists = parsed.nameLists;
+    const cityNameParts = parsed.cityNameParts || { prefixes: [], roots: [], suffixes: [] };
+    
+    let prefixes = [...(cityNameParts.prefixes || [])];
+    let roots = [...(cityNameParts.roots || [])];
+    let suffixes = [...(cityNameParts.suffixes || [])];
+    
+    if (countryId && nameLists[countryId]) {
+      const countryLists = nameLists[countryId];
+      if (countryLists.male?.length) prefixes = [...prefixes, ...countryLists.male];
+      if (countryLists.female?.length) prefixes = [...prefixes, ...countryLists.female];
+      if (countryLists.surnames?.length) roots = [...roots, ...countryLists.surnames];
+    }
+    
+    if (!prefixes.length || !roots.length) return null;
+    
+    let name = '';
+    switch(style) {
+      case 'prefix_root':
+        name = prefixes[Math.floor(Math.random() * prefixes.length)] + 
+               roots[Math.floor(Math.random() * roots.length)];
+        break;
+      case 'prefix_root_suffix':
+        name = prefixes[Math.floor(Math.random() * prefixes.length)] + 
+               roots[Math.floor(Math.random() * roots.length)];
+        if (suffixes.length) name += suffixes[Math.floor(Math.random() * suffixes.length)];
+        break;
+      case 'root_suffix':
+        name = roots[Math.floor(Math.random() * roots.length)];
+        if (suffixes.length) name += suffixes[Math.floor(Math.random() * suffixes.length)];
+        break;
+      case 'prefix_suffix':
+        name = prefixes[Math.floor(Math.random() * prefixes.length)];
+        if (suffixes.length) name += suffixes[Math.floor(Math.random() * suffixes.length)];
+        break;
+      default:
+        name = prefixes[Math.floor(Math.random() * prefixes.length)] + 
+               roots[Math.floor(Math.random() * roots.length)];
+    }
+    
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  }
   
   // ==================== LOAD/SAVE ====================
   function loadAllData() {
-    // Load location types
     const storedTypes = localStorage.getItem('stillwaters_locationTypes');
     if (storedTypes) locationTypes = JSON.parse(storedTypes);
-    else locationTypes = [{ id: 'type1', name: 'Country', priority: 1 }, { id: 'type2', name: 'District', priority: 2 }, { id: 'type3', name: 'Town', priority: 3 }];
-    
-    // Load governments
-    const storedGovs = localStorage.getItem('stillwaters_governments');
-    if (storedGovs) governments = JSON.parse(storedGovs);
-    else governments = [{ id: 'gov1', name: 'Monarchy', priority: 1, leaderRankId: null }, { id: 'gov2', name: 'Chiefdom', priority: 2, leaderRankId: null }];
-    
-    // Load places
-    const storedPlaces = localStorage.getItem('stillwaters_places');
-    if (storedPlaces) places = JSON.parse(storedPlaces);
     else {
-      places = [
-        { id: 'p1', name: 'Aethelgard', typeId: 'type1', parentId: null, variableKey: 'aethelgard', status: 'active', isCapital: true, leaderId: null, leaderHistory: [], subtype: 'Imperial Seat', economy: 'Trade hub', export: 'Textiles, Grain', notes: 'Heart of the realm' },
-        { id: 'p2', name: 'Ironhold', typeId: 'type2', parentId: 'p1', variableKey: 'ironhold', status: 'active', isCapital: false, leaderId: null, leaderHistory: [], subtype: 'Mining town', economy: 'Mining', export: 'Iron ore', notes: '' },
-        { id: 'p3', name: 'Riversmeet', typeId: 'type3', parentId: 'p2', variableKey: 'riversmeet', status: 'active', isCapital: false, leaderId: null, leaderHistory: [], subtype: 'Fishing village', economy: 'Fishing', export: 'Fish', notes: '' }
+      locationTypes = [
+        { id: generateId(), displayName: 'Country', priority: 1 },
+        { id: generateId(), displayName: 'District', priority: 2 },
+        { id: generateId(), displayName: 'Town', priority: 3 },
+        { id: generateId(), displayName: 'Compound', priority: 4 }
       ];
     }
     
-    // Load ranks from shared storage
+    const storedGovs = localStorage.getItem('stillwaters_governments');
+    if (storedGovs) governments = JSON.parse(storedGovs);
+    else {
+      governments = [
+        { id: generateId(), displayName: 'Monarchy', priority: 1, leaderRankId: null },
+        { id: generateId(), displayName: 'Chiefdom', priority: 2, leaderRankId: null },
+        { id: generateId(), displayName: 'Republic', priority: 3, leaderRankId: null }
+      ];
+    }
+    
+    const storedPlaces = localStorage.getItem('stillwaters_places');
+    if (storedPlaces) {
+      places = JSON.parse(storedPlaces);
+      places = places.map(p => ({
+        ...p,
+        nameListId: p.nameListId || null,
+        cityNameStyle: p.cityNameStyle || null
+      }));
+    } else {
+      const countryId = generateId();
+      const districtId = generateId();
+      const townId = generateId();
+      
+      places = [
+        { 
+          id: countryId, displayName: 'Aethelgard', typeId: locationTypes[0].id, parentId: null, 
+          variableKey: 'aethelgard', status: 'active', isCapital: true, leaderId: null, 
+          leaderHistory: [], subtype: 'Imperial Seat', economy: 'Trade hub', 
+          export: 'Textiles, Grain', notes: 'Heart of the realm', governmentId: governments[0].id,
+          nameListId: null, cityNameStyle: null
+        },
+        { 
+          id: districtId, displayName: 'Ironhold', typeId: locationTypes[1].id, parentId: countryId, 
+          variableKey: 'ironhold', status: 'active', isCapital: false, leaderId: null, 
+          leaderHistory: [], subtype: 'Mining region', economy: 'Mining', 
+          export: 'Iron ore', notes: '', governmentId: null,
+          nameListId: null, cityNameStyle: null
+        },
+        { 
+          id: townId, displayName: 'Riversmeet', typeId: locationTypes[2].id, parentId: districtId, 
+          variableKey: 'riversmeet', status: 'active', isCapital: false, leaderId: null, 
+          leaderHistory: [], subtype: 'Fishing village', economy: 'Fishing', 
+          export: 'Fish', notes: '', governmentId: null,
+          nameListId: null, cityNameStyle: null
+        }
+      ];
+    }
+    
     const storedRanks = localStorage.getItem('stillwaters_ranks');
     if (storedRanks) ranks = JSON.parse(storedRanks);
     else ranks = [];
     
-    // Load characters from shared storage
     const storedChars = localStorage.getItem('stillwaters_characters');
     if (storedChars) characters = JSON.parse(storedChars);
     else characters = [];
@@ -327,7 +472,23 @@
     localStorage.setItem('stillwaters_locationTypes', JSON.stringify(locationTypes));
     localStorage.setItem('stillwaters_governments', JSON.stringify(governments));
     localStorage.setItem('stillwaters_places', JSON.stringify(places));
-    // Ranks and characters are shared, we don't overwrite them here
+  }
+  
+  // ==================== HELPER FUNCTIONS ====================
+  function getPlaceById(id) {
+    return places.find(p => p.id === id);
+  }
+  
+  function getTypeById(id) {
+    return locationTypes.find(t => t.id === id);
+  }
+  
+  function getGovernmentById(id) {
+    return governments.find(g => g.id === id);
+  }
+  
+  function getCharacterById(id) {
+    return characters.find(c => c.id === id);
   }
   
   // ==================== HIERARCHY BUILDING ====================
@@ -336,9 +497,17 @@
     places.forEach(p => placeMap.set(p.id, { ...p, children: [] }));
     const roots = [];
     places.forEach(p => {
-      if (p.parentId && placeMap.has(p.parentId)) placeMap.get(p.parentId).children.push(placeMap.get(p.id));
-      else roots.push(placeMap.get(p.id));
+      if (p.parentId && placeMap.has(p.parentId)) {
+        placeMap.get(p.parentId).children.push(placeMap.get(p.id));
+      } else {
+        roots.push(placeMap.get(p.id));
+      }
     });
+    const sortChildren = (node) => {
+      node.children.sort((a, b) => a.displayName.localeCompare(b.displayName));
+      node.children.forEach(sortChildren);
+    };
+    roots.forEach(sortChildren);
     return roots;
   }
   
@@ -350,22 +519,23 @@
   }
   
   function renderTree(nodes, level) {
-    if (!nodes.length) return '<div class="empty-msg" style="padding:20px;">No places defined</div>';
+    if (!nodes.length) return '<div class="empty-msg" style="padding:20px;">No places defined. Click "+ Add Place" to begin.</div>';
     return `<ul class="tree-node" style="list-style:none; padding-left:0;">${nodes.map(node => renderNode(node, level)).join('')}</ul>`;
   }
   
   function renderNode(node, level) {
-    const type = locationTypes.find(t => t.id === node.typeId);
     const statusColors = { active: '#4a9060', disputed: '#c87040', abandoned: '#8f5e5e', occupied: '#8b4040' };
     const star = node.isCapital ? '<span class="capital-star">★</span>' : '';
     const statusText = node.status || 'active';
+    const shortId = node.id.slice(-6);
     
     return `
       <li class="tree-item" data-place-id="${node.id}">
         <div class="tree-header" data-place-id="${node.id}">
           <span class="toggle-icon" data-toggle>${node.children.length ? '▼' : '○'}</span>
           ${star}
-          <span class="place-name">${escapeHtml(node.name)}</span>
+          <span class="place-name">${escapeHtml(node.displayName)}</span>
+          <span class="id-hint" title="Permanent ID: ${node.id}">#${shortId}</span>
           <span class="status-badge" style="border-color:${statusColors[statusText]}; color:${statusColors[statusText]}">${statusText}</span>
         </div>
         ${node.children.length ? `<div class="tree-children" data-children="${node.id}">${renderTree(node.children, level + 1)}</div>` : ''}
@@ -395,13 +565,13 @@
   
   // ==================== POPULATION CALCULATION ====================
   function calculatePopulation(placeId) {
-    // This would normally aggregate character locations
-    // For now, returns placeholder count based on characters assigned via variableKey
-    const place = places.find(p => p.id === placeId);
+    const place = getPlaceById(placeId);
     if (!place) return 0;
-    let count = characters.filter(c => c.locationKey === place.variableKey).length;
+    
+    let count = characters.filter(c => c.locationId === placeId).length;
     const children = places.filter(p => p.parentId === placeId);
     children.forEach(child => { count += calculatePopulation(child.id); });
+    
     return count;
   }
   
@@ -410,30 +580,38 @@
   
   function selectPlace(placeId) {
     currentPlaceId = placeId;
-    const place = places.find(p => p.id === placeId);
+    const place = getPlaceById(placeId);
     if (!place) return;
     renderViewTab(place);
     document.querySelector('.tab-btn[data-tab="view"]').click();
   }
   
   function renderViewTab(place) {
-    const type = locationTypes.find(t => t.id === place.typeId);
-    const parent = places.find(p => p.id === place.parentId);
-    const gov = place.governmentId ? governments.find(g => g.id === place.governmentId) : null;
-    const leader = place.leaderId ? characters.find(c => c.id === place.leaderId) : null;
+    const type = getTypeById(place.typeId);
+    const parent = getPlaceById(place.parentId);
+    const gov = getGovernmentById(place.governmentId);
+    const leader = getCharacterById(place.leaderId);
     const population = calculatePopulation(place.id);
+    const assignedChars = characters.filter(c => c.locationId === place.id);
+    const nameListPlace = place.nameListId ? getPlaceById(place.nameListId) : null;
     
     const content = `
       <div class="view-section">
-        <h2 style="margin-bottom:20px;">${escapeHtml(place.name)}</h2>
+        <h2 style="margin-bottom:20px;">${escapeHtml(place.displayName)}</h2>
+        <div class="warning-badge">
+          🔒 Permanent ID: <code class="id-display">${place.id}</code><br>
+          <small>Characters reference this ID. You can rename this place freely without breaking any links.</small>
+        </div>
         <div class="info-grid">
-          <div class="info-label">Type</div><div class="info-value">${type ? type.name : 'Unknown'} (Priority ${type?.priority || '-'})</div>
-          <div class="info-label">Parent</div><div class="info-value">${parent ? parent.name : '— Root —'}</div>
+          <div class="info-label">Type</div><div class="info-value">${type ? type.displayName : 'Unknown'} (Priority ${type?.priority || '-'})</div>
+          <div class="info-label">Parent</div><div class="info-value">${parent ? parent.displayName : '— Root / Capital Region —'}</div>
           <div class="info-label">Status</div><div class="info-value">${place.status || 'active'}</div>
           <div class="info-label">Capital</div><div class="info-value">${place.isCapital ? '✓ Yes' : '✗ No'}</div>
           <div class="info-label">Variable Key</div><div class="info-value">${place.variableKey || '— Not assignable —'}</div>
-          <div class="info-label">Government</div><div class="info-value">${gov ? gov.name : '— None —'}</div>
+          <div class="info-label">Government</div><div class="info-value">${gov ? gov.displayName : '— None —'}</div>
           <div class="info-label">Current Leader</div><div class="info-value">${leader ? leader.name : '— Vacant —'}</div>
+          <div class="info-label">Name List</div><div class="info-value">${nameListPlace ? nameListPlace.displayName : (place.nameListId ? 'Custom list' : '— None —')}</div>
+          <div class="info-label">Name Style</div><div class="info-value">${place.cityNameStyle || '— Default —'}</div>
           <div class="info-label">Subtype</div><div class="info-value">${place.subtype || '—'}</div>
           <div class="info-label">Economy</div><div class="info-value">${place.economy || '—'}</div>
           <div class="info-label">Main Export</div><div class="info-value">${place.export || '—'}</div>
@@ -441,7 +619,8 @@
         </div>
         <div class="population-stat">
           <strong>📊 Population</strong><br>
-          <span style="font-size:1.5rem; color:var(--accent);">${population}</span> inhabitants (including all sub-regions)
+          <span style="font-size:1.5rem; color:var(--accent);">${population}</span> inhabitants (including all sub-regions)<br>
+          <small>${assignedChars.length} characters directly assigned to this location</small>
         </div>
         ${place.leaderHistory?.length ? `<div class="info-grid"><div class="info-label">Former Leaders</div><div class="info-value">${place.leaderHistory.map(h => `${h.name} (${h.period})`).join(', ')}</div></div>` : ''}
       </div>
@@ -450,33 +629,71 @@
   }
   
   function renderEditTab(place) {
-    const typeOptions = locationTypes.map(t => `<option value="${t.id}" ${place.typeId === t.id ? 'selected' : ''}>${t.name} (Prio ${t.priority})</option>`).join('');
-    const parentOptions = `<option value="">— None (Root) —</option>${places.filter(p => p.id !== place.id).map(p => `<option value="${p.id}" ${place.parentId === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}`;
-    const govOptions = `<option value="">— None —</option>${governments.map(g => `<option value="${g.id}" ${place.governmentId === g.id ? 'selected' : ''}>${g.name}</option>`).join('')}`;
-    const rankFilteredChars = characters.filter(c => {
-      if (!place.governmentId) return true;
-      const gov = governments.find(g => g.id === place.governmentId);
-      if (!gov || !gov.leaderRankId) return true;
-      return c.rankId === gov.leaderRankId;
-    });
-    const leaderOptions = `<option value="">— Vacant —</option>${rankFilteredChars.map(c => `<option value="${c.id}" ${place.leaderId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}`;
+    const typeOptions = locationTypes.map(t => `<option value="${t.id}" ${place.typeId === t.id ? 'selected' : ''}>${escapeHtml(t.displayName)} (Prio ${t.priority})</option>`).join('');
+    const parentOptions = `<option value="">— None (Root) —</option>${places.filter(p => p.id !== place.id).map(p => `<option value="${p.id}" ${place.parentId === p.id ? 'selected' : ''}>${escapeHtml(p.displayName)}</option>`).join('')}`;
+    const govOptions = `<option value="">— None —</option>${governments.map(g => `<option value="${g.id}" ${place.governmentId === g.id ? 'selected' : ''}>${escapeHtml(g.displayName)}</option>`).join('')}`;
+    
+    let eligibleChars = characters;
+    if (place.governmentId) {
+      const gov = getGovernmentById(place.governmentId);
+      if (gov && gov.leaderRankId) {
+        eligibleChars = characters.filter(c => c.rankId === gov.leaderRankId);
+      }
+    }
+    const leaderOptions = `<option value="">— Vacant —</option>${eligibleChars.map(c => `<option value="${c.id}" ${place.leaderId === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}`;
+    
+    const nameListOptions = getNameListOptions(place.nameListId);
     
     const content = `
       <div class="edit-section">
+        <div class="warning-badge">
+          🔒 Permanent ID: <code class="id-display">${place.id}</code><br>
+          <small>This ID never changes. All character assignments and references remain intact even if you rename the place.</small>
+        </div>
         <form id="editPlaceForm">
-          <div class="form-group"><label>Place Name</label><input type="text" id="editName" value="${escapeHtml(place.name)}" required></div>
+          <div class="form-group">
+            <label>Place Name (Display Name)</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="editDisplayName" value="${escapeHtml(place.displayName)}" required style="flex:1;">
+              <button type="button" id="randomizeNameBtn" class="btn small">🎲 Random</button>
+            </div>
+          </div>
           <div class="form-row">
             <div class="form-group"><label>Type</label><select id="editTypeId">${typeOptions}</select></div>
             <div class="form-group"><label>Parent Place</label><select id="editParentId">${parentOptions}</select></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Status</label><select id="editStatus"><option ${place.status === 'active' ? 'selected' : ''}>active</option><option ${place.status === 'disputed' ? 'selected' : ''}>disputed</option><option ${place.status === 'abandoned' ? 'selected' : ''}>abandoned</option><option ${place.status === 'occupied' ? 'selected' : ''}>occupied</option></select></div>
+            <div class="form-group"><label>Status</label><select id="editStatus">
+              <option ${place.status === 'active' ? 'selected' : ''}>active</option>
+              <option ${place.status === 'disputed' ? 'selected' : ''}>disputed</option>
+              <option ${place.status === 'abandoned' ? 'selected' : ''}>abandoned</option>
+              <option ${place.status === 'occupied' ? 'selected' : ''}>occupied</option>
+            </select></div>
             <div class="form-group"><label><input type="checkbox" id="editIsCapital" ${place.isCapital ? 'checked' : ''}> Capital City</label></div>
           </div>
           <div class="form-group"><label>Variable Key (for character assignment)</label><input type="text" id="editVariableKey" value="${place.variableKey || ''}" placeholder="e.g., aethelgard"></div>
           <div class="form-row">
             <div class="form-group"><label>Government Type</label><select id="editGovernmentId">${govOptions}</select></div>
             <div class="form-group"><label>Current Leader</label><select id="editLeaderId">${leaderOptions}</select></div>
+          </div>
+          <div class="form-group">
+            <label>🏷️ Name List for Places</label>
+            <select id="editNameListId">
+              <option value="">— None (manual naming only) —</option>
+              ${nameListOptions}
+            </select>
+            <div class="helper-text">Assign a name list to generate random names for sub-locations in this area</div>
+          </div>
+          <div class="form-group">
+            <label>🎲 Name Generation Style</label>
+            <select id="editCityNameStyle">
+              <option value="">— Default (Prefix+Root) —</option>
+              <option value="prefix_root" ${place.cityNameStyle === 'prefix_root' ? 'selected' : ''}>Prefix + Root (e.g., Ashfield)</option>
+              <option value="prefix_root_suffix" ${place.cityNameStyle === 'prefix_root_suffix' ? 'selected' : ''}>Prefix + Root + Suffix (e.g., Ashfieldia)</option>
+              <option value="root_suffix" ${place.cityNameStyle === 'root_suffix' ? 'selected' : ''}>Root + Suffix (e.g., Fieldia)</option>
+              <option value="prefix_suffix" ${place.cityNameStyle === 'prefix_suffix' ? 'selected' : ''}>Prefix + Suffix (e.g., Ashia)</option>
+            </select>
+            <div class="helper-text">How random names should be constructed</div>
           </div>
           <div class="form-group"><label>Subtype (e.g., market town, fishing village)</label><input type="text" id="editSubtype" value="${place.subtype || ''}"></div>
           <div class="form-row">
@@ -493,98 +710,239 @@
     `;
     document.getElementById('panelContent').innerHTML = content;
     
+    const randomBtn = document.getElementById('randomizeNameBtn');
+    if (randomBtn) {
+      randomBtn.addEventListener('click', () => {
+        const nameListId = document.getElementById('editNameListId')?.value;
+        const style = document.getElementById('editCityNameStyle')?.value;
+        const randomName = generateRandomPlaceName(nameListId, style);
+        if (randomName) {
+          document.getElementById('editDisplayName').value = randomName;
+          showToast(`Random name generated: ${randomName}`);
+        } else {
+          showToast('No name list available. Create one in Names Manager first.');
+        }
+      });
+    }
+    
     document.getElementById('editPlaceForm').addEventListener('submit', (e) => {
       e.preventDefault();
       savePlaceEdit(place.id);
     });
     document.getElementById('deletePlaceBtn').addEventListener('click', () => deletePlace(place.id));
+    
+    const govSelect = document.getElementById('editGovernmentId');
+    if (govSelect) {
+      govSelect.addEventListener('change', () => {
+        const newGovId = document.getElementById('editGovernmentId').value;
+        const gov = getGovernmentById(newGovId);
+        let filteredChars = characters;
+        if (gov && gov.leaderRankId) {
+          filteredChars = characters.filter(c => c.rankId === gov.leaderRankId);
+        }
+        const leaderSelect = document.getElementById('editLeaderId');
+        const currentLeader = leaderSelect.value;
+        leaderSelect.innerHTML = `<option value="">— Vacant —</option>${filteredChars.map(c => `<option value="${c.id}" ${currentLeader === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}`;
+      });
+    }
   }
   
   function savePlaceEdit(placeId) {
-    const place = places.find(p => p.id === placeId);
+    const place = getPlaceById(placeId);
     if (!place) return;
-    place.name = document.getElementById('editName').value;
+    
+    const newDisplayName = document.getElementById('editDisplayName').value;
+    const oldName = place.displayName;
+    place.displayName = newDisplayName;
     place.typeId = document.getElementById('editTypeId').value;
     place.parentId = document.getElementById('editParentId').value || null;
     place.status = document.getElementById('editStatus').value;
     place.isCapital = document.getElementById('editIsCapital').checked;
     place.variableKey = document.getElementById('editVariableKey').value || null;
     place.governmentId = document.getElementById('editGovernmentId').value || null;
+    place.nameListId = document.getElementById('editNameListId')?.value || null;
+    place.cityNameStyle = document.getElementById('editCityNameStyle')?.value || null;
+    
     const newLeaderId = document.getElementById('editLeaderId').value || null;
     if (newLeaderId !== place.leaderId && newLeaderId) {
       if (!place.leaderHistory) place.leaderHistory = [];
       if (place.leaderId) {
-        const oldLeader = characters.find(c => c.id === place.leaderId);
-        if (oldLeader) place.leaderHistory.unshift({ id: place.leaderId, name: oldLeader.name, period: 'until ' + new Date().toLocaleDateString() });
+        const oldLeader = getCharacterById(place.leaderId);
+        if (oldLeader) {
+          place.leaderHistory.unshift({ 
+            id: place.leaderId, 
+            name: oldLeader.name, 
+            period: 'until ' + new Date().toLocaleDateString() 
+          });
+        }
       }
       place.leaderId = newLeaderId;
     }
+    
     place.subtype = document.getElementById('editSubtype').value;
     place.economy = document.getElementById('editEconomy').value;
     place.export = document.getElementById('editExport').value;
     place.notes = document.getElementById('editNotes').value;
+    
     saveAllData();
     renderPlaceList();
     selectPlace(placeId);
+    
+    if (oldName !== newDisplayName) {
+      showToast(`Place renamed from "${oldName}" to "${newDisplayName}". All references intact.`);
+    } else {
+      showToast(`Place "${newDisplayName}" saved successfully.`);
+    }
   }
   
   function deletePlace(placeId) {
-    if (!confirm('Delete this place and all its sub-places? This cannot be undone.')) return;
+    const place = getPlaceById(placeId);
+    if (!place) return;
+    
+    const assignedChars = characters.filter(c => c.locationId === placeId);
+    if (assignedChars.length > 0) {
+      if (!confirm(`Warning: ${assignedChars.length} character(s) are assigned to this place. Deleting will remove their location reference. Continue?`)) {
+        return;
+      }
+    }
+    
+    if (!confirm(`Delete "${place.displayName}" and all its sub-places? This cannot be undone.`)) return;
+    
     const toDelete = [placeId];
-    const children = places.filter(p => p.parentId === placeId);
-    children.forEach(c => toDelete.push(c.id));
+    const findChildren = (parentId) => {
+      const children = places.filter(p => p.parentId === parentId);
+      children.forEach(child => {
+        toDelete.push(child.id);
+        findChildren(child.id);
+      });
+    };
+    findChildren(placeId);
+    
+    characters.forEach(c => {
+      if (toDelete.includes(c.locationId)) {
+        c.locationId = null;
+      }
+    });
+    
     places = places.filter(p => !toDelete.includes(p.id));
     saveAllData();
+    localStorage.setItem('stillwaters_characters', JSON.stringify(characters));
     renderPlaceList();
     document.getElementById('panelContent').innerHTML = '<div class="empty-selection">Place deleted. Select another from the list.</div>';
     currentPlaceId = null;
   }
   
-  // ==================== MODALS FOR TYPES/GOVS/PLACES ====================
+  // ==================== MODALS ====================
   function showAddTypeModal() {
-    const name = prompt('Enter type name (e.g., Region, Province):');
+    const name = prompt('Enter type name (e.g., Region, Province, Barony):');
     if (!name) return;
     const priority = parseInt(prompt('Priority (1 = highest):', locationTypes.length + 1) || '10');
-    locationTypes.push({ id: generateId(), name, priority });
+    locationTypes.push({ id: generateId(), displayName: name, priority });
     saveAllData();
     renderPlaceList();
+    showToast(`Added location type: ${name}`);
   }
   
   function showAddGovModal() {
-    const name = prompt('Enter government type (e.g., Republic, Theocracy):');
+    const name = prompt('Enter government type (e.g., Republic, Theocracy, Merchant League):');
     if (!name) return;
     const priority = parseInt(prompt('Priority:', governments.length + 1) || '10');
-    const rankOptions = ranks.map(r => `${r.name} (priority ${r.priority})`).join(', ');
-    const rankName = prompt(`Optional: assign leader rank (from ranks list)\nAvailable: ${rankOptions || 'none'}\nEnter rank name or leave blank:`);
-    const leaderRank = ranks.find(r => r.name.toLowerCase() === rankName?.toLowerCase());
-    governments.push({ id: generateId(), name, priority, leaderRankId: leaderRank?.id || null });
+    const rankOptions = ranks.map(r => `${r.name}`).join(', ');
+    let leaderRankId = null;
+    if (ranks.length) {
+      const rankName = prompt(`Optional: assign leader rank (from ranks list)\nAvailable: ${rankOptions || 'none'}\nEnter rank name or leave blank:`);
+      const leaderRank = ranks.find(r => r.name.toLowerCase() === rankName?.toLowerCase());
+      leaderRankId = leaderRank?.id || null;
+    }
+    governments.push({ id: generateId(), displayName: name, priority, leaderRankId });
     saveAllData();
+    showToast(`Added government: ${name}`);
   }
   
   function showAddPlaceModal() {
-    const name = prompt('Place name:');
-    if (!name) return;
-    const typeOptions = locationTypes.map(t => `${t.name} (Prio ${t.priority})`).join(', ');
+    let name = prompt('Place name (or leave blank for random):');
+    
+    if (!name || name.trim() === '') {
+      const useRandom = confirm('Generate random name?');
+      if (useRandom) {
+        const countryOptions = places.filter(p => {
+          const type = getTypeById(p.typeId);
+          return type && type.displayName === 'Country';
+        }).map(c => c.displayName).join(', ');
+        
+        let countryId = null;
+        if (countryOptions) {
+          const countryName = prompt(`Which country's naming style? (${countryOptions})\nLeave blank for default:`, '');
+          const country = places.find(c => c.displayName.toLowerCase() === countryName?.toLowerCase());
+          if (country) countryId = country.id;
+        }
+        
+        const style = prompt('Name style: prefix_root, prefix_root_suffix, root_suffix, prefix_suffix (default: prefix_root)', 'prefix_root');
+        const randomName = generateRandomPlaceName(countryId, style);
+        if (randomName) {
+          name = randomName;
+        } else {
+          name = prompt('Enter place name:', 'New Place');
+          if (!name) return;
+        }
+      } else {
+        name = prompt('Enter place name:', 'New Place');
+        if (!name) return;
+      }
+    }
+    
+    if (!locationTypes.length) {
+      alert('Please add a location type first.');
+      return;
+    }
+    
+    const typeOptions = locationTypes.map(t => `${t.displayName} (Prio ${t.priority})`).join(', ');
     const typeName = prompt(`Select type:\n${typeOptions}`);
-    const type = locationTypes.find(t => t.name.toLowerCase() === typeName?.toLowerCase());
+    const type = locationTypes.find(t => t.displayName.toLowerCase() === typeName?.toLowerCase());
     if (!type) { alert('Invalid type'); return; }
-    const parentOptions = places.map(p => p.name).join(', ');
-    const parentName = prompt(`Parent place (optional, leave blank for root):\n${parentOptions}`);
-    const parent = places.find(p => p.name.toLowerCase() === parentName?.toLowerCase());
+    
+    const parentOptions = places.map(p => p.displayName).join(', ');
+    const parentName = prompt(`Parent place (optional, leave blank for root):\n${parentOptions || 'No existing places'}`);
+    const parent = places.find(p => p.displayName.toLowerCase() === parentName?.toLowerCase());
+    
     const variableKey = prompt('Variable key (optional, for character assignment):', name.toLowerCase().replace(/\s/g, '_'));
+    
     const newPlace = {
-      id: generateId(), name, typeId: type.id, parentId: parent?.id || null, variableKey: variableKey || null,
-      status: 'active', isCapital: false, leaderId: null, leaderHistory: [], subtype: '', economy: '', export: '', notes: ''
+      id: generateId(),
+      displayName: name,
+      typeId: type.id,
+      parentId: parent?.id || null,
+      variableKey: variableKey || null,
+      status: 'active',
+      isCapital: false,
+      leaderId: null,
+      leaderHistory: [],
+      subtype: '',
+      economy: '',
+      export: '',
+      notes: '',
+      governmentId: null,
+      nameListId: null,
+      cityNameStyle: null
     };
+    
     places.push(newPlace);
     saveAllData();
     renderPlaceList();
     selectPlace(newPlace.id);
+    showToast(`Added place: ${name} (ID: ${newPlace.id.slice(-6)})`);
   }
   
   // ==================== IMPORT/EXPORT ====================
   function exportData() {
-    const exportObj = { locationTypes, governments, places, version: '1.0' };
+    const exportObj = { 
+      locationTypes, 
+      governments, 
+      places,
+      version: '2.0',
+      exportDate: new Date().toISOString(),
+      note: 'Places use permanent IDs. Characters reference places by these IDs, not by names.'
+    };
     const dataStr = JSON.stringify(exportObj, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -593,6 +951,7 @@
     a.download = `stillwaters_locations_${new Date().toISOString().slice(0,19)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    showToast('Locations exported successfully');
   }
   
   function importData() {
@@ -607,15 +966,47 @@
           const imported = JSON.parse(ev.target.result);
           if (imported.locationTypes) locationTypes = imported.locationTypes;
           if (imported.governments) governments = imported.governments;
-          if (imported.places) places = imported.places;
+          if (imported.places) {
+            places = imported.places.map(p => ({
+              ...p,
+              nameListId: p.nameListId || null,
+              cityNameStyle: p.cityNameStyle || null
+            }));
+          }
           saveAllData();
           renderPlaceList();
-          alert('Import successful!');
-        } catch(err) { alert('Invalid JSON'); }
+          showToast(`Imported ${places.length} places, ${locationTypes.length} types, ${governments.length} governments`);
+        } catch(err) { 
+          alert('Invalid JSON format'); 
+        }
       };
       reader.readAsText(file);
     };
     input.click();
+  }
+  
+  function showToast(msg) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+  
+  function escapeHtml(str) { 
+    if (!str) return ''; 
+    return str.replace(/[&<>]/g, function(m) { 
+      if (m === '&') return '&amp;'; 
+      if (m === '<') return '&lt;'; 
+      if (m === '>') return '&gt;'; 
+      return m; 
+    });
   }
   
   // ==================== INIT ====================
@@ -628,13 +1019,16 @@
     document.getElementById('addPlaceBtn').addEventListener('click', showAddPlaceModal);
     document.getElementById('importLocBtn').addEventListener('click', importData);
     document.getElementById('exportLocBtn').addEventListener('click', exportData);
+    document.getElementById('mobileToggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
     
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         if (currentPlaceId) {
-          const place = places.find(p => p.id === currentPlaceId);
+          const place = getPlaceById(currentPlaceId);
           if (place) {
             if (btn.getAttribute('data-tab') === 'view') renderViewTab(place);
             else renderEditTab(place);
@@ -643,12 +1037,16 @@
       });
     });
     
-    document.getElementById('mobileToggle').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('collapsed');
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'stillwaters_characters' || e.key === 'stillwaters_ranks' || e.key === 'stillwaters_namelists') {
+        loadAllData();
+        if (currentPlaceId) {
+          const place = getPlaceById(currentPlaceId);
+          if (place) renderViewTab(place);
+        }
+      }
     });
   }
-  
-  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
   
   init();
 </script>
