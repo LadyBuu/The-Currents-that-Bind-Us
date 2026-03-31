@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Still Waters — Rank Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="stillwaters.css">
+  <style>
+    /* rank-specific layout */
+    .rank-container {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 20px 40px;
+    }
+    
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 28px;
+      padding: 16px 20px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      align-items: center;
+    }
+    
+    .toolbar .btn-group {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+    
+    .rank-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px;
+    }
+    
+    .rank-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      transition: all 0.2s;
+      overflow: hidden;
+    }
+    
+    .rank-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    
+    .rank-header {
+      padding: 16px 20px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    .rank-name-field {
+      flex: 2;
+      min-width: 160px;
+    }
+    
+    .rank-name-field input {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      padding: 8px 12px;
+      width: 100%;
+    }
+    
+    .rank-priority {
+      width: 100px;
+    }
+    
+    .rank-priority input {
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    .delete-rank {
+      background: rgba(139,64,64,0.2);
+      border-color: var(--danger);
+      color: var(--danger-lt);
+      padding: 6px 14px;
+    }
+    
+    .delete-rank:hover {
+      background: rgba(139,64,64,0.5);
+    }
+    
+    .rank-body {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      color: var(--dim);
+    }
+    
+    .symbol-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .symbol-selector label {
+      font-size: 0.7rem;
+    }
+    
+    .symbol-dropdown {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      padding: 6px 10px;
+      font-size: 1.2rem;
+      font-family: monospace;
+      border-radius: 6px;
+      color: var(--accent);
+      cursor: pointer;
+    }
+    
+    .symbol-preview {
+      font-size: 1.4rem;
+      background: var(--bg);
+      padding: 4px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      min-width: 60px;
+      text-align: center;
+    }
+    
+    .location-assignment {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+    }
+    
+    .loc-type-group, .loc-specific-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .loc-type-group select, .loc-specific-group select {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      padding: 6px 8px;
+    }
+    
+    .info-note {
+      font-size: 0.65rem;
+      color: var(--tmut);
+      margin-top: 4px;
+      font-style: italic;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--dim);
+      font-family: 'Cinzel', serif;
+      border: 1px dashed var(--border2);
+      border-radius: 20px;
+      background: var(--bg2);
+    }
+    
+    .modal-select-location {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    @media (max-width: 700px) {
+      .rank-grid { grid-template-columns: 1fr; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .toolbar .btn-group { margin-left: 0; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="title">⚔️ RANK MANAGER</div>
+  <div style="flex:1"></div>
+  <button id="importBtn" class="tb-btn">📂 Import JSON</button>
+  <button id="exportBtn" class="tb-btn primary">💾 Export JSON</button>
+</div>
+
+<div class="rank-container">
+  <div class="toolbar">
+    <button id="addRankBtn" class="btn primary">+ Add New Rank</button>
+    <div class="btn-group">
+      <span class="tb-sep"></span>
+      <span class="text-dim" style="font-size:0.7rem;">⚡ Priority: lower number = higher rank</span>
+    </div>
+  </div>
+  
+  <div id="ranksGrid" class="rank-grid">
+    <!-- dynamic rank cards appear here -->
+  </div>
+</div>
+
+<script>
+  // --------------------------------------------------------------
+  // RANK DATA STRUCTURE (compatible with shared JSON across tools)
+  // --------------------------------------------------------------
+  // Each rank object:
+  // {
+  //   id: string (unique),
+  //   name: string,
+  //   priority: number (1 = highest),
+  //   numbered: boolean,
+  //   symbol: string (from allowed symbols list),
+  //   locationType: string | null (e.g., "country", "district", "town", "compound")
+  //   locationId: string | null (specific location UUID or name, stored as identifier)
+  // }
+  // --------------------------------------------------------------
+  
+  // ----- FULL LIST OF SYMBOLS (as provided) -----
+  const SYMBOLS = [
+    "🜲", "✪", "🟊", "◎", "◉", "◍", "⊕", "✦", "✧", "⫷", "⟁", "▲", "▽", "■", "▥", "▣", "❖", 
+    "🝔", "🞜", "⟐", "❖", "♡", "✿", "❀", "❆", "🜋", "ⴾ", "⦚", "⌇", "≋", "ᨒ"
+  ];
+  
+  // ----- LOCATION TYPES & SAMPLE LOCATIONS (pulled from locations structure) -----
+  // To simulate real location data, we'll store a default location catalog.
+  // In the real ecosystem, these would be loaded from Locations.html data.
+  // For consistency across editors, we keep a shared locationRegistry.
+  let locationTypes = ["country", "district", "town", "compound", "sanctuary", "stronghold"];
+  let locationsDB = []; // each: { id, name, type }
+  
+  // Initialize with sample locations (so rank assignment is meaningful)
+  function initSampleLocations() {
+    locationsDB = [
+      { id: "loc_1", name: "Caloellle", type: "country" },
+      { id: "loc_2", name: "Straecia", type: "country" },
+      { id: "loc_3", name: "Tonga", type: "district" },
+      { id: "loc_4", name: "Matukia", type: "district" },
+      { id: "loc_5", name: "Arenui", type: "town" },
+      { id: "loc_6", name: "Paretu", type: "town" },
+      { id: "loc_7", name: "K-Awa", type: "compound" },
+      { id: "loc_8", name: "K-Ahi", type: "compound" },
+      { id: "loc_9", name: "Sanctum of the Tide", type: "sanctuary" },
+      { id: "loc_10", name: "Grey Citadel", type: "stronghold" }
+    ];
+  }
+  
+  // ----- RANK STORAGE (global ranks array) -----
+  let ranks = [];
+  
+  // Helper: generate short unique id
+  function generateId() {
+    return 'rank_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+  }
+  
+  // Load ranks from localStorage (shared across tools)
+  function loadRanksFromStorage() {
+    const stored = localStorage.getItem('stillwaters_ranks');
+    if (stored) {
+      try {
+        ranks = JSON.parse(stored);
+        // validation: ensure each rank has required fields
+        ranks = ranks.filter(r => r && typeof r === 'object').map(r => ({
+          id: r.id || generateId(),
+          name: r.name || "Untitled Rank",
+          priority: typeof r.priority === 'number' ? r.priority : 10,
+          numbered: r.numbered === true,
+          symbol: SYMBOLS.includes(r.symbol) ? r.symbol : "✦",
+          locationType: r.locationType || null,
+          locationId: r.locationId || null
+        }));
+      } catch(e) { ranks = []; }
+    }
+    if (!ranks.length) {
+      // create two default ranks as examples
+      ranks = [
+        {
+          id: generateId(),
+          name: "High King",
+          priority: 1,
+          numbered: false,
+          symbol: "👑",
+          locationType: "country",
+          locationId: "loc_1"
+        },
+        {
+          id: generateId(),
+          name: "Prince",
+          priority: 2,
+          numbered: true,
+          symbol: "✪",
+          locationType: "country",
+          locationId: null
+        },
+        {
+          id: generateId(),
+          name: "District Warden",
+          priority: 3,
+          numbered: false,
+          symbol: "⚔️",
+          locationType: "district",
+          locationId: "loc_3"
+        }
+      ];
+      saveRanksToStorage();
+    }
+  }
+  
+  // Save ranks to localStorage (global shared)
+  function saveRanksToStorage() {
+    localStorage.setItem('stillwaters_ranks', JSON.stringify(ranks));
+  }
+  
+  // ----- Helper to get location name from ID -----
+  function getLocationNameById(locId, typeFilter = null) {
+    if (!locId) return null;
+    const loc = locationsDB.find(l => l.id === locId);
+    if (!loc) return null;
+    if (typeFilter && loc.type !== typeFilter) return null;
+    return loc.name;
+  }
+  
+  // get filtered locations by type
+  function getLocationsByType(type) {
+    if (!type) return [];
+    return locationsDB.filter(loc => loc.type === type);
+  }
+  
+  // ----- RENDER ALL RANK CARDS -----
+  function renderRanks() {
+    const grid = document.getElementById('ranksGrid');
+    if (!ranks.length) {
+      grid.innerHTML = `<div class="empty-state">✨ No ranks defined. Click "Add New Rank" to create hierarchies.<br>Ranks define titles like King, Prince, Chief, etc.</div>`;
+      return;
+    }
+    
+    grid.innerHTML = ranks.map(rank => {
+      // Build location-specific dropdowns
+      const availableTypes = [...new Set(locationsDB.map(l => l.type))];
+      const selectedLocationType = rank.locationType || "";
+      
+      // location dropdown options based on current type
+      let locationOptions = '<option value="">— None —</option>';
+      if (rank.locationType) {
+        const matchingLocs = getLocationsByType(rank.locationType);
+        locationOptions = '<option value="">— None —</option>' + 
+          matchingLocs.map(loc => `<option value="${loc.id}" ${rank.locationId === loc.id ? 'selected' : ''}>${loc.name}</option>`).join('');
+      } else {
+        // if no type selected, show generic hint
+        locationOptions = '<option value="" disabled>Select a location type first</option>';
+      }
+      
+      // symbol dropdown HTML
+      const symbolOptions = SYMBOLS.map(sym => `<option value="${sym}" ${rank.symbol === sym ? 'selected' : ''}>${sym}</option>`).join('');
+      
+      return `
+        <div class="rank-card" data-rank-id="${rank.id}">
+          <div class="rank-header">
+            <div class="rank-name-field">
+              <input type="text" class="rank-name-input" value="${escapeHtml(rank.name)}" placeholder="Rank name (e.g., High King)" data-field="name">
+            </div>
+            <div class="rank-priority">
+              <input type="number" class="rank-priority-input" value="${rank.priority}" step="1" min="1" max="1000" data-field="priority" style="width:100%">
+            </div>
+            <button class="btn delete-rank" data-action="delete">🗑️ Delete</button>
+          </div>
+          <div class="rank-body">
+            <div class="toggle-row">
+              <label class="toggle-label">
+                <input type="checkbox" class="rank-numbered-toggle" ${rank.numbered ? 'checked' : ''} data-field="numbered">
+                <span>🔢 Numbered rank</span>
+                <span class="info-note" style="display:inline; margin-left:6px;">(e.g., 1st Prince, 2nd Prince)</span>
+              </label>
+            </div>
+            
+            <div class="symbol-selector">
+              <label>🏷️ Title symbol:</label>
+              <select class="symbol-dropdown" data-field="symbol">
+                ${symbolOptions}
+              </select>
+              <div class="symbol-preview">${rank.symbol}</div>
+            </div>
+            
+            <div class="location-assignment">
+              <div class="loc-type-group">
+                <label>📍 Location Type:</label>
+                <select class="location-type-select" data-field="locationType">
+                  <option value="">— No restriction —</option>
+                  ${availableTypes.map(type => `<option value="${type}" ${rank.locationType === type ? 'selected' : ''}>${type.charAt(0).toUpperCase() + type.slice(1)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="loc-specific-group">
+                <label>🗺️ Specific ${rank.locationType ? rank.locationType : 'Location'}:</label>
+                <select class="location-id-select" data-field="locationId" ${!rank.locationType ? 'disabled' : ''}>
+                  ${locationOptions}
+                </select>
+              </div>
+              <div class="info-note">Assigning a location is optional. If selected, rank applies to that specific ${rank.locationType || 'place'}.</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    // attach event listeners after rendering
+    document.querySelectorAll('.rank-card').forEach(card => {
+      const rankId = card.getAttribute('data-rank-id');
+      const rank = ranks.find(r => r.id === rankId);
+      if (!rank) return;
+      
+      // name input
+      const nameInput = card.querySelector('.rank-name-input');
+      nameInput.addEventListener('change', (e) => { rank.name = e.target.value; saveRanksToStorage(); renderRanks(); });
+      
+      // priority input
+      const priorityInput = card.querySelector('.rank-priority-input');
+      priorityInput.addEventListener('change', (e) => { rank.priority = parseInt(e.target.value) || 10; saveRanksToStorage(); renderRanks(); });
+      
+      // numbered checkbox
+      const numberedToggle = card.querySelector('.rank-numbered-toggle');
+      numberedToggle.addEventListener('change', (e) => { rank.numbered = e.target.checked; saveRanksToStorage(); renderRanks(); });
+      
+      // symbol dropdown
+      const symbolSelect = card.querySelector('.symbol-dropdown');
+      symbolSelect.addEventListener('change', (e) => { rank.symbol = e.target.value; saveRanksToStorage(); renderRanks(); });
+      
+      // location type change
+      const locTypeSelect = card.querySelector('.location-type-select');
+      const locIdSelect = card.querySelector('.location-id-select');
+      locTypeSelect.addEventListener('change', (e) => {
+        const newType = e.target.value || null;
+        rank.locationType = newType;
+        if (newType === null) {
+          rank.locationId = null;
+        } else {
+          // if previous locationId doesn't match new type, reset it
+          const matching = getLocationsByType(newType);
+          if (!matching.some(l => l.id === rank.locationId)) {
+            rank.locationId = null;
+          }
+        }
+        saveRanksToStorage();
+        renderRanks(); // re-render to refresh location dropdown
+      });
+      
+      if (locIdSelect) {
+        locIdSelect.addEventListener('change', (e) => {
+          rank.locationId = e.target.value || null;
+          saveRanksToStorage();
+          renderRanks();
+        });
+      }
+      
+      // delete button
+      const delBtn = card.querySelector('.delete-rank');
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete rank "${rank.name}"?`)) {
+          ranks = ranks.filter(r => r.id !== rankId);
+          saveRanksToStorage();
+          renderRanks();
+        }
+      });
+    });
+  }
+  
+  // helper: escape html
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+      return c;
+    });
+  }
+  
+  // ----- ADD NEW RANK -----
+  function addNewRank() {
+    const newRank = {
+      id: generateId(),
+      name: "New Rank",
+      priority: ranks.length ? Math.max(...ranks.map(r => r.priority), 0) + 1 : 5,
+      numbered: false,
+      symbol: "✦",
+      locationType: null,
+      locationId: null
+    };
+    ranks.push(newRank);
+    saveRanksToStorage();
+    renderRanks();
+  }
+  
+  // ----- IMPORT JSON (shared format)-----
+  function importJSON() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          if (Array.isArray(imported)) {
+            // validate structure: each item must have at least name, priority
+            const validRanks = imported.filter(item => item && typeof item === 'object' && typeof item.name === 'string');
+            if (validRanks.length) {
+              ranks = validRanks.map(r => ({
+                id: r.id || generateId(),
+                name: r.name || "Unnamed",
+                priority: typeof r.priority === 'number' ? r.priority : 10,
+                numbered: r.numbered === true,
+                symbol: SYMBOLS.includes(r.symbol) ? r.symbol : "✦",
+                locationType: r.locationType || null,
+                locationId: r.locationId || null
+              }));
+              saveRanksToStorage();
+              renderRanks();
+              showToast(`Imported ${ranks.length} ranks successfully.`);
+            } else {
+              alert("Invalid rank data: no valid rank objects found.");
+            }
+          } else {
+            alert("JSON must contain an array of ranks.");
+          }
+        } catch(err) {
+          alert("Error parsing JSON: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+  
+  // ----- EXPORT JSON (global format)-----
+  function exportJSON() {
+    const dataStr = JSON.stringify(ranks, null, 2);
+    const blob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `stillwaters_ranks_${new Date().toISOString().slice(0,19)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Ranks exported.");
+  }
+  
+  // simple toast (use base toast from stillwaters if available, else makeshift)
+  function showToast(msg) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+  
+  // ----- synchronization with external location data (real location file)
+  // For robust integration, we listen to storage events and also can load locations from global store.
+  // We'll also attempt to read from 'stillwaters_locations' if present (shared across tools)
+  function loadExternalLocations() {
+    const storedLocs = localStorage.getItem('stillwaters_locations');
+    if (storedLocs) {
+      try {
+        const parsed = JSON.parse(storedLocs);
+        if (Array.isArray(parsed) && parsed.length) {
+          locationsDB = parsed.map(l => ({
+            id: l.id || l.name?.toLowerCase().replace(/\s/g,'_'),
+            name: l.name || "Unnamed",
+            type: l.type || "unknown"
+          }));
+          return;
+        }
+      } catch(e) {}
+    }
+    // fallback to sample locations
+    initSampleLocations();
+  }
+  
+  // Listen for location updates from other tabs (cross-tool sync)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'stillwaters_locations') {
+      loadExternalLocations();
+      renderRanks(); // refresh dropdowns
+    }
+    if (e.key === 'stillwaters_ranks') {
+      // if changes happen in another tab, reload ranks
+      loadRanksFromStorage();
+      renderRanks();
+    }
+  });
+  
+  // ----- Initialize -----
+  function init() {
+    loadExternalLocations();   // load from shared location DB or sample
+    loadRanksFromStorage();    // loads ranks from localStorage
+    renderRanks();
+    
+    document.getElementById('addRankBtn').addEventListener('click', addNewRank);
+    document.getElementById('importBtn').addEventListener('click', importJSON);
+    document.getElementById('exportBtn').addEventListener('click', exportJSON);
+    
+    // optional: save ranks to storage whenever a change occurs (already in each event)
+  }
+  
+  init();
+</script>
+</body>
+</html>
