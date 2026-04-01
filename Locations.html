@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Still Waters — Locations Manager</title>
+  <title>Locations Manager</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="stillwaters.css">
@@ -327,16 +327,16 @@
 <body>
 
 <div class="topbar">
-  <div class="title">🗺️ LOCATIONS MANAGER</div>
+  <div class="title">LOCATIONS MANAGER</div>
   <div style="flex:1"></div>
-  <button id="importLocBtn" class="tb-btn">📂 Import JSON</button>
-  <button id="exportLocBtn" class="tb-btn primary">💾 Export JSON</button>
+  <button id="importLocBtn" class="tb-btn">Import JSON</button>
+  <button id="exportLocBtn" class="tb-btn primary">Export JSON</button>
 </div>
 
 <div class="locations-app">
   <div class="sidebar">
     <div class="sidebar-header">
-      <h3>🏛️ PLACE HIERARCHY</h3>
+      <h3>PLACE HIERARCHY</h3>
       <div class="sidebar-actions">
         <button id="addTypeBtn" class="btn small">+ Add Type</button>
         <button id="addGovBtn" class="btn small">+ Add Government</button>
@@ -348,9 +348,9 @@
   
   <div class="main-panel">
     <div class="panel-tabs">
-      <button class="tab-btn active" data-tab="view">📖 View</button>
-      <button class="tab-btn" data-tab="edit">✏️ Edit</button>
-      <button class="tab-btn" data-tab="manage">⚙️ Manage Types</button>
+      <button class="tab-btn active" data-tab="view">View</button>
+      <button class="tab-btn" data-tab="edit">Edit</button>
+      <button class="tab-btn" data-tab="manage">Manage Types</button>
     </div>
     <div class="panel-content" id="panelContent">
       <div class="empty-selection">Select a place from the list to view or edit details</div>
@@ -536,7 +536,7 @@
       <div class="view-section">
         <h2 style="margin-bottom:20px;">${escapeHtml(place.displayName)}</h2>
         <div class="warning-badge">
-          🔒 Permanent ID: <code class="id-display">${place.id}</code><br>
+          Permanent ID: <code class="id-display">${place.id}</code><br>
           <small>Characters reference this ID. You can rename this place freely without breaking any links.</small>
         </div>
         <div class="info-grid">
@@ -574,7 +574,7 @@
     const content = `
       <div class="edit-section">
         <div class="warning-badge">
-          🔒 Permanent ID: <code class="id-display">${place.id}</code>
+          Permanent ID: <code class="id-display">${place.id}</code>
         </div>
         <form id="editPlaceForm">
           <div class="form-group">
@@ -605,8 +605,8 @@
           </div>
           <div class="form-group"><label>Notes</label><textarea id="editNotes" rows="3">${place.notes || ''}</textarea></div>
           <div class="action-buttons">
-            <button type="submit" class="btn primary">💾 Save</button>
-            <button type="button" id="deletePlaceBtn" class="btn danger">🗑️ Delete</button>
+            <button type="submit" class="btn primary">Save</button>
+            <button type="button" id="deletePlaceBtn" class="btn danger">Delete</button>
           </div>
         </form>
       </div>
@@ -668,7 +668,7 @@
       <div class="manage-section">
         <div class="management-section">
           <div class="management-header">
-            <h3>🏷️ Location Types</h3>
+            <h3>Location Types</h3>
             <button id="addLocationTypeBtn" class="btn small primary">+ Add Type</button>
           </div>
           <div class="management-list" id="locationTypesList">
@@ -678,7 +678,7 @@
         
         <div class="management-section">
           <div class="management-header">
-            <h3>🏛️ Government Types</h3>
+            <h3>Government Types</h3>
             <button id="addGovernmentTypeBtn" class="btn small primary">+ Add Government</button>
           </div>
           <div class="management-list" id="governmentsList">
@@ -713,9 +713,9 @@
           <input type="number" id="edit-priority-${type.id}" value="${type.priority}" placeholder="Priority" style="width:80px;">
         </div>
         <div class="management-item-actions">
-          <button class="btn small" data-action="edit" data-type-id="${type.id}" data-type="location">✏️ Edit</button>
-          <button class="btn small danger" data-action="delete" data-type-id="${type.id}" data-type="location">🗑️ Delete</button>
-          <button class="btn small success" data-action="save" data-type-id="${type.id}" data-type="location" style="display:none;">💾 Save</button>
+          <button class="btn small" data-action="edit" data-type-id="${type.id}" data-type="location">Edit</button>
+          <button class="btn small danger" data-action="delete" data-type-id="${type.id}" data-type="location">Delete</button>
+          <button class="btn small success" data-action="save" data-type-id="${type.id}" data-type="location" style="display:none;">Save</button>
           <button class="btn small" data-action="cancel" data-type-id="${type.id}" data-type="location" style="display:none;">Cancel</button>
         </div>
       </div>
@@ -738,9 +738,9 @@
           <input type="number" id="edit-priority-${gov.id}" value="${gov.priority}" placeholder="Priority" style="width:80px;">
         </div>
         <div class="management-item-actions">
-          <button class="btn small" data-action="edit" data-gov-id="${gov.id}" data-type="government">✏️ Edit</button>
-          <button class="btn small danger" data-action="delete" data-gov-id="${gov.id}" data-type="government">🗑️ Delete</button>
-          <button class="btn small success" data-action="save" data-gov-id="${gov.id}" data-type="government" style="display:none;">💾 Save</button>
+          <button class="btn small" data-action="edit" data-gov-id="${gov.id}" data-type="government">Edit</button>
+          <button class="btn small danger" data-action="delete" data-gov-id="${gov.id}" data-type="government">Delete</button>
+          <button class="btn small success" data-action="save" data-gov-id="${gov.id}" data-type="government" style="display:none;">Save</button>
           <button class="btn small" data-action="cancel" data-gov-id="${gov.id}" data-type="government" style="display:none;">Cancel</button>
         </div>
       </div>
