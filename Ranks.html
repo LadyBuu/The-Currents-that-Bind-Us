@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Still Waters — Rank Manager</title>
+  <title>Rank Manager</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="stillwaters.css">
@@ -37,10 +37,10 @@
 <body>
 
 <div class="topbar">
-  <div class="title">⚔️ RANK MANAGER</div>
+  <div class="title">RANK MANAGER</div>
   <div style="flex:1"></div>
-  <button id="importBtn" class="tb-btn">📂 Import JSON</button>
-  <button id="exportBtn" class="tb-btn primary">💾 Export JSON</button>
+  <button id="importBtn" class="tb-btn">Import JSON</button>
+  <button id="exportBtn" class="tb-btn primary">Export JSON</button>
 </div>
 
 <div class="rank-container">
@@ -48,7 +48,7 @@
     <button id="addRankBtn" class="btn primary">+ Add New Rank</button>
     <div class="btn-group">
       <span class="tb-sep"></span>
-      <span class="text-dim" style="font-size:0.7rem;">⚡ Priority: lower number = higher rank</span>
+      <span class="text-dim" style="font-size:0.7rem;">Priority: lower number = higher rank</span>
     </div>
   </div>
   
@@ -74,7 +74,7 @@
     }
   };
   
-  const SYMBOLS = ["🜲", "✪", "🟊", "◎", "◉", "◍", "⊕", "✦", "✧", "⫷", "⟁", "▲", "▽", "■", "▥", "▣", "❖", "🝔", "🞜", "⟐", "❖", "♡", "✿", "❀", "❆", "🜋", "ⴾ", "⦚", "⌇", "≋", "ᨒ"];
+  const SYMBOLS = ["🜲", "🜋", "🜍", "🜏", "🝆", "🝕", "🝪", "✪", "✦", "✧", "🟊", "⚝", "𖤓", "✴", "✺", "✵", "🞡", "🞢", "🞭", "◎", "◉", "◍", "◯", "⊙", "◐", "◑", "◒", "◓", "◖", "◗", "⨀", "⚬", "⊕", "🜨", "⚲", "⌾", "⫷", "⟁", "⟐", "⌇", "≋", "⌁", "▲", "▽", "■", "▥", "▣", "⬔", "⬖", "⟡", "⬟", "⎔", "⌘", "❖", "♡", "✿", "❀", "❆", "❦", "❧", "☙", "❝", "❞", "☯", "⚜", "✠", "ⴾ", "⦚", "⳩", "𐃏", "⛤", "ᨒ", "꤮", "𑁍", "𖦹", "⚴", "⚷", "⚳", "☉", "☾", "☋"];
   
   function generateId() { return 'rank_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
   
@@ -106,7 +106,7 @@
       masterData.data.ranks = [
         { id: generateId(), name: "High King", priority: 1, numbered: false, symbol: "✦", locationType: "country", locationId: null },
         { id: generateId(), name: "Prince", priority: 2, numbered: true, symbol: "✪", locationType: "country", locationId: null },
-        { id: generateId(), name: "District Warden", priority: 3, numbered: false, symbol: "⚔️", locationType: "district", locationId: null }
+        { id: generateId(), name: "District Warden", priority: 3, numbered: false, symbol: "✪️", locationType: "district", locationId: null }
       ];
       saveMasterData();
     }
@@ -157,7 +157,7 @@
     const ranks = getRanks();
     
     if (!ranks.length) {
-      grid.innerHTML = `<div class="empty-state">✨ No ranks defined. Click "Add New Rank" to create hierarchies.<br>Ranks define titles like King, Prince, Chief, etc.</div>`;
+      grid.innerHTML = `<div class="empty-state">No ranks defined. Click "Add New Rank" to create hierarchies.<br>Ranks define titles like King, Prince, Chief, etc.</div>`;
       return;
     }
     
@@ -176,19 +176,19 @@
           <div class="rank-priority">
             <input type="number" class="rank-priority-input" value="${rank.priority}" step="1" min="1" max="1000" data-field="priority">
           </div>
-          <button class="btn delete-rank" data-action="delete">🗑️ Delete</button>
+          <button class="btn delete-rank" data-action="delete">Delete</button>
         </div>
         <div class="rank-body">
           <div class="toggle-row">
             <label class="toggle-label">
               <input type="checkbox" class="rank-numbered-toggle" ${rank.numbered ? 'checked' : ''} data-field="numbered">
-              <span>🔢 Numbered rank</span>
+              <span>Numbered rank</span>
               <span class="info-note" style="display:inline; margin-left:6px;">(e.g., 1st Prince, 2nd Prince)</span>
             </label>
           </div>
           
           <div class="symbol-selector">
-            <label>🏷️ Title symbol:</label>
+            <label>Title symbol:</label>
             <select class="symbol-dropdown" data-field="symbol">
               ${SYMBOLS.map(sym => `<option value="${sym}" ${rank.symbol === sym ? 'selected' : ''}>${sym}</option>`).join('')}
             </select>
@@ -197,7 +197,7 @@
           
           <div class="location-assignment">
             <div class="loc-type-group">
-              <label>📍 Location Type:</label>
+              <label>Location Type:</label>
               <select class="location-type-select" data-field="locationType">
                 <option value="">— No restriction —</option>
                 ${locationTypes.map(type => `<option value="${type}" ${rank.locationType === type ? 'selected' : ''}>${type}</option>`).join('')}
