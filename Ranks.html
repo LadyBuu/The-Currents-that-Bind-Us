@@ -8,30 +8,197 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="stillwaters.css">
   <style>
-    .rank-container { max-width: 1400px; margin: 20px auto; padding: 0 20px 40px; }
-    .toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; padding: 16px 20px; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; align-items: center; }
-    .toolbar .btn-group { display: flex; gap: 8px; margin-left: auto; }
-    .rank-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
-    .rank-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; transition: all 0.2s; overflow: hidden; }
-    .rank-card:hover { border-color: var(--accent); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-    .rank-header { padding: 16px 20px; background: var(--bg3); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-    .rank-name-field { flex: 2; min-width: 160px; }
-    .rank-name-field input { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600; background: var(--bg); border: 1px solid var(--border2); padding: 8px 12px; width: 100%; }
-    .rank-priority { width: 100px; }
-    .rank-priority input { text-align: center; font-weight: bold; }
-    .delete-rank { background: rgba(139,64,64,0.2); border-color: var(--danger); color: var(--danger-lt); padding: 6px 14px; }
-    .rank-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 18px; }
-    .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-    .toggle-label { display: flex; align-items: center; gap: 10px; font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.05em; color: var(--dim); }
-    .symbol-selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .symbol-dropdown { background: var(--bg); border: 1px solid var(--border2); padding: 6px 10px; font-size: 1.2rem; font-family: monospace; border-radius: 6px; color: var(--accent); cursor: pointer; }
-    .symbol-preview { font-size: 1.4rem; background: var(--bg); padding: 4px 12px; border-radius: 8px; border: 1px solid var(--border); min-width: 60px; text-align: center; }
-    .location-assignment { display: flex; flex-direction: column; gap: 12px; padding-top: 8px; border-top: 1px dashed var(--border); }
-    .loc-type-group, .loc-specific-group { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-    .info-note { font-size: 0.65rem; color: var(--tmut); margin-top: 4px; font-style: italic; }
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--dim); font-family: 'Cinzel', serif; border: 1px dashed var(--border2); border-radius: 20px; background: var(--bg2); }
-    .warning-badge { background: rgba(200,112,64,0.2); border: 1px solid var(--warn); border-radius: 4px; padding: 8px 12px; font-size: 0.7rem; margin-bottom: 16px; }
-    @media (max-width: 700px) { .rank-grid { grid-template-columns: 1fr; } .toolbar { flex-direction: column; align-items: stretch; } .toolbar .btn-group { margin-left: 0; justify-content: center; } }
+    .rank-container {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 20px 40px;
+    }
+    
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 28px;
+      padding: 16px 20px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      align-items: center;
+    }
+    
+    .toolbar .btn-group {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+    
+    .rank-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px;
+    }
+    
+    .rank-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      transition: all 0.2s;
+      overflow: hidden;
+    }
+    
+    .rank-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    
+    .rank-header {
+      padding: 16px 20px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    .rank-name-field {
+      flex: 2;
+      min-width: 160px;
+    }
+    
+    .rank-name-field input {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      padding: 8px 12px;
+      width: 100%;
+      border-radius: 6px;
+      color: var(--text);
+    }
+    
+    .rank-priority {
+      width: 100px;
+    }
+    
+    .rank-priority input {
+      text-align: center;
+      font-weight: bold;
+      padding: 8px;
+      border-radius: 6px;
+    }
+    
+    .delete-rank {
+      background: rgba(139,64,64,0.2);
+      border-color: var(--danger);
+      color: var(--danger-lt);
+      padding: 6px 14px;
+    }
+    
+    .rank-body {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      color: var(--dim);
+    }
+    
+    .symbol-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .symbol-dropdown {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      padding: 6px 10px;
+      font-size: 1.2rem;
+      font-family: monospace;
+      border-radius: 6px;
+      color: var(--accent);
+      cursor: pointer;
+    }
+    
+    .symbol-preview {
+      font-size: 1.4rem;
+      background: var(--bg);
+      padding: 4px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      min-width: 60px;
+      text-align: center;
+    }
+    
+    .location-assignment {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+    }
+    
+    .loc-type-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .info-note {
+      font-size: 0.65rem;
+      color: var(--tmut);
+      margin-top: 4px;
+      font-style: italic;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--dim);
+      font-family: 'Cinzel', serif;
+      border: 1px dashed var(--border2);
+      border-radius: 20px;
+      background: var(--bg2);
+    }
+    
+    .btn.small {
+      padding: 4px 10px;
+      font-size: 0.65rem;
+    }
+    
+    @media (max-width: 700px) {
+      .rank-grid {
+        grid-template-columns: 1fr;
+      }
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .toolbar .btn-group {
+        margin-left: 0;
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 <body>
@@ -57,7 +224,6 @@
 
 <script>
   // ==================== UNIFIED DATA STRUCTURE ====================
-  // This matches the SAME structure used by Locations Manager and Character Manager
   let masterData = {
     version: "2.0",
     lastUpdated: new Date().toISOString(),
@@ -76,15 +242,16 @@
   
   const SYMBOLS = ["🜲", "🜋", "🜍", "🜏", "🝆", "🝕", "🝪", "✪", "✦", "✧", "🟊", "⚝", "𖤓", "✴", "✺", "✵", "🞡", "🞢", "🞭", "◎", "◉", "◍", "◯", "⊙", "◐", "◑", "◒", "◓", "◖", "◗", "⨀", "⚬", "⊕", "🜨", "⚲", "⌾", "⫷", "⟁", "⟐", "⌇", "≋", "⌁", "▲", "▽", "■", "▥", "▣", "⬔", "⬖", "⟡", "⬟", "⎔", "⌘", "❖", "♡", "✿", "❀", "❆", "❦", "❧", "☙", "❝", "❞", "☯", "⚜", "✠", "ⴾ", "⦚", "⳩", "𐃏", "⛤", "ᨒ", "꤮", "𑁍", "𖦹", "⚴", "⚷", "⚳", "☉", "☾", "☋"];
   
-  function generateId() { return 'rank_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
+  function generateId() { 
+    return 'rank_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); 
+  }
   
-  // ==================== LOAD FROM UNIFIED STORAGE ====================
+  // ==================== LOAD FROM STORAGE ====================
   function loadMasterData() {
     const stored = localStorage.getItem('stillwaters_master');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        // Merge with existing structure to preserve all data
         masterData = {
           version: parsed.version || "2.0",
           lastUpdated: parsed.lastUpdated || new Date().toISOString(),
@@ -100,9 +267,13 @@
             currentYear: parsed.data?.currentYear || 1250
           }
         };
-      } catch(e) { console.error('Error loading master data', e); }
-    } else {
-      // Initialize with default ranks if none exist
+      } catch(e) { 
+        console.error('Error loading master data', e); 
+      }
+    }
+    
+    // Ensure ranks array exists
+    if (!masterData.data.ranks || !masterData.data.ranks.length) {
       masterData.data.ranks = [
         { id: generateId(), name: "High King", priority: 1, numbered: false, symbol: "✦", locationType: null, locationId: null },
         { id: generateId(), name: "Prince", priority: 2, numbered: true, symbol: "✪", locationType: null, locationId: null },
@@ -121,31 +292,39 @@
   }
   
   // ==================== RANK OPERATIONS ====================
-  function getRanks() { return masterData.data.ranks; }
-  function setRanks(ranks) { masterData.data.ranks = ranks; saveMasterData(); }
+  function getRanks() { 
+    return masterData.data.ranks || []; 
+  }
+  
+  function setRanks(ranks) { 
+    masterData.data.ranks = ranks; 
+    saveMasterData(); 
+  }
   
   function addRank() {
+    const ranks = getRanks();
+    const maxPriority = ranks.length ? Math.max(...ranks.map(r => r.priority), 0) : 0;
     const newRank = {
       id: generateId(),
       name: "New Rank",
-      priority: getRanks().length ? Math.max(...getRanks().map(r => r.priority), 0) + 1 : 5,
+      priority: maxPriority + 1,
       numbered: false,
       symbol: "✦",
       locationType: null,
       locationId: null
     };
-    const ranks = getRanks();
     ranks.push(newRank);
     setRanks(ranks);
     renderRanks();
+    showToast('Rank added');
   }
   
   function deleteRank(rankId) {
-    if (confirm('Delete this rank?')) {
-      const ranks = getRanks().filter(r => r.id !== rankId);
-      setRanks(ranks);
-      renderRanks();
-    }
+    if (!confirm('Delete this rank?')) return;
+    const ranks = getRanks().filter(r => r.id !== rankId);
+    setRanks(ranks);
+    renderRanks();
+    showToast('Rank deleted');
   }
   
   function updateRank(rankId, updates) {
@@ -159,21 +338,24 @@
     const locationTypes = [];
     const typeMap = new Map();
     
-    // Get all unique location type display names from places
-    masterData.data.places.forEach(place => {
-      const type = masterData.data.locationTypes.find(t => t.id === place.typeId);
-      if (type && !typeMap.has(type.displayName)) {
-        typeMap.set(type.displayName, type);
-        locationTypes.push(type);
-      }
-    });
+    if (masterData.data.places && masterData.data.locationTypes) {
+      masterData.data.places.forEach(place => {
+        const type = masterData.data.locationTypes.find(t => t.id === place.typeId);
+        if (type && !typeMap.has(type.displayName)) {
+          typeMap.set(type.displayName, type);
+          locationTypes.push(type);
+        }
+      });
+    }
     
-    return locationTypes.sort((a, b) => a.priority - b.priority);
+    return locationTypes.sort((a, b) => (a.priority || 999) - (b.priority || 999));
   }
   
   // ==================== RENDER ====================
   function renderRanks() {
     const grid = document.getElementById('ranksGrid');
+    if (!grid) return;
+    
     const ranks = getRanks();
     const locationTypes = getLocationTypesFromPlaces();
     
@@ -182,9 +364,10 @@
       return;
     }
     
-    grid.innerHTML = ranks.map(rank => {
-      // Sort ranks by priority for display
-      const sortedRanks = [...ranks].sort((a, b) => a.priority - b.priority);
+    // Sort ranks by priority for display
+    const sortedRanks = [...ranks].sort((a, b) => (a.priority || 999) - (b.priority || 999));
+    
+    grid.innerHTML = sortedRanks.map(rank => {
       const rankNumber = sortedRanks.findIndex(r => r.id === rank.id) + 1;
       
       return `
@@ -194,7 +377,7 @@
             <input type="text" class="rank-name-input" value="${escapeHtml(rank.name)}" placeholder="Rank name" data-field="name">
           </div>
           <div class="rank-priority">
-            <input type="number" class="rank-priority-input" value="${rank.priority}" step="1" min="1" max="1000" data-field="priority">
+            <input type="number" class="rank-priority-input" value="${rank.priority || rankNumber * 5}" step="1" min="1" max="1000" data-field="priority">
           </div>
           <button class="btn delete-rank" data-action="delete">Delete</button>
         </div>
@@ -212,22 +395,22 @@
             <select class="symbol-dropdown" data-field="symbol">
               ${SYMBOLS.map(sym => `<option value="${sym}" ${rank.symbol === sym ? 'selected' : ''}>${sym}</option>`).join('')}
             </select>
-            <div class="symbol-preview">${rank.symbol}</div>
+            <div class="symbol-preview">${rank.symbol || '✦'}</div>
           </div>
           
           <div class="location-assignment">
             <div class="loc-type-group">
-              <label>Location Type (from Locations Manager):</label>
+              <label>Location Type:</label>
               <select class="location-type-select" data-field="locationType">
                 <option value="">— No restriction —</option>
-                ${locationTypes.map(type => `<option value="${type.displayName}" ${rank.locationType === type.displayName ? 'selected' : ''}>${type.displayName} (Priority ${type.priority})</option>`).join('')}
+                ${locationTypes.map(type => `<option value="${type.displayName}" ${rank.locationType === type.displayName ? 'selected' : ''}>${escapeHtml(type.displayName)} (Priority ${type.priority})</option>`).join('')}
               </select>
             </div>
-            ${locationTypes.length === 0 ? '<div class="info-note" style="color:var(--warn);">No location types found. Create locations in Locations Manager first.</div>' : '<div class="info-note">Assigning a location type is optional. If selected, rank applies to that specific place type.</div>'}
+            ${locationTypes.length === 0 ? '<div class="info-note" style="color:var(--warn);">No location types found. Create locations in Locations Manager first.</div>' : '<div class="info-note">Assigning a location type is optional.</div>'}
           </div>
           
           <div class="info-note" style="margin-top:8px; border-top:1px solid var(--border2); padding-top:8px;">
-            Rank ID: <code style="font-size:0.6rem;">${rank.id}</code> | Position: ${rankNumber} of ${ranks.length}
+            Rank ID: <code style="font-size:0.6rem;">${rank.id.substring(0, 8)}...</code> | Position: ${rankNumber} of ${ranks.length}
           </div>
         </div>
       </div>
@@ -237,39 +420,67 @@
     document.querySelectorAll('.rank-card').forEach(card => {
       const rankId = card.getAttribute('data-rank-id');
       
-      card.querySelector('.rank-name-input')?.addEventListener('change', (e) => {
-        updateRank(rankId, { name: e.target.value });
-      });
+      const nameInput = card.querySelector('.rank-name-input');
+      if (nameInput) {
+        nameInput.addEventListener('change', (e) => {
+          updateRank(rankId, { name: e.target.value });
+        });
+      }
       
-      card.querySelector('.rank-priority-input')?.addEventListener('change', (e) => {
-        updateRank(rankId, { priority: parseInt(e.target.value) || 10 });
-      });
+      const priorityInput = card.querySelector('.rank-priority-input');
+      if (priorityInput) {
+        priorityInput.addEventListener('change', (e) => {
+          updateRank(rankId, { priority: parseInt(e.target.value) || 10 });
+        });
+      }
       
-      card.querySelector('.rank-numbered-toggle')?.addEventListener('change', (e) => {
-        updateRank(rankId, { numbered: e.target.checked });
-      });
+      const numberedToggle = card.querySelector('.rank-numbered-toggle');
+      if (numberedToggle) {
+        numberedToggle.addEventListener('change', (e) => {
+          updateRank(rankId, { numbered: e.target.checked });
+        });
+      }
       
-      card.querySelector('.symbol-dropdown')?.addEventListener('change', (e) => {
-        updateRank(rankId, { symbol: e.target.value });
-      });
+      const symbolDropdown = card.querySelector('.symbol-dropdown');
+      if (symbolDropdown) {
+        symbolDropdown.addEventListener('change', (e) => {
+          updateRank(rankId, { symbol: e.target.value });
+        });
+      }
       
-      card.querySelector('.location-type-select')?.addEventListener('change', (e) => {
-        updateRank(rankId, { locationType: e.target.value || null });
-      });
+      const locationSelect = card.querySelector('.location-type-select');
+      if (locationSelect) {
+        locationSelect.addEventListener('change', (e) => {
+          updateRank(rankId, { locationType: e.target.value || null });
+        });
+      }
       
-      card.querySelector('[data-action="delete"]')?.addEventListener('click', () => deleteRank(rankId));
+      const deleteBtn = card.querySelector('[data-action="delete"]');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => deleteRank(rankId));
+      }
     });
   }
   
-  // ==================== IMPORT/EXPORT (UNIFIED) ====================
+  // ==================== IMPORT/EXPORT ====================
   function exportData() {
-    // Export the COMPLETE unified master data
     const exportObj = {
       type: "master",
       version: "2.0",
       exportDate: new Date().toISOString(),
-      data: masterData.data
+      data: {
+        characters: masterData.data.characters,
+        locationTypes: masterData.data.locationTypes,
+        governments: masterData.data.governments,
+        places: masterData.data.places,
+        ranks: masterData.data.ranks,
+        roles: masterData.data.roles,
+        nameLists: masterData.data.nameLists,
+        cityNameParts: masterData.data.cityNameParts,
+        currentYear: masterData.data.currentYear
+      }
     };
+    
     const dataStr = JSON.stringify(exportObj, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const a = document.createElement('a');
@@ -277,7 +488,7 @@
     a.download = `stillwaters_master_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast('Complete master data exported (ranks + locations + all data)');
+    showToast('Complete master data exported');
   }
   
   function importData() {
@@ -286,134 +497,91 @@
     input.accept = 'application/json';
     input.onchange = (e) => {
       const file = e.target.files[0];
+      if (!file) return;
+      
       const reader = new FileReader();
       reader.onload = (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
-          let importedMaster = null;
+          let importedRanks = null;
+          let importedPlaces = null;
+          let importedLocationTypes = null;
+          let importedGovernments = null;
           
           // Case 1: New unified format with type "master"
           if (imported.type === "master" && imported.data) {
-            importedMaster = imported;
+            importedRanks = imported.data.ranks;
+            importedPlaces = imported.data.places;
+            importedLocationTypes = imported.data.locationTypes;
+            importedGovernments = imported.data.governments;
+            if (imported.data.currentYear) masterData.data.currentYear = imported.data.currentYear;
           }
-          // Case 2: Old format with just data object
-          else if (imported.data && (imported.data.ranks || imported.data.places)) {
-            importedMaster = imported;
-          }
-          // Case 3: Direct array of ranks (old rank manager export)
+          // Case 2: Direct array of ranks
           else if (Array.isArray(imported)) {
-            // This is an old rank-only export, merge into master
-            importedMaster = {
-              type: "master",
-              version: "2.0",
-              data: {
-                ...masterData.data,
-                ranks: imported
-              }
-            };
+            importedRanks = imported;
           }
-          // Case 4: Object with ranks array
+          // Case 3: Object with ranks array
           else if (imported.ranks && Array.isArray(imported.ranks)) {
-            importedMaster = {
-              type: "master",
-              version: "2.0",
-              data: {
-                ...masterData.data,
-                ranks: imported.ranks
-              }
-            };
+            importedRanks = imported.ranks;
           }
-          // Case 5: Locations export format
+          // Case 4: Locations export format
           else if (imported.places || imported.locationTypes) {
-            importedMaster = {
-              type: "master",
-              version: "2.0",
-              data: {
-                ...masterData.data,
-                places: imported.places || masterData.data.places,
-                locationTypes: imported.locationTypes || masterData.data.locationTypes,
-                governments: imported.governments || masterData.data.governments
-              }
-            };
+            importedPlaces = imported.places;
+            importedLocationTypes = imported.locationTypes;
+            importedGovernments = imported.governments;
+          }
+          // Case 5: Has data property
+          else if (imported.data) {
+            importedRanks = imported.data.ranks;
+            importedPlaces = imported.data.places;
+            importedLocationTypes = imported.data.locationTypes;
+            importedGovernments = imported.data.governments;
           }
           
-          if (importedMaster && importedMaster.data) {
-            let ranksImported = 0;
-            let placesImported = 0;
-            let typesImported = 0;
-            let govsImported = 0;
-            
-            // Merge ranks
-            if (importedMaster.data.ranks && Array.isArray(importedMaster.data.ranks)) {
-              const currentRanks = masterData.data.ranks;
-              importedMaster.data.ranks.forEach(importedRank => {
-                const existingIndex = currentRanks.findIndex(r => r.id === importedRank.id);
-                if (existingIndex !== -1) {
-                  // Update existing rank
-                  currentRanks[existingIndex] = { ...currentRanks[existingIndex], ...importedRank };
-                } else {
-                  // Add new rank (ensure it has an ID)
-                  if (!importedRank.id) importedRank.id = generateId();
-                  currentRanks.push(importedRank);
-                }
-                ranksImported++;
-              });
-            }
-            
-            // Merge places
-            if (importedMaster.data.places && Array.isArray(importedMaster.data.places)) {
-              const currentPlaces = masterData.data.places;
-              importedMaster.data.places.forEach(importedPlace => {
-                const existingIndex = currentPlaces.findIndex(p => p.id === importedPlace.id);
-                if (existingIndex !== -1) {
-                  currentPlaces[existingIndex] = { ...currentPlaces[existingIndex], ...importedPlace };
-                } else {
-                  if (!importedPlace.id) importedPlace.id = 'loc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-                  currentPlaces.push(importedPlace);
-                }
-                placesImported++;
-              });
-            }
-            
-            // Merge location types
-            if (importedMaster.data.locationTypes && Array.isArray(importedMaster.data.locationTypes)) {
-              const currentTypes = masterData.data.locationTypes;
-              importedMaster.data.locationTypes.forEach(importedType => {
-                const existingIndex = currentTypes.findIndex(t => t.id === importedType.id);
-                if (existingIndex !== -1) {
-                  currentTypes[existingIndex] = { ...currentTypes[existingIndex], ...importedType };
-                } else {
-                  if (!importedType.id) importedType.id = 'type_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-                  currentTypes.push(importedType);
-                }
-                typesImported++;
-              });
-            }
-            
-            // Merge governments
-            if (importedMaster.data.governments && Array.isArray(importedMaster.data.governments)) {
-              const currentGovs = masterData.data.governments;
-              importedMaster.data.governments.forEach(importedGov => {
-                const existingIndex = currentGovs.findIndex(g => g.id === importedGov.id);
-                if (existingIndex !== -1) {
-                  currentGovs[existingIndex] = { ...currentGovs[existingIndex], ...importedGov };
-                } else {
-                  if (!importedGov.id) importedGov.id = 'gov_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-                  currentGovs.push(importedGov);
-                }
-                govsImported++;
-              });
-            }
-            
-            // Merge current year
-            if (importedMaster.data.currentYear) {
-              masterData.data.currentYear = importedMaster.data.currentYear;
-            }
-            
-            saveMasterData();
-            renderRanks();
-            
-            let message = `Imported: ${ranksImported} ranks, ${placesImported} places, ${typesImported} types, ${govsImported} governments`;
-            showToast(message);
-            
-  
+          let changes = 0;
+          
+          // Merge ranks
+          if (importedRanks && Array.isArray(importedRanks) && importedRanks.length) {
+            const currentRanks = masterData.data.ranks;
+            importedRanks.forEach(importedRank => {
+              const existingIndex = currentRanks.findIndex(r => r.id === importedRank.id);
+              if (existingIndex !== -1) {
+                currentRanks[existingIndex] = { ...currentRanks[existingIndex], ...importedRank };
+              } else {
+                if (!importedRank.id) importedRank.id = generateId();
+                currentRanks.push(importedRank);
+              }
+              changes++;
+            });
+          }
+          
+          // Merge places
+          if (importedPlaces && Array.isArray(importedPlaces) && importedPlaces.length) {
+            const currentPlaces = masterData.data.places;
+            importedPlaces.forEach(importedPlace => {
+              const existingIndex = currentPlaces.findIndex(p => p.id === importedPlace.id);
+              if (existingIndex !== -1) {
+                currentPlaces[existingIndex] = { ...currentPlaces[existingIndex], ...importedPlace };
+              } else {
+                if (!importedPlace.id) importedPlace.id = 'loc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                currentPlaces.push(importedPlace);
+              }
+            });
+          }
+          
+          // Merge location types
+          if (importedLocationTypes && Array.isArray(importedLocationTypes) && importedLocationTypes.length) {
+            const currentTypes = masterData.data.locationTypes;
+            importedLocationTypes.forEach(importedType => {
+              const existingIndex = currentTypes.findIndex(t => t.id === importedType.id);
+              if (existingIndex !== -1) {
+                currentTypes[existingIndex] = { ...currentTypes[existingIndex], ...importedType };
+              } else {
+                if (!importedType.id) importedType.id = 'type_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                currentTypes.push(importedType);
+              }
+            });
+          }
+          
+          // Merge governments
+          if (importedGovernments && 
