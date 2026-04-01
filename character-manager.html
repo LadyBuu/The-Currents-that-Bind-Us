@@ -816,30 +816,150 @@ const TABS = [
   },
   
   {
-    id: 'relations',
-    label: 'Relations',
-    render: function(container, person) {
-      // Placeholder - Add your full Relations tab HTML here
-      container.innerHTML = `
-        <div class="tab-relations">
-          <div class="empty-msg" style="padding: 40px;">
-            <h4 style="margin-bottom: 16px;">Family & Relationships</h4>
-            <p style="margin-bottom: 12px;">Coming soon: Manage parents, siblings, partners, and friends.</p>
-            <p>This tab will include:</p>
-            <ul style="margin-top: 12px; text-align: left; display: inline-block;">
-              <li>• Parents and children</li>
-              <li>• Siblings</li>
-              <li>• Romantic partners</li>
-              <li>• Friendships</li>
-            </ul>
+  id: 'relations',
+  label: 'Relations',
+  render: function(container, person) {
+    if (!person) {
+      container.innerHTML = `<div class="empty-msg">Select a character to manage relations</div>`;
+      return;
+    }
+    
+    // Get all relationship data
+    const rel = DATA.relationships[activeId] || {
+      ongoing: [], ended: [], widowed: [], friends: [], 
+      friendDetails: {}, details: {}
+    };
+    const partners = getPartners(activeId);
+    const friends = getFriends(activeId);
+    const parents = [];
+    if (rel.father) parents.push({ id: rel.father, relation: 'Father' });
+    if (rel.mother) parents.push({ id: rel.mother, relation: 'Mother' });
+    const children = getChildren(activeId);
+    const siblings = getSiblings(activeId);
+    
+    container.innerHTML = `
+      <div class="tab-relations">
+        <!-- ====================== PARENTS SECTION ====================== -->
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span>Parents</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <div id="parents-list"></div>
+              <div class="add-row" style="margin-top:12px;">
+                <div id="father-picker" style="flex:1;"></div>
+                <button class="primary" style="margin-left:8px;" onclick="setParent('father')">Set Father</button>
+              </div>
+              <div class="add-row" style="margin-top:8px;">
+                <div id="mother-picker" style="flex:1;"></div>
+                <button class="primary" style="margin-left:8px;" onclick="setParent('mother')">Set Mother</button>
+              </div>
+            </div>
           </div>
         </div>
-      `;
-    },
-    refresh: function() {
-      // Nothing to refresh yet
-    }
+        
+        <!-- ====================== PARTNERS SECTION ====================== -->
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span>Partners (${partners.length})</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <div id="partners-list"></div>
+              <div class="add-row" style="margin-top:12px;">
+                <div id="partner-picker" style="flex:1;"></div>
+                <button class="primary" style="margin-left:8px;" onclick="addPartner()">Add Partner</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- ====================== CHILDREN SECTION ====================== -->
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span>Children (${children.length})</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <div id="children-list"></div>
+              <div class="add-row" style="margin-top:12px;">
+                <div id="child-picker" style="flex:1;"></div>
+                <button class="primary" style="margin-left:8px;" onclick="addChild()">Add Child</button>
+              </div>
+              <button class="primary" style="margin-top:8px; width:100%;" onclick="generateNewborn()">✨ Generate Newborn</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- ====================== SIBLINGS SECTION ====================== -->
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span>Siblings (${siblings.length})</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <div id="siblings-list"></div>
+              <div class="add-row" style="margin-top:12px;">
+                <div id="sibling-picker" style="flex:1;"></div>
+                <button class="primary" style="margin-left:8px;" onclick="addSibling()">Add Sibling</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- ====================== FRIENDS SECTION ====================== -->
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span>Friends (${friends.length})</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <div id="friends-list"></div>
+              <div class="add-row" style="margin-top:12px;">
+                <div id="friend-picker" style="flex:1;"></div>
+                <button class="primary" style="margin-left:8px;" onclick="addFriend()">Add Friend</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Render all the lists after container is populated
+    setTimeout(() => {
+      renderParentsList(parents);
+      renderPartnersList(partners, rel);
+      renderChildrenList(children);
+      renderSiblingsList(siblings);
+      renderFriendsList(friends);
+      setupPickers();
+    }, 0);
   },
+  refresh: function() {
+    // Refresh all lists when data changes
+    if (!activeId) return;
+    const rel = DATA.relationships[activeId] || {};
+    const partners = getPartners(activeId);
+    const friends = getFriends(activeId);
+    const parents = [];
+    if (rel.father) parents.push({ id: rel.father, relation: 'Father' });
+    if (rel.mother) parents.push({ id: rel.mother, relation: 'Mother' });
+    const children = getChildren(activeId);
+    const siblings = getSiblings(activeId);
+    
+    renderParentsList(parents);
+    renderPartnersList(partners, rel);
+    renderChildrenList(children);
+    renderSiblingsList(siblings);
+    renderFriendsList(friends);
+  }
+},
   
   {
     id: 'professions',
@@ -867,7 +987,854 @@ const TABS = [
     }
   }
 ];
+// ====================== RELATIONSHIP HELPER FUNCTIONS ======================
+// Add these functions right after the TABS array and before initTabs()
 
+function getPartners(id) {
+  const rel = DATA.relationships[id] || {};
+  const partners = [];
+  (rel.ongoing || []).forEach(pid => { 
+    const personId = getPersonId(pid);
+    if (personId && DATA.people[personId]) partners.push({ id: pid, status: 'ongoing' }); 
+  });
+  (rel.ended || []).forEach(pid => { 
+    const personId = getPersonId(pid);
+    if (personId && DATA.people[personId]) partners.push({ id: pid, status: 'ended' }); 
+  });
+  (rel.widowed || []).forEach(pid => { 
+    const personId = getPersonId(pid);
+    if (personId && DATA.people[personId]) partners.push({ id: pid, status: 'widowed' }); 
+  });
+  return partners;
+}
+
+function getFriends(id) {
+  const rel = DATA.relationships[id] || {};
+  const friends = [];
+  (rel.friends || []).forEach(fid => {
+    const friendId = getPersonId(fid);
+    if (friendId && DATA.people[friendId]) {
+      const details = rel.friendDetails?.[fid] || { level: 'friend', metYear: null, notes: '' };
+      friends.push({ id: fid, level: details.level || 'friend', metYear: details.metYear, notes: details.notes || '' });
+    }
+  });
+  return friends;
+}
+
+function getChildren(id) {
+  const personId = getPersonId(id);
+  const children = [];
+  Object.keys(DATA.people).forEach(childId => {
+    const rel = DATA.relationships[childId] || {};
+    const fatherId = rel.father ? getPersonId(rel.father) : null;
+    const motherId = rel.mother ? getPersonId(rel.mother) : null;
+    if (fatherId === personId || motherId === personId) {
+      children.push({ id: childId });
+    }
+  });
+  return children.sort((a, b) => {
+    const aDisplay = getPersonDisplay(a.id);
+    const bDisplay = getPersonDisplay(b.id);
+    return (aDisplay?.birthYear || 0) - (bDisplay?.birthYear || 0);
+  });
+}
+
+function getSiblings(id) {
+  const personId = getPersonId(id);
+  const current = getPersonDisplay(personId);
+  if (!current) return [];
+  const siblings = [];
+  Object.keys(DATA.people).forEach(siblingId => {
+    if (siblingId === personId) return;
+    const sibling = getPersonDisplay(siblingId);
+    if (!sibling) return;
+    const shareFather = (current.father && sibling.father && getPersonId(sibling.father) === getPersonId(current.father));
+    const shareMother = (current.mother && sibling.mother && getPersonId(sibling.mother) === getPersonId(current.mother));
+    if (shareFather || shareMother) siblings.push(siblingId);
+  });
+  return siblings.sort((a, b) => {
+    const aDisplay = getPersonDisplay(a);
+    const bDisplay = getPersonDisplay(b);
+    return (aDisplay?.birthYear || 0) - (bDisplay?.birthYear || 0);
+  });
+}
+
+function ageAtBirth(parent, child) {
+  const parentDisplay = getPersonDisplay(parent);
+  const childDisplay = getPersonDisplay(child);
+  if (!parentDisplay?.birthYear || !childDisplay?.birthYear) return null;
+  return childDisplay.birthYear - parentDisplay.birthYear;
+}
+
+// ====================== RENDER FUNCTIONS ======================
+
+function renderParentsList(parents) {
+  const container = document.getElementById('parents-list');
+  if (!container) return;
+  
+  if (!parents.length) {
+    container.innerHTML = '<div style="color:var(--dim); font-style:italic; padding:6px;">No parents assigned</div>';
+    return;
+  }
+  
+  container.innerHTML = parents.map(p => {
+    const pd = getPersonDisplay(p.id);
+    if (!pd) return '';
+    const ageAtBirthValue = p.id === activeId ? null : ageAtBirth(p.id, activeId);
+    return `
+      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px; margin-bottom:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <a onclick="selectPerson('${p.id}')" style="color:var(--accent); cursor:pointer;">${escapeHtml(pd.name)}</a>
+            <span style="margin-left:8px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">${p.relation}</span>
+            ${ageAtBirthValue ? `<div style="font-size:0.65rem; color:var(--accent);">was ${ageAtBirthValue} at birth</div>` : ''}
+          </div>
+          <button class="danger" style="padding:2px 8px; font-size:0.6rem;" onclick="event.stopPropagation(); removeParent('${p.relation.toLowerCase()}')">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPartnersList(partners, rel) {
+  const container = document.getElementById('partners-list');
+  if (!container) return;
+  
+  if (!partners.length) {
+    container.innerHTML = '<div style="color:var(--dim); font-style:italic; padding:6px;">No partners</div>';
+    return;
+  }
+  
+  const statusColors = { ongoing: '#4a9060', ended: '#8b4040', widowed: '#8f5e5e' };
+  
+  container.innerHTML = partners.map(p => {
+    const pd = getPersonDisplay(p.id);
+    if (!pd) return '';
+    const details = rel.details?.[p.id] || {};
+    const relationshipWarning = checkRelationship(activeId, p.id);
+    return `
+      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px; margin-bottom:6px; cursor:pointer;" onclick="openPartnerDetails('${p.id}')">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <a onclick="event.stopPropagation(); selectPerson('${p.id}')" style="color:var(--accent); cursor:pointer;">${escapeHtml(pd.name)}</a>
+            <span style="margin-left:8px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:${statusColors[p.status]}20; border:1px solid ${statusColors[p.status]};">${p.status}</span>
+            ${details.type ? `<span style="margin-left:4px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">${details.type}</span>` : ''}
+            ${details.startYear ? `<span style="margin-left:4px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">📅 ${details.startYear}${details.endYear ? `-${details.endYear}` : ''}</span>` : ''}
+            ${relationshipWarning ? `<span style="margin-left:4px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:#8b404020; border:1px solid #8b4040;">⚠️ ${relationshipWarning}</span>` : ''}
+          </div>
+          <button class="danger" style="padding:2px 8px; font-size:0.6rem;" onclick="event.stopPropagation(); removePartnerById('${p.id}')">✕</button>
+        </div>
+        ${details.notes ? `<div style="font-size:0.65rem; color:var(--dim); margin-top:4px;">📝 ${escapeHtml(details.notes)}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderChildrenList(children) {
+  const container = document.getElementById('children-list');
+  if (!container) return;
+  
+  if (!children.length) {
+    container.innerHTML = '<div style="color:var(--dim); font-style:italic; padding:6px;">No children</div>';
+    return;
+  }
+  
+  container.innerHTML = children.map(c => {
+    const cd = getPersonDisplay(c.id);
+    if (!cd) return '';
+    const ageAtBirthValue = ageAtBirth(activeId, c.id);
+    return `
+      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px; margin-bottom:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <a onclick="selectPerson('${c.id}')" style="color:var(--accent); cursor:pointer;">${escapeHtml(cd.name)}</a>
+            <span style="margin-left:8px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">Child</span>
+            ${cd.age ? `<span style="font-size:0.65rem; color:var(--dim); margin-left:4px;">age ${cd.age}</span>` : ''}
+            ${ageAtBirthValue ? `<div style="font-size:0.65rem; color:var(--accent);">you were ${ageAtBirthValue} at birth</div>` : ''}
+          </div>
+          <button class="danger" style="padding:2px 8px; font-size:0.6rem;" onclick="event.stopPropagation(); removeChild('${c.id}')">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSiblingsList(siblings) {
+  const container = document.getElementById('siblings-list');
+  if (!container) return;
+  
+  if (!siblings.length) {
+    container.innerHTML = '<div style="color:var(--dim); font-style:italic; padding:6px;">No siblings</div>';
+    return;
+  }
+  
+  container.innerHTML = siblings.map(s => {
+    const sd = getPersonDisplay(s);
+    if (!sd) return '';
+    return `
+      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px; margin-bottom:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <a onclick="selectPerson('${s}')" style="color:var(--accent); cursor:pointer;">${escapeHtml(sd.name)}</a>
+            <span style="margin-left:8px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">Sibling</span>
+            ${sd.age ? `<span style="font-size:0.65rem; color:var(--dim); margin-left:4px;">age ${sd.age}</span>` : ''}
+          </div>
+          <button class="danger" style="padding:2px 8px; font-size:0.6rem;" onclick="event.stopPropagation(); removeSibling('${s}')">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderFriendsList(friends) {
+  const container = document.getElementById('friends-list');
+  if (!container) return;
+  
+  if (!friends.length) {
+    container.innerHTML = '<div style="color:var(--dim); font-style:italic; padding:6px;">No friends</div>';
+    return;
+  }
+  
+  const levelLabels = { acquaintance: 'Acquaintance', friend: 'Friend', close: 'Close Friend', best: 'Best Friend' };
+  const levelColors = { acquaintance: '#8aabb8', friend: '#6a9ece', close: '#aa88dd', best: '#bb88ee' };
+  
+  container.innerHTML = friends.map(f => {
+    const fd = getPersonDisplay(f.id);
+    if (!fd) return '';
+    return `
+      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px; margin-bottom:6px; cursor:pointer;" onclick="openFriendDetails('${f.id}')">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <a onclick="event.stopPropagation(); selectPerson('${f.id}')" style="color:var(--accent); cursor:pointer;">${escapeHtml(fd.name)}</a>
+            <span style="margin-left:8px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:${levelColors[f.level]}20; border:1px solid ${levelColors[f.level]};">${levelLabels[f.level]}</span>
+            ${f.metYear ? `<span style="margin-left:4px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">📅 ${f.metYear}</span>` : ''}
+          </div>
+          <button class="danger" style="padding:2px 8px; font-size:0.6rem;" onclick="event.stopPropagation(); removeFriendById('${f.id}')">✕</button>
+        </div>
+        ${f.notes ? `<div style="font-size:0.65rem; color:var(--dim); margin-top:4px;">📝 ${escapeHtml(f.notes)}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ====================== PICKER FUNCTIONS ======================
+
+function setupPickers() {
+  // Father picker (male only)
+  const fatherPicker = document.getElementById('father-picker');
+  if (fatherPicker) {
+    fatherPicker.innerHTML = makePicker('father-pick', 'Select father...', 
+      p => p.display.gender === 'male' && p.id !== activeId && !p.display.deceased);
+  }
+  
+  // Mother picker (female only)
+  const motherPicker = document.getElementById('mother-picker');
+  if (motherPicker) {
+    motherPicker.innerHTML = makePicker('mother-pick', 'Select mother...', 
+      p => p.display.gender === 'female' && p.id !== activeId && !p.display.deceased);
+  }
+  
+  // Partner picker (adults only)
+  const partnerPicker = document.getElementById('partner-picker');
+  if (partnerPicker) {
+    partnerPicker.innerHTML = makePicker('partner-pick', 'Add partner...', 
+      p => p.id !== activeId && p.display.stage !== 'infant' && p.display.stage !== 'toddler' && p.display.stage !== 'child');
+  }
+  
+  // Child picker
+  const childPicker = document.getElementById('child-picker');
+  if (childPicker) {
+    childPicker.innerHTML = makePicker('child-pick', 'Add child...', 
+      p => p.id !== activeId);
+  }
+  
+  // Sibling picker
+  const siblingPicker = document.getElementById('sibling-picker');
+  if (siblingPicker) {
+    siblingPicker.innerHTML = makePicker('sibling-pick', 'Add sibling...', 
+      p => p.id !== activeId);
+  }
+  
+  // Friend picker (adults only)
+  const friendPicker = document.getElementById('friend-picker');
+  if (friendPicker) {
+    friendPicker.innerHTML = makePicker('friend-pick', 'Add friend...', 
+      p => p.id !== activeId && p.display.stage !== 'infant' && p.display.stage !== 'toddler' && p.display.stage !== 'child');
+  }
+}
+
+function makePicker(id, placeholder, filterFn) {
+  const cand = Object.keys(DATA.people)
+    .map(i => ({ id: i, display: getPersonDisplay(i) }))
+    .filter(p => filterFn ? filterFn(p) : p.id !== activeId)
+    .sort((a, b) => (b.display.birthYear || 0) - (a.display.birthYear || 0));
+  
+  function makeItems(l) {
+    if (!l.length) return '<div style="padding:8px; color:var(--dim);">No candidates</div>';
+    return l.map(p => {
+      const d = p.display;
+      const g = d.gender === 'male' ? '♂' : d.gender === 'female' ? '♀' : '·';
+      const a = d.age ? `age ${d.age}` : '';
+      const by = d.birthYear ? `b.${d.birthYear}` : '';
+      const meta = [by, a].filter(Boolean).join(' · ');
+      return `<div class="picker-item" data-pid="${p.id}" data-stable-id="${d.stableId || ''}" style="display:flex; align-items:center; gap:8px; padding:6px 10px; cursor:pointer; border-bottom:1px solid var(--border2);">
+        <span style="color:var(--dim);">${g}</span>
+        <span style="flex:1;">${escapeHtml(d.name)}${d.deceased ? ' ✝' : ''}</span>
+        <span style="font-size:0.6rem; color:var(--dim);">${escapeHtml(meta)}</span>
+      </div>`;
+    }).join('');
+  }
+  
+  return `<div class="picker-wrap" id="pw-${id}" style="position:relative;">
+    <button class="picker-btn" onclick="togglePicker('${id}')" type="button" style="width:100%; padding:6px 10px; background:var(--bg3); border:1px solid var(--border2); border-radius:4px; cursor:pointer; text-align:left;">
+      <span id="pb-label-${id}" style="color:var(--dim);">${escapeHtml(placeholder)}</span>
+      <span style="float:right;">▼</span>
+    </button>
+    <div class="picker-drop" id="pd-${id}" style="position:absolute; top:100%; left:0; right:0; background:var(--bg2); border:1px solid var(--accent); border-radius:6px; display:none; z-index:1000; max-height:300px; overflow-y:auto;">
+      <div style="padding:8px; border-bottom:1px solid var(--border);">
+        <input placeholder="Search..." oninput="filterPicker('${id}', this.value)" style="width:100%; padding:4px 8px; background:var(--bg); border:1px solid var(--border2); border-radius:4px; color:var(--text);">
+      </div>
+      <div id="pl-${id}" style="max-height:250px; overflow-y:auto;">
+        ${makeItems(cand)}
+      </div>
+    </div>
+  </div>`;
+}
+
+function togglePicker(id) {
+  const drop = document.getElementById('pd-' + id);
+  if (!drop) return;
+  const isOpen = drop.style.display === 'block';
+  document.querySelectorAll('.picker-drop').forEach(d => d.style.display = 'none');
+  drop.style.display = isOpen ? 'none' : 'block';
+}
+
+function filterPicker(id, q) {
+  const list = document.getElementById('pl-' + id);
+  if (!list) return;
+  const queryLower = q.toLowerCase();
+  list.querySelectorAll('.picker-item').forEach(item => {
+    const name = item.querySelector('span:nth-child(2)')?.textContent || '';
+    item.style.display = (!queryLower || name.toLowerCase().includes(queryLower)) ? '' : 'none';
+  });
+}
+
+function getSelectedPickerValue(id) {
+  const label = document.getElementById(`pb-label-${id}`);
+  if (!label) return null;
+  return label.getAttribute('data-selected') || null;
+}
+
+// Close pickers when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.picker-wrap')) {
+    document.querySelectorAll('.picker-drop').forEach(d => d.style.display = 'none');
+  }
+});
+
+document.addEventListener('click', e => {
+  const item = e.target.closest('.picker-item[data-pid]');
+  if (!item) return;
+  const drop = item.closest('.picker-drop');
+  if (!drop) return;
+  const pid = item.getAttribute('data-pid');
+  const pickerId = drop.id.replace('pd-', '');
+  const label = document.getElementById('pb-label-' + pickerId);
+  if (label) {
+    const d = getPersonDisplay(pid);
+    label.textContent = d.name + (d.deceased ? ' ✝' : '');
+    label.style.color = 'var(--text)';
+    label.setAttribute('data-selected', pid);
+  }
+  drop.style.display = 'none';
+});
+
+// ====================== RELATIONSHIP ACTIONS ======================
+
+function setParent(role) {
+  const pickerId = role === 'father' ? 'father-pick' : 'mother-pick';
+  const selectedValue = getSelectedPickerValue(pickerId);
+  if (!selectedValue) { showToast('Select a person first'); return; }
+  
+  const parentId = getPersonId(selectedValue);
+  if (!parentId) { showToast('Invalid selection'); return; }
+  
+  const parentStableId = getPersonDisplay(parentId).stableId;
+  if (!parentStableId) { showToast('Invalid parent data'); return; }
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  if (!DATA.relationships[parentId]) DATA.relationships[parentId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  
+  if (role === 'father') DATA.relationships[activeId].father = parentStableId;
+  else DATA.relationships[activeId].mother = parentStableId;
+  
+  if (!DATA.relationships[parentId].children) DATA.relationships[parentId].children = [];
+  const childStableId = getPersonDisplay(activeId).stableId;
+  if (!DATA.relationships[parentId].children.includes(childStableId)) {
+    DATA.relationships[parentId].children.push(childStableId);
+  }
+  
+  saveData();
+  refreshCurrentTab();
+  showToast(`Set ${role} to ${getPersonDisplay(parentId).name}`);
+}
+
+function removeParent(role) {
+  if (!confirm(`Remove ${role}?`)) return;
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  if (role === 'father') delete DATA.relationships[activeId].father;
+  else delete DATA.relationships[activeId].mother;
+  saveData();
+  refreshCurrentTab();
+  showToast(`${role.charAt(0).toUpperCase() + role.slice(1)} removed`);
+}
+
+function addPartner() {
+  const selectedValue = getSelectedPickerValue('partner-pick');
+  if (!selectedValue) { showToast('Select a person first'); return; }
+  
+  const partnerId = getPersonId(selectedValue);
+  if (!partnerId) { showToast('Invalid selection'); return; }
+  
+  const myStableId = getPersonDisplay(activeId).stableId || activeId;
+  const partnerStableId = getPersonDisplay(partnerId).stableId || partnerId;
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  if (!DATA.relationships[partnerId]) DATA.relationships[partnerId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  
+  if (!DATA.relationships[activeId].ongoing) DATA.relationships[activeId].ongoing = [];
+  if (!DATA.relationships[activeId].ongoing.includes(partnerStableId)) DATA.relationships[activeId].ongoing.push(partnerStableId);
+  if (!DATA.relationships[activeId].details) DATA.relationships[activeId].details = {};
+  DATA.relationships[activeId].details[partnerStableId] = { type: null, startYear: null, endYear: null, notes: null };
+  
+  if (!DATA.relationships[partnerId].ongoing) DATA.relationships[partnerId].ongoing = [];
+  if (!DATA.relationships[partnerId].ongoing.includes(myStableId)) DATA.relationships[partnerId].ongoing.push(myStableId);
+  if (!DATA.relationships[partnerId].details) DATA.relationships[partnerId].details = {};
+  DATA.relationships[partnerId].details[myStableId] = { type: null, startYear: null, endYear: null, notes: null };
+  
+  saveData();
+  refreshCurrentTab();
+  showToast('Partner added');
+  setTimeout(() => openPartnerDetails(partnerId), 100);
+}
+
+function removePartnerById(partnerId) {
+  if (!confirm('Remove this relationship?')) return;
+  const myStableId = getPersonDisplay(activeId).stableId || activeId;
+  const partnerStableId = getPersonDisplay(partnerId).stableId || partnerId;
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  if (!DATA.relationships[partnerId]) DATA.relationships[partnerId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  
+  DATA.relationships[activeId].ongoing = (DATA.relationships[activeId].ongoing || []).filter(id => id !== partnerStableId);
+  DATA.relationships[activeId].ended = (DATA.relationships[activeId].ended || []).filter(id => id !== partnerStableId);
+  DATA.relationships[activeId].widowed = (DATA.relationships[activeId].widowed || []).filter(id => id !== partnerStableId);
+  if (DATA.relationships[activeId].details) delete DATA.relationships[activeId].details[partnerStableId];
+  
+  DATA.relationships[partnerId].ongoing = (DATA.relationships[partnerId].ongoing || []).filter(id => id !== myStableId);
+  DATA.relationships[partnerId].ended = (DATA.relationships[partnerId].ended || []).filter(id => id !== myStableId);
+  DATA.relationships[partnerId].widowed = (DATA.relationships[partnerId].widowed || []).filter(id => id !== myStableId);
+  if (DATA.relationships[partnerId].details) delete DATA.relationships[partnerId].details[myStableId];
+  
+  saveData();
+  refreshCurrentTab();
+  showToast('Relationship removed');
+}
+
+function addChild() {
+  const selectedValue = getSelectedPickerValue('child-pick');
+  if (!selectedValue) { showToast('Select a person first'); return; }
+  
+  const childId = getPersonId(selectedValue);
+  if (!childId) { showToast('Invalid selection'); return; }
+  
+  if (!DATA.relationships[childId]) DATA.relationships[childId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  const myStableId = getPersonDisplay(activeId).stableId || activeId;
+  const myGender = getPersonDisplay(activeId).gender;
+  
+  if (myGender === 'male' && !DATA.relationships[childId].father) DATA.relationships[childId].father = myStableId;
+  if (myGender === 'female' && !DATA.relationships[childId].mother) DATA.relationships[childId].mother = myStableId;
+  
+  saveData();
+  refreshCurrentTab();
+  showToast(`Added ${getPersonDisplay(childId).name} as child`);
+}
+
+function removeChild(childId) {
+  if (!confirm('Remove this child?')) return;
+  if (!DATA.relationships[childId]) DATA.relationships[childId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  const myStableId = getPersonDisplay(activeId).stableId || activeId;
+  if (DATA.relationships[childId].father === myStableId) delete DATA.relationships[childId].father;
+  if (DATA.relationships[childId].mother === myStableId) delete DATA.relationships[childId].mother;
+  saveData();
+  refreshCurrentTab();
+  showToast('Child removed');
+}
+
+function addSibling() {
+  const selectedValue = getSelectedPickerValue('sibling-pick');
+  if (!selectedValue) { showToast('Select a person first'); return; }
+  
+  const siblingId = getPersonId(selectedValue);
+  if (!siblingId) { showToast('Invalid selection'); return; }
+  
+  const myData = getPersonDisplay(activeId);
+  const siblingData = getPersonDisplay(siblingId);
+  if (!myData || !siblingData) return;
+  
+  if (!myData.father && !myData.mother && !siblingData.father && !siblingData.mother) {
+    showToast('No common parent to establish sibling relationship');
+    return;
+  }
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  if (!DATA.relationships[siblingId]) DATA.relationships[siblingId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  
+  if (!myData.father && siblingData.father) {
+    DATA.relationships[activeId].father = siblingData.father;
+  }
+  if (!myData.mother && siblingData.mother) {
+    DATA.relationships[activeId].mother = siblingData.mother;
+  }
+  if (!siblingData.father && myData.father) {
+    DATA.relationships[siblingId].father = myData.father;
+  }
+  if (!siblingData.mother && myData.mother) {
+    DATA.relationships[siblingId].mother = myData.mother;
+  }
+  
+  saveData();
+  refreshCurrentTab();
+  showToast(`Added ${siblingData.name} as sibling`);
+}
+
+function removeSibling(siblingId) {
+  if (!confirm('Remove this sibling?')) return;
+  // Just refresh - sibling relationships are inferred from shared parents
+  refreshCurrentTab();
+  showToast('Sibling removed');
+}
+
+function addFriend() {
+  const selectedValue = getSelectedPickerValue('friend-pick');
+  if (!selectedValue) { showToast('Select a person first'); return; }
+  
+  const friendId = getPersonId(selectedValue);
+  if (!friendId) { showToast('Invalid selection'); return; }
+  
+  const myStableId = getPersonDisplay(activeId).stableId || activeId;
+  const friendStableId = getPersonDisplay(friendId).stableId || friendId;
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  if (!DATA.relationships[friendId]) DATA.relationships[friendId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  
+  if (!DATA.relationships[activeId].friends) DATA.relationships[activeId].friends = [];
+  if (!DATA.relationships[activeId].friends.includes(friendStableId)) DATA.relationships[activeId].friends.push(friendStableId);
+  if (!DATA.relationships[activeId].friendDetails) DATA.relationships[activeId].friendDetails = {};
+  DATA.relationships[activeId].friendDetails[friendStableId] = { level: 'friend', metYear: DATA.currentYear, notes: '' };
+  
+  if (!DATA.relationships[friendId].friends) DATA.relationships[friendId].friends = [];
+  if (!DATA.relationships[friendId].friends.includes(myStableId)) DATA.relationships[friendId].friends.push(myStableId);
+  if (!DATA.relationships[friendId].friendDetails) DATA.relationships[friendId].friendDetails = {};
+  DATA.relationships[friendId].friendDetails[myStableId] = { level: 'friend', metYear: DATA.currentYear, notes: '' };
+  
+  saveData();
+  refreshCurrentTab();
+  showToast('Friend added');
+  setTimeout(() => openFriendDetails(friendId), 100);
+}
+
+function removeFriendById(friendId) {
+  if (!confirm('Remove this friendship?')) return;
+  const myStableId = getPersonDisplay(activeId).stableId || activeId;
+  const friendStableId = getPersonDisplay(friendId).stableId || friendId;
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  if (!DATA.relationships[friendId]) DATA.relationships[friendId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  
+  DATA.relationships[activeId].friends = (DATA.relationships[activeId].friends || []).filter(id => id !== friendStableId);
+  if (DATA.relationships[activeId].friendDetails) delete DATA.relationships[activeId].friendDetails[friendStableId];
+  
+  DATA.relationships[friendId].friends = (DATA.relationships[friendId].friends || []).filter(id => id !== myStableId);
+  if (DATA.relationships[friendId].friendDetails) delete DATA.relationships[friendId].friendDetails[myStableId];
+  
+  saveData();
+  refreshCurrentTab();
+  showToast('Friend removed');
+}
+
+// ====================== MODAL FUNCTIONS ======================
+
+function openPartnerDetails(partnerId) {
+  const partner = getPersonDisplay(partnerId);
+  if (!partner) return;
+  const rel = DATA.relationships[activeId] || {};
+  const details = rel.details?.[partnerId] || {};
+  
+  let status = 'ongoing';
+  if (rel.ended?.includes(partnerId)) status = 'ended';
+  if (rel.widowed?.includes(partnerId)) status = 'widowed';
+  
+  let modal = document.getElementById('partner-details-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'partner-details-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-title" id="partner-modal-title">Partner Details</div>
+        <div id="partner-modal-content"></div>
+        <div style="display:flex; gap:8px; margin-top:16px;">
+          <button class="primary" style="flex:2;" onclick="savePartnerDetails()">Save</button>
+          <button class="danger" style="flex:1;" onclick="removePartnerById(window.currentEditingPartner)">Remove</button>
+          <button style="flex:1;" onclick="closePartnerModal()">Cancel</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  
+  document.getElementById('partner-modal-title').textContent = `${escapeHtml(partner.name)} - Relationship`;
+  document.getElementById('partner-modal-content').innerHTML = `
+    <div class="form-group">
+      <label>Status</label>
+      <select id="partner-status">
+        <option value="ongoing" ${status === 'ongoing' ? 'selected' : ''}>Ongoing</option>
+        <option value="ended" ${status === 'ended' ? 'selected' : ''}>Ended</option>
+        <option value="widowed" ${status === 'widowed' ? 'selected' : ''}>Widowed</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Type</label>
+      <select id="partner-type">
+        <option value="">—</option>
+        <option value="casual" ${details.type === 'casual' ? 'selected' : ''}>Casual</option>
+        <option value="serious" ${details.type === 'serious' ? 'selected' : ''}>Serious</option>
+        <option value="affair" ${details.type === 'affair' ? 'selected' : ''}>Affair</option>
+        <option value="promised" ${details.type === 'promised' ? 'selected' : ''}>Promised</option>
+        <option value="arranged" ${details.type === 'arranged' ? 'selected' : ''}>Arranged</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Start Year</label>
+        <input type="number" id="partner-start" value="${details.startYear || ''}">
+      </div>
+      <div class="form-group">
+        <label>End Year</label>
+        <input type="number" id="partner-end" value="${details.endYear || ''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="partner-notes" rows="2">${escapeHtml(details.notes || '')}</textarea>
+    </div>
+  `;
+  
+  window.currentEditingPartner = partnerId;
+  modal.style.display = 'flex';
+}
+
+function savePartnerDetails() {
+  if (!window.currentEditingPartner) return;
+  
+  const status = document.getElementById('partner-status').value;
+  const type = document.getElementById('partner-type').value;
+  const startYear = document.getElementById('partner-start').value;
+  const endYear = document.getElementById('partner-end').value;
+  const notes = document.getElementById('partner-notes').value;
+  
+  const myStableId = getPersonDisplay(activeId).stableId || activeId;
+  const partnerStableId = getPersonDisplay(window.currentEditingPartner).stableId || window.currentEditingPartner;
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  if (!DATA.relationships[window.currentEditingPartner]) DATA.relationships[window.currentEditingPartner] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  
+  DATA.relationships[activeId].ongoing = (DATA.relationships[activeId].ongoing || []).filter(id => id !== partnerStableId);
+  DATA.relationships[activeId].ended = (DATA.relationships[activeId].ended || []).filter(id => id !== partnerStableId);
+  DATA.relationships[activeId].widowed = (DATA.relationships[activeId].widowed || []).filter(id => id !== partnerStableId);
+  if (!DATA.relationships[activeId][status]) DATA.relationships[activeId][status] = [];
+  if (!DATA.relationships[activeId][status].includes(partnerStableId)) DATA.relationships[activeId][status].push(partnerStableId);
+  if (!DATA.relationships[activeId].details) DATA.relationships[activeId].details = {};
+  DATA.relationships[activeId].details[partnerStableId] = { type: type || null, startYear: startYear ? parseInt(startYear) : null, endYear: endYear ? parseInt(endYear) : null, notes: notes || null };
+  
+  DATA.relationships[window.currentEditingPartner].ongoing = (DATA.relationships[window.currentEditingPartner].ongoing || []).filter(id => id !== myStableId);
+  DATA.relationships[window.currentEditingPartner].ended = (DATA.relationships[window.currentEditingPartner].ended || []).filter(id => id !== myStableId);
+  DATA.relationships[window.currentEditingPartner].widowed = (DATA.relationships[window.currentEditingPartner].widowed || []).filter(id => id !== myStableId);
+  if (!DATA.relationships[window.currentEditingPartner][status]) DATA.relationships[window.currentEditingPartner][status] = [];
+  if (!DATA.relationships[window.currentEditingPartner][status].includes(myStableId)) DATA.relationships[window.currentEditingPartner][status].push(myStableId);
+  if (!DATA.relationships[window.currentEditingPartner].details) DATA.relationships[window.currentEditingPartner].details = {};
+  DATA.relationships[window.currentEditingPartner].details[myStableId] = { type: type || null, startYear: startYear ? parseInt(startYear) : null, endYear: endYear ? parseInt(endYear) : null, notes: notes || null };
+  
+  saveData();
+  closePartnerModal();
+  refreshCurrentTab();
+  showToast('Relationship updated');
+}
+
+function closePartnerModal() {
+  const modal = document.getElementById('partner-details-modal');
+  if (modal) modal.style.display = 'none';
+  window.currentEditingPartner = null;
+}
+
+function openFriendDetails(friendId) {
+  const friend = getPersonDisplay(friendId);
+  if (!friend) return;
+  const rel = DATA.relationships[activeId] || {};
+  const d = rel.friendDetails?.[friendId] || { level: 'friend', metYear: DATA.currentYear, notes: '' };
+  
+  let modal = document.getElementById('friend-details-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'friend-details-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-title" id="friend-modal-title">Friend Details</div>
+        <div id="friend-modal-content"></div>
+        <div style="display:flex; gap:8px; margin-top:16px;">
+          <button class="primary" style="flex:2;" onclick="saveFriendDetails()">Save</button>
+          <button class="danger" style="flex:1;" onclick="removeFriendById(window.currentEditingFriend)">Remove</button>
+          <button style="flex:1;" onclick="closeFriendModal()">Cancel</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  
+  document.getElementById('friend-modal-title').textContent = `${escapeHtml(friend.name)} - Friend Details`;
+  document.getElementById('friend-modal-content').innerHTML = `
+    <div class="form-group">
+      <label>Friendship Level</label>
+      <select id="friend-level">
+        <option value="acquaintance" ${d.level === 'acquaintance' ? 'selected' : ''}>Acquaintance</option>
+        <option value="friend" ${d.level === 'friend' ? 'selected' : ''}>Friend</option>
+        <option value="close" ${d.level === 'close' ? 'selected' : ''}>Close Friend</option>
+        <option value="best" ${d.level === 'best' ? 'selected' : ''}>Best Friend</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Year Met</label>
+      <input type="number" id="friend-met-year" value="${d.metYear || ''}">
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="friend-notes" rows="2">${escapeHtml(d.notes || '')}</textarea>
+    </div>
+  `;
+  
+  window.currentEditingFriend = friendId;
+  modal.style.display = 'flex';
+}
+
+function saveFriendDetails() {
+  if (!window.currentEditingFriend) return;
+  
+  const level = document.getElementById('friend-level').value;
+  const metYear = document.getElementById('friend-met-year').value;
+  const notes = document.getElementById('friend-notes').value;
+  
+  const myStableId = getPersonDisplay(activeId).stableId || activeId;
+  const friendStableId = getPersonDisplay(window.currentEditingFriend).stableId || window.currentEditingFriend;
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  if (!DATA.relationships[window.currentEditingFriend]) DATA.relationships[window.currentEditingFriend] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  
+  if (!DATA.relationships[activeId].friendDetails) DATA.relationships[activeId].friendDetails = {};
+  DATA.relationships[activeId].friendDetails[friendStableId] = { level, metYear: metYear ? parseInt(metYear) : null, notes: notes || null };
+  
+  if (!DATA.relationships[window.currentEditingFriend].friendDetails) DATA.relationships[window.currentEditingFriend].friendDetails = {};
+  DATA.relationships[window.currentEditingFriend].friendDetails[myStableId] = { level, metYear: metYear ? parseInt(metYear) : null, notes: notes || null };
+  
+  saveData();
+  closeFriendModal();
+  refreshCurrentTab();
+  showToast('Friend details updated');
+}
+
+function closeFriendModal() {
+  const modal = document.getElementById('friend-details-modal');
+  if (modal) modal.style.display = 'none';
+  window.currentEditingFriend = null;
+}
+
+function checkRelationship(person1Id, person2Id) {
+  const p1 = getPersonDisplay(person1Id);
+  const p2 = getPersonDisplay(person2Id);
+  if (!p1 || !p2) return null;
+  if (p1.father && p2.father && getPersonId(p1.father) === getPersonId(p2.father)) return 'Siblings (same father)';
+  if (p1.mother && p2.mother && getPersonId(p1.mother) === getPersonId(p2.mother)) return 'Siblings (same mother)';
+  if (p1.father === person2Id || p1.mother === person2Id) return 'Parent-child relationship';
+  if (p2.father === person1Id || p2.mother === person1Id) return 'Parent-child relationship';
+  return null;
+}
+
+function generateNewborn() {
+  if (!activeId) { showToast('Select a person first'); return; }
+  
+  const parent = getPersonDisplay(activeId);
+  if (!parent) return;
+  const partners = getPartners(activeId);
+  
+  if (partners.length === 0) { showToast('Need a partner to have a child'); return; }
+  
+  let otherParent = null;
+  if (partners.length === 1) {
+    otherParent = getPersonDisplay(partners[0].id);
+  } else {
+    const choice = prompt(`Select the other parent:\n${partners.map((p, i) => `${i+1}. ${getPersonDisplay(p.id)?.name}`).join('\n')}\n\nEnter number (1-${partners.length}):`);
+    const idx = parseInt(choice) - 1;
+    if (idx >= 0 && idx < partners.length) otherParent = getPersonDisplay(partners[idx].id);
+    else return;
+  }
+  if (!otherParent) return;
+  
+  let mother = null, father = null;
+  if (parent.gender === 'female') { mother = parent; father = otherParent; }
+  else if (parent.gender === 'male') { mother = otherParent; father = parent; }
+  else {
+    const role = confirm(`Is ${parent.name} the mother? Click OK for Mother, Cancel for Father`);
+    if (role) { mother = parent; father = otherParent; }
+    else { mother = otherParent; father = parent; }
+  }
+  
+  if (!mother) { showToast('Need a mother to have a child'); return; }
+  if (!mother.birthYear) { showToast(`${mother.name} has no birth year set.`); return; }
+  
+  const motherBirthYear = mother.birthYear;
+  const minChildBirthYear = motherBirthYear + 18;
+  const maxChildBirthYear = motherBirthYear + 40;
+  const childBirthYear = Math.floor(Math.random() * (maxChildBirthYear - minChildBirthYear + 1)) + minChildBirthYear;
+  const motherAgeAtBirth = childBirthYear - motherBirthYear;
+  
+  const gender = Math.random() < 0.5 ? 'male' : 'female';
+  const maleNames = ['Kai', 'Mako', 'Tane', 'Rangi', 'Koa', 'Ikaia', 'Keanu', 'Leo', 'Nico', 'Ari'];
+  const femaleNames = ['Leilani', 'Moana', 'Nani', 'Tui', 'Hina', 'Lani', 'Malia', 'Rai', 'Tara', 'Vai'];
+  const name = gender === 'male' ? maleNames[Math.floor(Math.random() * maleNames.length)] : femaleNames[Math.floor(Math.random() * femaleNames.length)];
+  
+  const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now().toString(36);
+  const stableId = generateStableId();
+  const childAge = DATA.currentYear - childBirthYear;
+  
+  DATA.people[id] = {
+    stableId: stableId, name: name, gender: gender, attraction: 'both',
+    birthYear: childBirthYear, age: childAge, stage: calculateLifeStage(childAge),
+    role: '', deceased: false, deathYear: null, causeDeath: '',
+    birthComp: father?.currComp || mother?.currComp || '', currComp: father?.currComp || mother?.currComp || '',
+    household: '', notes: '', ranks: []
+  };
+  
+  DATA.relationships[id] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
+  if (father) DATA.relationships[id].father = father.stableId;
+  if (mother) DATA.relationships[id].mother = mother.stableId;
+  
+  rebuildStableIdIndex();
+  saveData();
+  renderPersonList();
+  selectPerson(id);
+  showToast(`🎉 ${name} born to ${father?.name || ''} and ${mother?.name || ''} (${mother.name} was ${motherAgeAtBirth})!`);
+}
 // ====================== TAB MANAGEMENT ======================
 function initTabs() {
   const tabsContainer = document.getElementById('edit-tabs');
