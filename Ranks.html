@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="stillwaters.css">
   <style>
-    /* Styles remain same as before */
     .rank-container { max-width: 1400px; margin: 20px auto; padding: 0 20px 40px; }
     .toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; padding: 16px 20px; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; align-items: center; }
     .toolbar .btn-group { display: flex; gap: 8px; margin-left: auto; }
@@ -31,6 +30,7 @@
     .loc-type-group, .loc-specific-group { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
     .info-note { font-size: 0.65rem; color: var(--tmut); margin-top: 4px; font-style: italic; }
     .empty-state { text-align: center; padding: 60px 20px; color: var(--dim); font-family: 'Cinzel', serif; border: 1px dashed var(--border2); border-radius: 20px; background: var(--bg2); }
+    .warning-badge { background: rgba(200,112,64,0.2); border: 1px solid var(--warn); border-radius: 4px; padding: 8px 12px; font-size: 0.7rem; margin-bottom: 16px; }
     @media (max-width: 700px) { .rank-grid { grid-template-columns: 1fr; } .toolbar { flex-direction: column; align-items: stretch; } .toolbar .btn-group { margin-left: 0; justify-content: center; } }
   </style>
 </head>
@@ -57,7 +57,7 @@
 
 <script>
   // ==================== UNIFIED DATA STRUCTURE ====================
-  // Master data object that matches ALL tools
+  // This matches the SAME structure used by Locations Manager and Character Manager
   let masterData = {
     version: "2.0",
     lastUpdated: new Date().toISOString(),
@@ -102,11 +102,14 @@
         };
       } catch(e) { console.error('Error loading master data', e); }
     } else {
-      // Initialize with default ranks
+      // Initialize with default ranks if none exist
       masterData.data.ranks = [
-        { id: generateId(), name: "High King", priority: 1, numbered: false, symbol: "✦", locationType: "country", locationId: null },
-        { id: generateId(), name: "Prince", priority: 2, numbered: true, symbol: "✪", locationType: "country", locationId: null },
-        { id: generateId(), name: "District Warden", priority: 3, numbered: false, symbol: "✪️", locationType: "district", locationId: null }
+        { id: generateId(), name: "High King", priority: 1, numbered: false, symbol: "✦", locationType: null, locationId: null },
+        { id: generateId(), name: "Prince", priority: 2, numbered: true, symbol: "✪", locationType: null, locationId: null },
+        { id: generateId(), name: "District Warden", priority: 3, numbered: false, symbol: "▲", locationType: null, locationId: null },
+        { id: generateId(), name: "Elder", priority: 4, numbered: false, symbol: "⌇", locationType: null, locationId: null },
+        { id: generateId(), name: "Master", priority: 5, numbered: false, symbol: "◆", locationType: null, locationId: null },
+        { id: generateId(), name: "Commoner", priority: 10, numbered: false, symbol: "·", locationType: null, locationId: null }
       ];
       saveMasterData();
     }
@@ -151,23 +154,40 @@
     renderRanks();
   }
   
+  // ==================== GET LOCATION TYPES FROM PLACES ====================
+  function getLocationTypesFromPlaces() {
+    const locationTypes = [];
+    const typeMap = new Map();
+    
+    // Get all unique location type display names from places
+    masterData.data.places.forEach(place => {
+      const type = masterData.data.locationTypes.find(t => t.id === place.typeId);
+      if (type && !typeMap.has(type.displayName)) {
+        typeMap.set(type.displayName, type);
+        locationTypes.push(type);
+      }
+    });
+    
+    return locationTypes.sort((a, b) => a.priority - b.priority);
+  }
+  
   // ==================== RENDER ====================
   function renderRanks() {
     const grid = document.getElementById('ranksGrid');
     const ranks = getRanks();
+    const locationTypes = getLocationTypesFromPlaces();
     
     if (!ranks.length) {
       grid.innerHTML = `<div class="empty-state">No ranks defined. Click "Add New Rank" to create hierarchies.<br>Ranks define titles like King, Prince, Chief, etc.</div>`;
       return;
     }
     
-    // Get location types from master data for dropdown
-    const locationTypes = [...new Set(masterData.data.places.map(p => {
-      const type = masterData.data.locationTypes.find(t => t.id === p.typeId);
-      return type?.displayName;
-    }).filter(Boolean))];
-    
-    grid.innerHTML = ranks.map(rank => `
+    grid.innerHTML = ranks.map(rank => {
+      // Sort ranks by priority for display
+      const sortedRanks = [...ranks].sort((a, b) => a.priority - b.priority);
+      const rankNumber = sortedRanks.findIndex(r => r.id === rank.id) + 1;
+      
+      return `
       <div class="rank-card" data-rank-id="${rank.id}">
         <div class="rank-header">
           <div class="rank-name-field">
@@ -197,17 +217,21 @@
           
           <div class="location-assignment">
             <div class="loc-type-group">
-              <label>Location Type:</label>
+              <label>Location Type (from Locations Manager):</label>
               <select class="location-type-select" data-field="locationType">
                 <option value="">— No restriction —</option>
-                ${locationTypes.map(type => `<option value="${type}" ${rank.locationType === type ? 'selected' : ''}>${type}</option>`).join('')}
+                ${locationTypes.map(type => `<option value="${type.displayName}" ${rank.locationType === type.displayName ? 'selected' : ''}>${type.displayName} (Priority ${type.priority})</option>`).join('')}
               </select>
             </div>
-            <div class="info-note">Assigning a location is optional. If selected, rank applies to that specific place type.</div>
+            ${locationTypes.length === 0 ? '<div class="info-note" style="color:var(--warn);">No location types found. Create locations in Locations Manager first.</div>' : '<div class="info-note">Assigning a location type is optional. If selected, rank applies to that specific place type.</div>'}
+          </div>
+          
+          <div class="info-note" style="margin-top:8px; border-top:1px solid var(--border2); padding-top:8px;">
+            Rank ID: <code style="font-size:0.6rem;">${rank.id}</code> | Position: ${rankNumber} of ${ranks.length}
           </div>
         </div>
       </div>
-    `).join('');
+    `}).join('');
     
     // Attach event listeners
     document.querySelectorAll('.rank-card').forEach(card => {
@@ -239,21 +263,21 @@
   
   // ==================== IMPORT/EXPORT (UNIFIED) ====================
   function exportData() {
-    // Export ONLY the ranks data in a clean format
+    // Export the COMPLETE unified master data
     const exportObj = {
-      type: "ranks",
+      type: "master",
       version: "2.0",
       exportDate: new Date().toISOString(),
-      data: getRanks()
+      data: masterData.data
     };
     const dataStr = JSON.stringify(exportObj, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `stillwaters_ranks_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+    a.download = `stillwaters_master_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast('Ranks exported successfully');
+    showToast('Complete master data exported (ranks + locations + all data)');
   }
   
   function importData() {
@@ -266,101 +290,130 @@
       reader.onload = (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
+          let importedMaster = null;
           
-          // Handle different import formats intelligently
-          let newRanks = null;
-          
-          // Case 1: New unified format with type field
-          if (imported.type === 'ranks' && imported.data && Array.isArray(imported.data)) {
-            newRanks = imported.data;
+          // Case 1: New unified format with type "master"
+          if (imported.type === "master" && imported.data) {
+            importedMaster = imported;
           }
-          // Case 2: Old format - direct array of ranks
+          // Case 2: Old format with just data object
+          else if (imported.data && (imported.data.ranks || imported.data.places)) {
+            importedMaster = imported;
+          }
+          // Case 3: Direct array of ranks (old rank manager export)
           else if (Array.isArray(imported)) {
-            newRanks = imported;
+            // This is an old rank-only export, merge into master
+            importedMaster = {
+              type: "master",
+              version: "2.0",
+              data: {
+                ...masterData.data,
+                ranks: imported
+              }
+            };
           }
-          // Case 3: Master data format with data.ranks
-          else if (imported.data && imported.data.ranks && Array.isArray(imported.data.ranks)) {
-            newRanks = imported.data.ranks;
-          }
-          // Case 4: Just a ranks array in an object
+          // Case 4: Object with ranks array
           else if (imported.ranks && Array.isArray(imported.ranks)) {
-            newRanks = imported.ranks;
+            importedMaster = {
+              type: "master",
+              version: "2.0",
+              data: {
+                ...masterData.data,
+                ranks: imported.ranks
+              }
+            };
+          }
+          // Case 5: Locations export format
+          else if (imported.places || imported.locationTypes) {
+            importedMaster = {
+              type: "master",
+              version: "2.0",
+              data: {
+                ...masterData.data,
+                places: imported.places || masterData.data.places,
+                locationTypes: imported.locationTypes || masterData.data.locationTypes,
+                governments: imported.governments || masterData.data.governments
+              }
+            };
           }
           
-          if (newRanks && newRanks.length) {
-            // MERGE - don't replace, add new ranks and update existing by ID
-            const currentRanks = getRanks();
-            const mergedRanks = [...currentRanks];
+          if (importedMaster && importedMaster.data) {
+            let ranksImported = 0;
+            let placesImported = 0;
+            let typesImported = 0;
+            let govsImported = 0;
             
-            newRanks.forEach(importedRank => {
-              const existingIndex = mergedRanks.findIndex(r => r.id === importedRank.id);
-              if (existingIndex !== -1) {
-                // Update existing rank
-                mergedRanks[existingIndex] = { ...mergedRanks[existingIndex], ...importedRank };
-              } else {
-                // Add new rank (generate new ID if missing)
-                if (!importedRank.id) importedRank.id = generateId();
-                mergedRanks.push(importedRank);
-              }
-            });
+            // Merge ranks
+            if (importedMaster.data.ranks && Array.isArray(importedMaster.data.ranks)) {
+              const currentRanks = masterData.data.ranks;
+              importedMaster.data.ranks.forEach(importedRank => {
+                const existingIndex = currentRanks.findIndex(r => r.id === importedRank.id);
+                if (existingIndex !== -1) {
+                  // Update existing rank
+                  currentRanks[existingIndex] = { ...currentRanks[existingIndex], ...importedRank };
+                } else {
+                  // Add new rank (ensure it has an ID)
+                  if (!importedRank.id) importedRank.id = generateId();
+                  currentRanks.push(importedRank);
+                }
+                ranksImported++;
+              });
+            }
             
-            setRanks(mergedRanks);
-            showToast(`Imported and merged ${newRanks.length} ranks. Total: ${mergedRanks.length}`);
-          } else {
-            alert('No valid rank data found in file. Please export ranks from Rank Manager first.');
-          }
-        } catch(err) { 
-          alert('Invalid JSON: ' + err.message); 
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  }
+            // Merge places
+            if (importedMaster.data.places && Array.isArray(importedMaster.data.places)) {
+              const currentPlaces = masterData.data.places;
+              importedMaster.data.places.forEach(importedPlace => {
+                const existingIndex = currentPlaces.findIndex(p => p.id === importedPlace.id);
+                if (existingIndex !== -1) {
+                  currentPlaces[existingIndex] = { ...currentPlaces[existingIndex], ...importedPlace };
+                } else {
+                  if (!importedPlace.id) importedPlace.id = 'loc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                  currentPlaces.push(importedPlace);
+                }
+                placesImported++;
+              });
+            }
+            
+            // Merge location types
+            if (importedMaster.data.locationTypes && Array.isArray(importedMaster.data.locationTypes)) {
+              const currentTypes = masterData.data.locationTypes;
+              importedMaster.data.locationTypes.forEach(importedType => {
+                const existingIndex = currentTypes.findIndex(t => t.id === importedType.id);
+                if (existingIndex !== -1) {
+                  currentTypes[existingIndex] = { ...currentTypes[existingIndex], ...importedType };
+                } else {
+                  if (!importedType.id) importedType.id = 'type_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                  currentTypes.push(importedType);
+                }
+                typesImported++;
+              });
+            }
+            
+            // Merge governments
+            if (importedMaster.data.governments && Array.isArray(importedMaster.data.governments)) {
+              const currentGovs = masterData.data.governments;
+              importedMaster.data.governments.forEach(importedGov => {
+                const existingIndex = currentGovs.findIndex(g => g.id === importedGov.id);
+                if (existingIndex !== -1) {
+                  currentGovs[existingIndex] = { ...currentGovs[existingIndex], ...importedGov };
+                } else {
+                  if (!importedGov.id) importedGov.id = 'gov_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                  currentGovs.push(importedGov);
+                }
+                govsImported++;
+              });
+            }
+            
+            // Merge current year
+            if (importedMaster.data.currentYear) {
+              masterData.data.currentYear = importedMaster.data.currentYear;
+            }
+            
+            saveMasterData();
+            renderRanks();
+            
+            let message = `Imported: ${ranksImported} ranks, ${placesImported} places, ${typesImported} types, ${govsImported} governments`;
+            showToast(message);
+            
   
-  function showToast(msg) {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'toast-container';
-      document.body.appendChild(container);
-    }
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerText = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 2500);
-  }
-  
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
-  }
-  
-  // ==================== INIT ====================
-  function init() {
-    loadMasterData();
-    renderRanks();
-    
-    document.getElementById('addRankBtn').addEventListener('click', addRank);
-    document.getElementById('importBtn').addEventListener('click', importData);
-    document.getElementById('exportBtn').addEventListener('click', exportData);
-    
-    // Listen for storage events from other tabs
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'stillwaters_master') {
-        loadMasterData();
-        renderRanks();
-      }
-    });
-  }
-  
-  init();
-</script>
-</body>
-</html>
