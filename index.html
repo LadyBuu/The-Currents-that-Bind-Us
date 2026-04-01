@@ -165,13 +165,12 @@
 
 <div class="tools-grid" id="toolsGrid"></div>
 <footer>
- Tool for Worldbuilding
+  Still Waters — Tools for Worldbuilding & Chronicle Keeping
 </footer>
 
 <script>
   // ============================================================
-  // CORE TOOL LIST — structured according to required separate links:
-  // Character Manager, Locations, Roles, Ranks, Diagnostics, Census, Family Tree
+  // COMPLETE TOOL LIST — All managers for the Still Waters suite
   // ============================================================
   const tools = [
     { 
@@ -197,10 +196,18 @@
     },
     { 
       name: "Ranks", 
-      desc: "Hierarchy of power. Rank color codes, privileges, and succession tracking.", 
+      desc: "Hierarchy of power: Chiefs, Sacred Sons, Elders, Consorts, Masters, and Commoners. Rank color codes, privileges, and succession tracking.", 
       icon: "🏅", 
       file: "Ranks.html", 
       tags: ["hierarchy", "privilege", "succession", "social standing"],
+      accent: true
+    },
+    { 
+      name: "Names Manager", 
+      desc: "Upload and manage name lists for characters and cities. Assign name lists to countries for cultural naming conventions. Generate random names for characters and places.", 
+      icon: "📜", 
+      file: "names.html", 
+      tags: ["names", "surnames", "city names", "generator", "culture"],
       accent: true
     },
     { 
@@ -240,16 +247,20 @@
     // Optional badges for special categories
     let extraBadges = '';
     if (tool.accent) {
-      extraBadges += '<span class="badge accent">Rank authority</span>';
+      extraBadges += '<span class="badge accent">✨ Featured</span>';
     }
     if (tool.warning) {
-      extraBadges += '<span class="badge warning">Integrity scan</span>';
+      extraBadges += '<span class="badge warning">⚠️ Integrity scan</span>';
     }
     if (tool.name === "Roles") {
-      extraBadges += '<span class="badge">Professions & duties</span>';
+      extraBadges += '<span class="badge">⚒️ Professions</span>';
     }
     if (tool.name === "Ranks") {
-      extraBadges += '<span class="badge accent">Hierarchy</span>';
+      extraBadges += '<span class="badge accent">👑 Hierarchy</span>';
+    }
+    if (tool.name === "Names Manager") {
+      extraBadges += '<span class="badge accent">📖 Cultural naming</span>';
+      extraBadges += '<span class="badge">🎲 Random generator</span>';
     }
     
     card.innerHTML = `
