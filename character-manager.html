@@ -584,8 +584,43 @@ window.saveCurrentPerson = function() { if (!activeId) return; const n = documen
 window.deleteCurrentPerson = function() { if (!activeId) return; const n = DATA.people[activeId]?.name; if (!confirm(`Delete ${n} permanently?`)) return; delete DATA.people[activeId]; delete DATA.relationships[activeId]; rebuildStableIdIndex(); activeId = null; saveData(); renderPersonList(); document.getElementById('view-empty').style.display = 'block'; document.getElementById('view-filled').style.display = 'none'; document.getElementById('edit-empty').style.display = 'block'; showToast('Character deleted'); };
 
 // ====================== RELATIONSHIP HELPERS ======================
-function getPartners(id) { const r = DATA.relationships[id] || {}; const p = []; (r.ongoing || []).forEach(pid => { if (getPersonId(pid)) p.push({ id: pid, status: 'ongoing' }); }); (r.ended || []).forEach(pid => { if (getPersonId(pid)) p.push({ id: pid, status: 'ended' }); }); (r.widowed || []).forEach(pid => { if (getPersonId(pid)) p.push({ id: pid, status: 'widowed' }); }); return p; }
-function getFriends(id) { const r = DATA.relationships[id] || {}; const f = []; (r.friends || []).forEach(fid => { if (getPersonId(fid)) { const d = r.friendDetails?.[fid] || {}; f.push({ id: fid, level: d.level || 'friend', metYear: d.metYear, notes: d.notes }); } }); return f; }
+function getPartners(id) { 
+  const r = DATA.relationships[id] || {}; 
+  const p = []; 
+  // Helper to check if a reference exists
+  const isValidPartner = (ref) => {
+    const personId = getPersonId(ref);
+    return personId && DATA.people[personId];
+  };
+  
+  (r.ongoing || []).forEach(pid => { 
+    if (isValidPartner(pid)) p.push({ id: pid, status: 'ongoing' }); 
+  }); 
+  (r.ended || []).forEach(pid => { 
+    if (isValidPartner(pid)) p.push({ id: pid, status: 'ended' }); 
+  }); 
+  (r.widowed || []).forEach(pid => { 
+    if (isValidPartner(pid)) p.push({ id: pid, status: 'widowed' }); 
+  }); 
+  return p; 
+}
+
+function getFriends(id) { 
+  const r = DATA.relationships[id] || {}; 
+  const f = []; 
+  const isValidFriend = (ref) => {
+    const personId = getPersonId(ref);
+    return personId && DATA.people[personId];
+  };
+  
+  (r.friends || []).forEach(fid => { 
+    if (isValidFriend(fid)) { 
+      const d = r.friendDetails?.[fid] || {}; 
+      f.push({ id: fid, level: d.level || 'friend', metYear: d.metYear, notes: d.notes }); 
+    } 
+  }); 
+  return f; 
+}
 function getChildren(id) { const pid = getPersonId(id); const c = []; Object.keys(DATA.people).forEach(cid => { const r = DATA.relationships[cid] || {}; const fid = r.father ? getPersonId(r.father) : null; const mid = r.mother ? getPersonId(r.mother) : null; if (fid === pid || mid === pid) c.push({ id: cid }); }); return c.sort((a,b) => (getPersonDisplay(a.id)?.birthYear || 0) - (getPersonDisplay(b.id)?.birthYear || 0)); }
 function getSiblings(id) { const pid = getPersonId(id); const cur = getPersonDisplay(pid); if (!cur) return []; const s = []; Object.keys(DATA.people).forEach(sid => { if (sid === pid) return; const sib = getPersonDisplay(sid); if (!sib) return; const shareF = cur.father && sib.father && getPersonId(sib.father) === getPersonId(cur.father); const shareM = cur.mother && sib.mother && getPersonId(sib.mother) === getPersonId(cur.mother); if (shareF || shareM) s.push(sid); }); return s; }
 function checkRelationship(p1, p2) { const a = getPersonDisplay(p1); const b = getPersonDisplay(p2); if (!a || !b) return null; if (a.father && b.father && getPersonId(a.father) === getPersonId(b.father)) return 'Siblings'; if (a.mother && b.mother && getPersonId(a.mother) === getPersonId(b.mother)) return 'Siblings'; if (a.father === p2 || a.mother === p2) return 'Parent-Child'; if (b.father === p1 || b.mother === p1) return 'Parent-Child'; return null; }
@@ -640,11 +675,88 @@ window.removeParent = function(role) { if (!confirm(`Remove ${role}?`)) return; 
 window.setParent = function(role) { const pid = window.getSelectedPickerValue(`${role}-pick`); if (!pid) { showToast('Select a person first'); return; } const parentId = getPersonId(pid); if (!parentId) return; const childBirthYear = DATA.people[activeId]?.birthYear; if (childBirthYear && !validateParentAge(parentId, childBirthYear)) { showToast(`${role.charAt(0).toUpperCase() + role.slice(1)} age invalid for birth year!`); return; } const rel = DATA.relationships[activeId] || {}; if (role === 'father') rel.father = getPersonDisplay(parentId).stableId; else rel.mother = getPersonDisplay(parentId).stableId; DATA.relationships[activeId] = rel; const childRel = DATA.relationships[parentId] || {}; if (!childRel.children) childRel.children = []; if (!childRel.children.includes(getPersonDisplay(activeId).stableId)) childRel.children.push(getPersonDisplay(activeId).stableId); DATA.relationships[parentId] = childRel; saveData(); window.renderParents(); showToast(`${role} set`); };
 
 window.renderPartners = function() { const c = document.getElementById('partners-list'); if (!c) return; const partners = getPartners(activeId); if (!partners.length) { c.innerHTML = '<div style="color:var(--dim);">No partners</div>'; return; } c.innerHTML = partners.map(p => { const pd = getPersonDisplay(p.id); const details = DATA.relationships[activeId]?.details?.[p.id] || {}; const warn = checkRelationship(activeId, p.id); return `<div class="rel-card" onclick="window.openPartnerDetails('${p.id}')"><div class="rel-card-top"><div><a onclick="event.stopPropagation(); selectPerson('${p.id}')">${escapeHtml(pd?.name)}</a><span class="badge ${p.status === 'ongoing' ? 'badge-ongoing' : p.status === 'ended' ? 'badge-ended' : 'badge-widowed'}">${p.status}</span>${details.type ? `<span class="badge">${details.type}</span>` : ''}${details.startYear ? `<span class="badge">📅 ${details.startYear}${details.endYear ? `-${details.endYear}` : ''}</span>` : ''}${warn ? `<span class="badge" style="background:#8b404020;">⚠️ ${warn}</span>` : ''}</div><button class="danger small" onclick="event.stopPropagation(); window.removePartner('${p.id}')">✕</button></div>${details.notes ? `<div class="rel-card-meta">📝 ${escapeHtml(details.notes)}</div>` : ''}</div>`; }).join(''); };
-window.removePartner = function(pid) { if (!confirm('Remove this relationship?')) return; const mySid = getPersonDisplay(activeId).stableId; const pSid = getPersonDisplay(pid).stableId; const myRel = DATA.relationships[activeId] || {}; const pRel = DATA.relationships[pid] || {}; myRel.ongoing = (myRel.ongoing || []).filter(id => id !== pSid && id !== pid); myRel.ended = (myRel.ended || []).filter(id => id !== pSid && id !== pid); myRel.widowed = (myRel.widowed || []).filter(id => id !== pSid && id !== pid); if (myRel.details) { delete myRel.details[pSid]; delete myRel.details[pid]; } pRel.ongoing = (pRel.ongoing || []).filter(id => id !== mySid && id !== activeId); pRel.ended = (pRel.ended || []).filter(id => id !== mySid && id !== activeId); pRel.widowed = (pRel.widowed || []).filter(id => id !== mySid && id !== activeId); if (pRel.details) { delete pRel.details[mySid]; delete pRel.details[activeId]; } DATA.relationships[activeId] = myRel; DATA.relationships[pid] = pRel; saveData(); window.renderPartners(); showToast('Partner removed'); };
+window.removePartner = function(pid) { 
+  if (!confirm('Remove this relationship permanently?')) return; 
+  
+  const mySid = getPersonDisplay(activeId).stableId; 
+  const pSid = getPersonDisplay(pid).stableId; 
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; 
+  if (!DATA.relationships[pid]) DATA.relationships[pid] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; 
+  
+  const myRel = DATA.relationships[activeId]; 
+  const pRel = DATA.relationships[pid]; 
+  
+  // Remove from all arrays - check both stableId and actual ID
+  myRel.ongoing = (myRel.ongoing || []).filter(id => id !== pSid && id !== pid); 
+  myRel.ended = (myRel.ended || []).filter(id => id !== pSid && id !== pid); 
+  myRel.widowed = (myRel.widowed || []).filter(id => id !== pSid && id !== pid); 
+  if (myRel.details) { 
+    delete myRel.details[pSid]; 
+    delete myRel.details[pid]; 
+  } 
+  
+  pRel.ongoing = (pRel.ongoing || []).filter(id => id !== mySid && id !== activeId); 
+  pRel.ended = (pRel.ended || []).filter(id => id !== mySid && id !== activeId); 
+  pRel.widowed = (pRel.widowed || []).filter(id => id !== mySid && id !== activeId); 
+  if (pRel.details) { 
+    delete pRel.details[mySid]; 
+    delete pRel.details[activeId]; 
+  } 
+  
+  DATA.relationships[activeId] = myRel; 
+  DATA.relationships[pid] = pRel; 
+  saveData(); 
+  window.renderPartners(); 
+  showToast('Partner removed'); 
+};
 window.openPartnerDetails = function(pid) { const p = getPersonDisplay(pid); const rel = DATA.relationships[activeId] || {}; const d = rel.details?.[pid] || {}; let status = 'ongoing'; if (rel.ended?.includes(pid)) status = 'ended'; if (rel.widowed?.includes(pid)) status = 'widowed'; const html = `<div class="modal-overlay" id="partner-modal" style="display:flex"><div class="modal-box"><div class="modal-title">${escapeHtml(p.name)} - Relationship</div><div class="form-group"><label>Status</label><select id="partner-status"><option value="ongoing" ${status === 'ongoing' ? 'selected' : ''}>Ongoing</option><option value="ended" ${status === 'ended' ? 'selected' : ''}>Ended</option><option value="widowed" ${status === 'widowed' ? 'selected' : ''}>Widowed</option></select></div><div class="form-group"><label>Type</label><select id="partner-type"><option value="">—</option><option value="casual">Casual</option><option value="serious">Serious</option><option value="affair">Affair</option><option value="betrothed">Betrothed</option><option value="other">Other</option></select></div><div class="form-row"><div class="form-group"><label>Start Year</label><input type="number" id="partner-start" value="${d.startYear || ''}"></div><div class="form-group"><label>End Year</label><input type="number" id="partner-end" value="${d.endYear || ''}"></div></div><div class="form-group"><label>Notes</label><textarea id="partner-notes" rows="2">${escapeHtml(d.notes || '')}</textarea></div><div style="display:flex; gap:8px; margin-top:16px;"><button class="primary" onclick="window.savePartnerDetails('${pid}')">Save</button><button onclick="document.getElementById('partner-modal').remove()">Cancel</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); document.getElementById('partner-type').value = d.type || ''; };
 window.savePartnerDetails = function(pid) { const status = document.getElementById('partner-status').value; const type = document.getElementById('partner-type').value; const start = document.getElementById('partner-start').value; const end = document.getElementById('partner-end').value; const notes = document.getElementById('partner-notes').value; const mySid = getPersonDisplay(activeId).stableId; const pSid = getPersonDisplay(pid).stableId; const myRel = DATA.relationships[activeId] || {}; const pRel = DATA.relationships[pid] || {}; [myRel.ongoing, myRel.ended, myRel.widowed].forEach(a => { if (a) { const i = a.indexOf(pSid); if (i !== -1) a.splice(i,1); const j = a.indexOf(pid); if (j !== -1) a.splice(j,1); } }); if (!myRel[status]) myRel[status] = []; if (!myRel[status].includes(pSid)) myRel[status].push(pSid); if (!myRel.details) myRel.details = {}; myRel.details[pSid] = { type: type || null, startYear: start ? parseInt(start) : null, endYear: end ? parseInt(end) : null, notes: notes || null }; [pRel.ongoing, pRel.ended, pRel.widowed].forEach(a => { if (a) { const i = a.indexOf(mySid); if (i !== -1) a.splice(i,1); const j = a.indexOf(activeId); if (j !== -1) a.splice(j,1); } }); if (!pRel[status]) pRel[status] = []; if (!pRel[status].includes(mySid)) pRel[status].push(mySid); if (!pRel.details) pRel.details = {}; pRel.details[mySid] = { type: type || null, startYear: start ? parseInt(start) : null, endYear: end ? parseInt(end) : null, notes: notes || null }; DATA.relationships[activeId] = myRel; DATA.relationships[pid] = pRel; saveData(); document.getElementById('partner-modal')?.remove(); window.renderPartners(); showToast('Partner updated'); };
-window.addPartner = function() { const selectedId = window.getSelectedPickerValue('partner-pick'); if (!selectedId) { showToast('Select a person first'); return; } const partnerId = getPersonId(selectedId); if (!partnerId) { showToast('Invalid selection'); return; } const mySid = getPersonDisplay(activeId).stableId; const pSid = getPersonDisplay(partnerId).stableId; const myRel = DATA.relationships[activeId] || {}; const pRel = DATA.relationships[partnerId] || {}; if (!myRel.ongoing) myRel.ongoing = []; if (!myRel.details) myRel.details = {}; if (!pRel.ongoing) pRel.ongoing = []; if (!pRel.details) pRel.details = {}; if (!myRel.ongoing.includes(pSid)) myRel.ongoing.push(pSid); myRel.details[pSid] = { type: null, startYear: null, endYear: null, notes: null }; if (!pRel.ongoing.includes(mySid)) pRel.ongoing.push(mySid); pRel.details[mySid] = { type: null, startYear: null, endYear: null, notes: null }; DATA.relationships[activeId] = myRel; DATA.relationships[partnerId] = pRel; saveData(); window.renderPartners(); showToast('Partner added'); setTimeout(() => window.openPartnerDetails(partnerId), 100); };
-
+window.addPartner = function() { 
+  const selectedId = window.getSelectedPickerValue('partner-pick'); 
+  if (!selectedId) { showToast('Select a person first'); return; } 
+  const partnerId = getPersonId(selectedId); 
+  if (!partnerId) { showToast('Invalid selection'); return; } 
+  
+  // Check if already partners
+  const existingPartners = getPartners(activeId);
+  if (existingPartners.some(p => p.id === partnerId || p.id === selectedId)) {
+    showToast('Already partners with this person');
+    return;
+  }
+  
+  const mySid = getPersonDisplay(activeId).stableId; 
+  const pSid = getPersonDisplay(partnerId).stableId; 
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; 
+  if (!DATA.relationships[partnerId]) DATA.relationships[partnerId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; 
+  
+  const myRel = DATA.relationships[activeId]; 
+  const pRel = DATA.relationships[partnerId]; 
+  
+  // Initialize arrays if needed
+  if (!myRel.ongoing) myRel.ongoing = []; 
+  if (!myRel.details) myRel.details = {}; 
+  if (!pRel.ongoing) pRel.ongoing = []; 
+  if (!pRel.details) pRel.details = {}; 
+  
+  // Add to ongoing - use both stableId and actual ID for redundancy
+  if (!myRel.ongoing.includes(pSid)) myRel.ongoing.push(pSid); 
+  if (!myRel.ongoing.includes(partnerId)) myRel.ongoing.push(partnerId); 
+  myRel.details[pSid] = { type: null, startYear: null, endYear: null, notes: null }; 
+  myRel.details[partnerId] = { type: null, startYear: null, endYear: null, notes: null }; 
+  
+  if (!pRel.ongoing.includes(mySid)) pRel.ongoing.push(mySid); 
+  if (!pRel.ongoing.includes(activeId)) pRel.ongoing.push(activeId); 
+  pRel.details[mySid] = { type: null, startYear: null, endYear: null, notes: null }; 
+  pRel.details[activeId] = { type: null, startYear: null, endYear: null, notes: null }; 
+  
+  DATA.relationships[activeId] = myRel; 
+  DATA.relationships[partnerId] = pRel; 
+  saveData(); 
+  window.renderPartners(); 
+  showToast('Partner added'); 
+  setTimeout(() => window.openPartnerDetails(partnerId), 100); 
+};
 window.renderChildren = function() { const c = document.getElementById('children-list'); if (!c) return; const kids = getChildren(activeId); if (!kids.length) { c.innerHTML = '<div style="color:var(--dim);">No children</div>'; return; } c.innerHTML = kids.map(k => { const kd = getPersonDisplay(k.id); const ageAtBirth = kd?.birthYear && DATA.people[activeId]?.birthYear ? kd.birthYear - DATA.people[activeId].birthYear : null; return `<div class="rel-card"><div class="rel-card-top"><div><a onclick="selectPerson('${k.id}')">${escapeHtml(kd?.name)}</a><span class="badge">Child</span>${ageAtBirth ? `<div class="rel-card-meta">you were ${ageAtBirth} at birth</div>` : ''}</div><button class="danger small" onclick="window.removeChildPerson('${k.id}')">✕</button></div></div>`; }).join(''); };
 window.removeChildPerson = function(cid) { if (!confirm('Remove this child?')) return; const cRel = DATA.relationships[cid] || {}; const mySid = getPersonDisplay(activeId).stableId; if (cRel.father === mySid) delete cRel.father; if (cRel.mother === mySid) delete cRel.mother; DATA.relationships[cid] = cRel; saveData(); window.renderChildren(); showToast('Child removed'); };
 window.addChild = function() { const pid = window.getSelectedPickerValue('child-pick'); if (!pid) { showToast('Select a person first'); return; } const childId = getPersonId(pid); const cRel = DATA.relationships[childId] || {}; const mySid = getPersonDisplay(activeId).stableId; const myGender = getPersonDisplay(activeId).gender; if (myGender === 'male' && !cRel.father) cRel.father = mySid; if (myGender === 'female' && !cRel.mother) cRel.mother = mySid; DATA.relationships[childId] = cRel; saveData(); window.renderChildren(); showToast('Child added'); };
@@ -654,11 +766,85 @@ window.removeSibling = function(sid) { if (!confirm('Remove this sibling?')) ret
 window.addSibling = function() { const pid = window.getSelectedPickerValue('sibling-pick'); if (!pid) { showToast('Select a person first'); return; } const siblingId = getPersonId(pid); const myData = getPersonDisplay(activeId); const sibData = getPersonDisplay(siblingId); if (!myData.father && !myData.mother && !sibData.father && !sibData.mother) { showToast('No common parent to establish sibling relationship'); return; } const myRel = DATA.relationships[activeId] || {}; const sibRel = DATA.relationships[siblingId] || {}; if (!myData.father && sibData.father) myRel.father = sibData.father; if (!myData.mother && sibData.mother) myRel.mother = sibData.mother; if (!sibData.father && myData.father) sibRel.father = myData.father; if (!sibData.mother && myData.mother) sibRel.mother = myData.mother; DATA.relationships[activeId] = myRel; DATA.relationships[siblingId] = sibRel; saveData(); window.renderSiblings(); showToast('Sibling added'); };
 
 window.renderFriends = function() { const c = document.getElementById('friends-list'); if (!c) return; const friends = getFriends(activeId); if (!friends.length) { c.innerHTML = '<div style="color:var(--dim);">No friends</div>'; return; } const levelNames = { acquaintance: 'Acquaintance', friend: 'Friend', close: 'Close Friend', best: 'Best Friend' }; c.innerHTML = friends.map(f => { const fd = getPersonDisplay(f.id); return `<div class="rel-card" onclick="window.openFriendDetails('${f.id}')"><div class="rel-card-top"><div><a onclick="event.stopPropagation(); selectPerson('${f.id}')">${escapeHtml(fd?.name)}</a><span class="badge">${levelNames[f.level] || 'Friend'}</span>${f.metYear ? `<span class="badge">📅 ${f.metYear}</span>` : ''}</div><button class="danger small" onclick="event.stopPropagation(); window.removeFriend('${f.id}')">✕</button></div>${f.notes ? `<div class="rel-card-meta">📝 ${escapeHtml(f.notes)}</div>` : ''}</div>`; }).join(''); };
-window.removeFriend = function(fid) { if (!confirm('Remove this friendship?')) return; const mySid = getPersonDisplay(activeId).stableId; const fSid = getPersonDisplay(fid).stableId; const myRel = DATA.relationships[activeId] || {}; const fRel = DATA.relationships[fid] || {}; myRel.friends = (myRel.friends || []).filter(id => id !== fSid); if (myRel.friendDetails) delete myRel.friendDetails[fSid]; fRel.friends = (fRel.friends || []).filter(id => id !== mySid); if (fRel.friendDetails) delete fRel.friendDetails[mySid]; DATA.relationships[activeId] = myRel; DATA.relationships[fid] = fRel; saveData(); window.renderFriends(); showToast('Friend removed'); };
+window.removeFriend = function(fid) { 
+  if (!confirm('Remove this friendship?')) return; 
+  
+  const mySid = getPersonDisplay(activeId).stableId; 
+  const fSid = getPersonDisplay(fid).stableId; 
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; 
+  if (!DATA.relationships[fid]) DATA.relationships[fid] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; 
+  
+  const myRel = DATA.relationships[activeId]; 
+  const fRel = DATA.relationships[fid]; 
+  
+  // Remove from friends arrays - check both stableId and actual ID
+  myRel.friends = (myRel.friends || []).filter(id => id !== fSid && id !== fid); 
+  if (myRel.friendDetails) { 
+    delete myRel.friendDetails[fSid]; 
+    delete myRel.friendDetails[fid]; 
+  } 
+  
+  fRel.friends = (fRel.friends || []).filter(id => id !== mySid && id !== activeId); 
+  if (fRel.friendDetails) { 
+    delete fRel.friendDetails[mySid]; 
+    delete fRel.friendDetails[activeId]; 
+  } 
+  
+  DATA.relationships[activeId] = myRel; 
+  DATA.relationships[fid] = fRel; 
+  saveData(); 
+  window.renderFriends(); 
+  showToast('Friend removed'); 
+};
+
 window.openFriendDetails = function(fid) { const f = getPersonDisplay(fid); const rel = DATA.relationships[activeId] || {}; const d = rel.friendDetails?.[fid] || { level: 'friend', metYear: null, notes: '' }; const html = `<div class="modal-overlay" id="friend-modal" style="display:flex"><div class="modal-box"><div class="modal-title">${escapeHtml(f.name)} - Friend Details</div><div class="form-group"><label>Level</label><select id="friend-level"><option value="acquaintance">Acquaintance</option><option value="friend">Friend</option><option value="close">Close Friend</option><option value="best">Best Friend</option></select></div><div class="form-group"><label>Year Met</label><input type="number" id="friend-year" value="${d.metYear || ''}"></div><div class="form-group"><label>Notes</label><textarea id="friend-notes" rows="2">${escapeHtml(d.notes || '')}</textarea></div><div style="display:flex; gap:8px;"><button class="primary" onclick="window.saveFriendDetails('${fid}')">Save</button><button onclick="document.getElementById('friend-modal').remove()">Cancel</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); document.getElementById('friend-level').value = d.level || 'friend'; };
 window.saveFriendDetails = function(fid) { const level = document.getElementById('friend-level').value; const year = document.getElementById('friend-year').value; const notes = document.getElementById('friend-notes').value; const mySid = getPersonDisplay(activeId).stableId; const fSid = getPersonDisplay(fid).stableId; const myRel = DATA.relationships[activeId] || {}; const fRel = DATA.relationships[fid] || {}; if (!myRel.friendDetails) myRel.friendDetails = {}; myRel.friendDetails[fSid] = { level, metYear: year ? parseInt(year) : null, notes: notes || null }; if (!fRel.friendDetails) fRel.friendDetails = {}; fRel.friendDetails[mySid] = { level, metYear: year ? parseInt(year) : null, notes: notes || null }; DATA.relationships[activeId] = myRel; DATA.relationships[fid] = fRel; saveData(); document.getElementById('friend-modal')?.remove(); window.renderFriends(); showToast('Friend updated'); };
-window.addFriend = function() { const pid = window.getSelectedPickerValue('friend-pick'); if (!pid) { showToast('Select a person first'); return; } const fid = getPersonId(pid); const mySid = getPersonDisplay(activeId).stableId; const fSid = getPersonDisplay(fid).stableId; const myRel = DATA.relationships[activeId] || {}; const fRel = DATA.relationships[fid] || {}; if (!myRel.friends) myRel.friends = []; if (!myRel.friends.includes(fSid)) myRel.friends.push(fSid); if (!myRel.friendDetails) myRel.friendDetails = {}; myRel.friendDetails[fSid] = { level: 'friend', metYear: DATA.currentYear, notes: '' }; if (!fRel.friends) fRel.friends = []; if (!fRel.friends.includes(mySid)) fRel.friends.push(mySid); if (!fRel.friendDetails) fRel.friendDetails = {}; fRel.friendDetails[mySid] = { level: 'friend', metYear: DATA.currentYear, notes: '' }; DATA.relationships[activeId] = myRel; DATA.relationships[fid] = fRel; saveData(); window.renderFriends(); showToast('Friend added'); setTimeout(() => window.openFriendDetails(fid), 100); };
-
+window.addFriend = function() { 
+  const pid = window.getSelectedPickerValue('friend-pick'); 
+  if (!pid) { showToast('Select a person first'); return; } 
+  const fid = getPersonId(pid); 
+  if (!fid) { showToast('Invalid selection'); return; } 
+  
+  // Check if already friends
+  const existingFriends = getFriends(activeId);
+  if (existingFriends.some(f => f.id === fid || f.id === pid)) {
+    showToast('Already friends with this person');
+    return;
+  }
+  
+  const mySid = getPersonDisplay(activeId).stableId; 
+  const fSid = getPersonDisplay(fid).stableId; 
+  
+  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; 
+  if (!DATA.relationships[fid]) DATA.relationships[fid] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; 
+  
+  const myRel = DATA.relationships[activeId]; 
+  const fRel = DATA.relationships[fid]; 
+  
+  if (!myRel.friends) myRel.friends = []; 
+  if (!myRel.friendDetails) myRel.friendDetails = {}; 
+  if (!fRel.friends) fRel.friends = []; 
+  if (!fRel.friendDetails) fRel.friendDetails = {}; 
+  
+  // Add to friends - use both stableId and actual ID for redundancy
+  if (!myRel.friends.includes(fSid)) myRel.friends.push(fSid); 
+  if (!myRel.friends.includes(fid)) myRel.friends.push(fid); 
+  myRel.friendDetails[fSid] = { level: 'friend', metYear: DATA.currentYear, notes: '' }; 
+  myRel.friendDetails[fid] = { level: 'friend', metYear: DATA.currentYear, notes: '' }; 
+  
+  if (!fRel.friends.includes(mySid)) fRel.friends.push(mySid); 
+  if (!fRel.friends.includes(activeId)) fRel.friends.push(activeId); 
+  fRel.friendDetails[mySid] = { level: 'friend', metYear: DATA.currentYear, notes: '' }; 
+  fRel.friendDetails[activeId] = { level: 'friend', metYear: DATA.currentYear, notes: '' }; 
+  
+  DATA.relationships[activeId] = myRel; 
+  DATA.relationships[fid] = fRel; 
+  saveData(); 
+  window.renderFriends(); 
+  showToast('Friend added'); 
+  setTimeout(() => window.openFriendDetails(fid), 100); 
+};
 window.setupRelationshipPickers = function() {
   const myData = getPersonDisplay(activeId);
   const myYear = myData?.birthYear;
