@@ -11,7 +11,6 @@
    CHARACTER MANAGER - SPECIFIC STYLES
    ============================================ */
 
-/* Layout */
 .app-container {
   display: flex;
   height: calc(100vh - 44px);
@@ -54,7 +53,6 @@
   cursor: pointer;
 }
 
-/* Person List */
 #person-list {
   flex: 1;
   overflow-y: auto;
@@ -71,41 +69,14 @@
   border-left: 3px solid transparent;
 }
 
-.person-item:hover {
-  background: var(--bg3);
-}
+.person-item:hover { background: var(--bg3); }
+.person-item.selected { background: var(--bg3); border-left-color: var(--accent); }
+.person-item.deceased { opacity: 0.7; }
 
-.person-item.selected {
-  background: var(--bg3);
-  border-left-color: var(--accent);
-}
-
-.person-item.deceased {
-  opacity: 0.7;
-}
-
-.person-name {
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.gender-symbol {
-  font-family: monospace;
-  color: var(--dim);
-  font-size: 0.85rem;
-}
-
-.person-detail {
-  font-size: 0.65rem;
-  color: var(--dim);
-  margin-top: 2px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
+.person-name { font-weight: 600; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.gender-symbol { font-family: monospace; color: var(--dim); font-size: 0.85rem; }
+.deceased-mark { color: var(--deceased); margin-left: 2px; }
+.person-detail { font-size: 0.65rem; color: var(--dim); margin-top: 2px; display: flex; flex-wrap: wrap; gap: 4px; }
 
 /* Main Content */
 .main-content {
@@ -117,7 +88,7 @@
   min-width: 0;
 }
 
-/* View Panel */
+/* View Panel (Collapsible Top) */
 .view-panel {
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
@@ -137,61 +108,20 @@
   position: sticky;
   top: 0;
   z-index: 5;
-}
-
-.view-header h4 {
-  font-size: 0.7rem;
-  margin: 0;
-}
-
-#view-collapse-btn {
-  background: none;
-  border: none;
-  color: var(--accent);
   cursor: pointer;
-  font-size: 1rem;
-  padding: 0 4px;
 }
 
-.view-content {
-  padding: 12px;
-}
+.view-header h4 { font-size: 0.7rem; margin: 0; color: var(--accent); }
+#view-collapse-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 1rem; padding: 0 4px; }
+.view-content { padding: 12px; }
+.view-section { margin-bottom: 16px; }
+.view-section h4 { font-size: 0.65rem; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+.view-grid { display: grid; grid-template-columns: 90px 1fr; gap: 4px 8px; font-size: 0.75rem; }
+.view-label { color: var(--dim); }
+.view-value { color: var(--text); }
+.view-stable-id { font-family: monospace; background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; }
 
-.view-section {
-  margin-bottom: 16px;
-}
-
-.view-section h4 {
-  font-size: 0.65rem;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 4px;
-}
-
-.view-grid {
-  display: grid;
-  grid-template-columns: 90px 1fr;
-  gap: 4px 8px;
-  font-size: 0.75rem;
-}
-
-.view-label {
-  color: var(--dim);
-}
-
-.view-value {
-  color: var(--text);
-}
-
-.view-stable-id {
-  font-family: monospace;
-  background: var(--bg);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.65rem;
-}
-
-/* Edit Panel */
+/* Edit Panel with Bottom Tabs */
 .edit-panel {
   flex: 1;
   display: flex;
@@ -200,7 +130,6 @@
   background: var(--bg);
 }
 
-/* Tabs Container */
 .edit-tabs {
   display: flex;
   gap: 2px;
@@ -223,16 +152,9 @@
   margin-bottom: -2px;
 }
 
-.edit-tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
+.edit-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.edit-tab:hover:not(.active) { color: var(--text); }
 
-.edit-tab:hover:not(.active) {
-  color: var(--text);
-}
-
-/* Edit Content Container */
 .edit-content {
   flex: 1;
   overflow-y: auto;
@@ -240,234 +162,90 @@
   scrollbar-width: thin;
 }
 
-/* Base Tab Styles - Each tab will have its own container */
-.tab-container {
-  display: none;
-}
+.tab-container { display: none; }
+.tab-container.active { display: block; }
 
-.tab-container.active {
-  display: block;
-}
+/* Forms */
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 0.7rem; font-family: 'Cinzel', serif; color: var(--accent); margin-bottom: 4px; }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.full-width { grid-column: 1 / -1; }
+.name-with-random { display: flex; gap: 8px; }
+.name-with-random input { flex: 1; }
+.random-btn { background: var(--bg2); border: 1px solid var(--border2); border-radius: 6px; padding: 0 12px; cursor: pointer; font-size: 0.75rem; }
+.random-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-/* Forms (Shared) */
-.form-group {
-  margin-bottom: 14px;
-}
+.action-buttons { display: flex; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
 
-.form-group label {
-  display: block;
-  font-size: 0.7rem;
-  font-family: 'Cinzel', serif;
-  color: var(--accent);
-  margin-bottom: 4px;
-}
+/* Ranks */
+.ranks-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.rank-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.rank-btn { padding: 4px 12px; border-radius: 20px; font-size: 0.65rem; background: var(--bg2); border: 1px solid var(--border2); color: var(--dim); cursor: pointer; }
+.rank-btn:hover { border-color: var(--accent); color: var(--accent); }
+.rank-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 0.65rem; background: var(--bg2); border: 1px solid var(--border2); cursor: pointer; }
+.rank-chip:hover { border-color: var(--danger); }
 
-.form-row {
-  display: flex;
-  gap: 12px;
-}
+/* Relationship Cards */
+.rel-card { background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; padding: 8px; margin-bottom: 6px; }
+.rel-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+.rel-card-name a { color: var(--accent); cursor: pointer; text-decoration: none; }
+.rel-card-name a:hover { text-decoration: underline; }
+.rel-card-meta { font-size: 0.65rem; color: var(--dim); margin-top: 4px; }
+.badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 10px; background: var(--bg2); white-space: nowrap; }
+.badge-ongoing { background: rgba(74, 144, 96, 0.15); border: 1px solid var(--ok); color: var(--ok); }
+.badge-ended { background: rgba(139, 64, 64, 0.15); border: 1px solid var(--danger); color: var(--danger-lt); }
+.badge-widowed { background: rgba(143, 94, 94, 0.15); border: 1px solid var(--deceased); color: var(--deceased); }
 
-.form-row .form-group {
-  flex: 1;
-}
+/* Picker */
+.picker-wrap { position: relative; width: 100%; }
+.picker-btn { width: 100%; padding: 6px 10px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); cursor: pointer; text-align: left; display: flex; justify-content: space-between; }
+.picker-drop { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg2); border: 1px solid var(--accent); border-radius: 6px; display: none; z-index: 1000; max-height: 300px; overflow-y: auto; }
+.picker-drop.open { display: block; }
+.picker-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: pointer; border-bottom: 1px solid var(--border2); }
+.picker-item:hover { background: var(--bg3); }
+.picker-item .pi-name { flex: 1; }
+.picker-item .pi-meta { font-size: 0.6rem; color: var(--dim); }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
+/* Filter Bar */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 8px; background: var(--bg2); border-radius: 6px; }
+.filter-tag { padding: 4px 12px; border-radius: 20px; font-size: 0.6rem; background: var(--bg3); border: 1px solid var(--border2); cursor: pointer; }
+.filter-tag.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.filter-select { padding: 4px 8px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); font-size: 0.7rem; }
 
-.full-width {
-  grid-column: 1 / -1;
-}
+.empty-msg { text-align: center; color: var(--dim); padding: 40px 20px; font-style: italic; }
 
-.name-with-random {
-  display: flex;
-  gap: 8px;
-}
+.collapsible-section { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+.section-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; cursor: pointer; font-family: 'Cinzel', serif; font-size: 0.75rem; color: var(--accent); background: var(--bg3); }
+.section-header .arrow { transition: transform 0.3s; font-size: 0.7rem; color: var(--dim); }
+.section-header.collapsed .arrow { transform: rotate(-90deg); }
+.section-content { max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease-out; }
+.section-content.collapsed { max-height: 0; }
+.section-inner { padding: 16px; }
 
-.name-with-random input {
-  flex: 1;
-}
+.add-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+.add-row .picker-wrap { flex: 1; }
 
-.random-btn {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: 6px;
-  padding: 0 12px;
-  cursor: pointer;
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-.random-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-
-/* Rank Management */
-.ranks-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.rank-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.rank-btn {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.65rem;
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  color: var(--dim);
-  cursor: pointer;
-}
-
-.rank-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.rank-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 0.65rem;
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  cursor: pointer;
-}
-
-.rank-chip:hover {
-  border-color: var(--danger);
-}
-
-/* Empty State */
-.empty-msg {
-  text-align: center;
-  color: var(--dim);
-  padding: 40px 20px;
-  font-style: italic;
-}
-
-/* Collapsible Sections */
-.collapsible-section {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  cursor: pointer;
-  font-family: 'Cinzel', serif;
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  color: var(--accent);
-  background: var(--bg3);
-}
-
-.section-header .arrow {
-  transition: transform 0.3s;
-  font-size: 0.7rem;
-  color: var(--dim);
-}
-
-.section-header.collapsed .arrow {
-  transform: rotate(-90deg);
-}
-
-.section-content {
-  max-height: 2000px;
-  overflow: hidden;
-  transition: max-height 0.3s ease-out;
-}
-
-.section-content.collapsed {
-  max-height: 0;
-}
-
-.section-inner {
-  padding: 16px;
-}
-
-/* Mobile */
 @media (max-width: 768px) {
-  .sidebar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    transform: translateX(-100%);
-    z-index: 200;
-  }
-  
-  .sidebar.mobile-visible {
-    transform: translateX(0);
-  }
-  
-  #close-sidebar {
-    display: block;
-  }
-  
-  #menu-toggle {
-    display: block !important;
-    background: transparent;
-    border: none;
-    color: var(--accent);
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0 8px;
-  }
-  
-  .view-panel {
-    max-height: 30%;
-  }
-  
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .form-row {
-    flex-direction: column;
-  }
+  .sidebar { position: absolute; top: 0; left: 0; bottom: 0; transform: translateX(-100%); z-index: 200; width: 280px; }
+  .sidebar.mobile-visible { transform: translateX(0); }
+  #close-sidebar { display: block; }
+  #menu-toggle { display: block !important; background: transparent; border: none; color: var(--accent); font-size: 1.2rem; cursor: pointer; padding: 0 8px; }
+  .view-panel { max-height: 30%; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-row { flex-direction: column; }
 }
+@media (min-width: 769px) { #menu-toggle { display: none !important; } }
 
-@media (min-width: 769px) {
-  #menu-toggle {
-    display: none !important;
-  }
-}
+/* Moves List */
+.move-item { background: var(--bg3); border: 1px solid var(--border2); border-radius: 4px; padding: 8px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
 </style>
 </head>
 <body>
 
-<!-- Toast Container -->
 <div id="toast-container"></div>
 
-<!-- Topbar -->
 <div class="topbar" id="topbar">
   <button id="menu-toggle" onclick="toggleMobileSidebar()">☰</button>
   <h1>The Currents that Bind Us — Character Manager</h1>
@@ -486,115 +264,103 @@
   </div>
 </div>
 
-<!-- Main App Container -->
 <div class="app-container">
-  
-  <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <h3>Characters</h3>
       <button id="close-sidebar" onclick="toggleMobileSidebar()">✕</button>
     </div>
-    
-    <!-- Search & Filters -->
     <div style="padding: 12px; border-bottom: 1px solid var(--border);">
       <input type="text" id="search-box" placeholder="Search characters..." oninput="renderPersonList()" style="width:100%;">
-      
       <div class="filter-toggle-btn" onclick="toggleFilters()" style="display:flex; justify-content:space-between; padding:8px 0 4px; cursor:pointer;">
         <span style="color:var(--accent); font-size:0.7rem;">Filters</span>
-        <span class="arrow" style="transition:transform 0.2s;">▼</span>
+        <span class="arrow">▼</span>
       </div>
-      
       <div id="filters-panel">
         <div class="filter-group" style="margin-bottom:8px;">
-          <div class="filter-label" style="font-size:0.6rem;">Age Range</div>
+          <div class="filter-label">Age Range</div>
           <div style="display:flex; gap:8px;">
             <input type="number" id="filter-age-min" placeholder="Min" oninput="renderPersonList()" style="width:50%;">
             <input type="number" id="filter-age-max" placeholder="Max" oninput="renderPersonList()" style="width:50%;">
           </div>
         </div>
         <div class="filter-group" style="margin-bottom:8px;">
-          <div class="filter-label" style="font-size:0.6rem;">Gender</div>
+          <div class="filter-label">Gender</div>
           <select id="filter-gender" onchange="renderPersonList()" style="width:100%;">
-            <option value="">All</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
+            <option value="">All</option><option value="male">Male</option><option value="female">Female</option>
           </select>
         </div>
         <div class="filter-group" style="margin-bottom:8px;">
-          <div class="filter-label" style="font-size:0.6rem;">Life Stage</div>
+          <div class="filter-label">Life Stage</div>
           <select id="filter-stage" onchange="renderPersonList()" style="width:100%;">
             <option value="">All</option>
-            <option value="infant">Infant</option>
-            <option value="toddler">Toddler</option>
-            <option value="child">Child</option>
-            <option value="adolescent">Adolescent</option>
-            <option value="young adult">Young Adult</option>
-            <option value="adult">Adult</option>
-            <option value="middle-aged">Middle-Aged</option>
-            <option value="elder">Elder</option>
+            <option value="infant">Infant</option><option value="toddler">Toddler</option><option value="child">Child</option>
+            <option value="adolescent">Adolescent</option><option value="young adult">Young Adult</option>
+            <option value="adult">Adult</option><option value="middle-aged">Middle-Aged</option><option value="elder">Elder</option>
           </select>
         </div>
         <div class="filter-checkbox" style="margin-bottom:8px;">
           <input type="checkbox" id="filter-show-deceased" onchange="renderPersonList()">
-          <label style="font-size:0.7rem;">Show Deceased</label>
+          <label>Show Deceased</label>
         </div>
         <div class="clear-filters" onclick="clearFilters()" style="text-align:center; padding:8px; font-size:0.6rem; color:var(--warn); cursor:pointer;">Clear all</div>
       </div>
     </div>
-    
-    <!-- Person List -->
     <div id="person-list"></div>
   </div>
   
-  <!-- Main Content -->
   <div class="main-content">
-    
-    <!-- View Panel (Read-only) -->
+    <!-- VIEW TAB (Collapsible Top) -->
     <div class="view-panel" id="view-panel">
-      <div class="view-header">
+      <div class="view-header" onclick="toggleViewPanel()">
         <h4>Character Info</h4>
-        <button id="view-collapse-btn" onclick="toggleViewPanel()">▼</button>
+        <button id="view-collapse-btn" onclick="event.stopPropagation(); toggleViewPanel()">▼</button>
       </div>
       <div class="view-content">
         <div id="view-empty" class="empty-msg">Select a character</div>
         <div id="view-filled" style="display:none;">
-          <div class="view-section">
-            <h4>Identity</h4>
+          <div class="view-section"><h4>Identity</h4>
             <div class="view-grid">
-              <span class="view-label">Name:</span>
-              <span class="view-value" id="view-name"></span>
-              <span class="view-label">Stable ID:</span>
-              <span class="view-value"><span class="view-stable-id" id="view-stableId"></span></span>
-              <span class="view-label">Gender:</span>
-              <span class="view-value" id="view-gender"></span>
-              <span class="view-label">Age:</span>
-              <span class="view-value" id="view-age"></span>
-              <span class="view-label">Stage:</span>
-              <span class="view-value" id="view-stage"></span>
-              <span class="view-label">Role:</span>
-              <span class="view-value" id="view-role"></span>
+              <span class="view-label">Name:</span><span class="view-value" id="view-name"></span>
+              <span class="view-label">Stable ID:</span><span class="view-value"><span class="view-stable-id" id="view-stableId"></span></span>
+              <span class="view-label">Gender:</span><span class="view-value" id="view-gender"></span>
+              <span class="view-label">Attraction:</span><span class="view-value" id="view-attraction"></span>
+              <span class="view-label">Birth Year:</span><span class="view-value" id="view-birthYear"></span>
+              <span class="view-label">Age:</span><span class="view-value" id="view-age"></span>
+              <span class="view-label">Stage:</span><span class="view-value" id="view-stage"></span>
+              <span class="view-label">Role:</span><span class="view-value" id="view-role"></span>
             </div>
-            <div id="view-ranks" class="view-ranks" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
+            <div id="view-ranks" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
           </div>
-          <div class="view-section">
-            <h4>Residence</h4>
+          <div class="view-section"><h4>Death</h4>
             <div class="view-grid">
-              <span class="view-label">Birth:</span>
-              <span class="view-value" id="view-birthComp"></span>
-              <span class="view-label">Current:</span>
-              <span class="view-value" id="view-currComp"></span>
+              <span class="view-label">Deceased:</span><span class="view-value" id="view-deceased"></span>
+              <span class="view-label">Death Year:</span><span class="view-value" id="view-deathYear"></span>
+              <span class="view-label">Cause:</span><span class="view-value" id="view-causeDeath"></span>
             </div>
           </div>
-          <div class="view-section">
-            <h4>Notes</h4>
-            <div id="view-notes" style="white-space:pre-wrap; font-size:0.75rem;"></div>
+          <div class="view-section"><h4>Location</h4>
+            <div class="view-grid">
+              <span class="view-label">Birth:</span><span class="view-value" id="view-birthComp"></span>
+              <span class="view-label">Current:</span><span class="view-value" id="view-currComp"></span>
+              <span class="view-label">Moves:</span><span class="view-value" id="view-moves"></span>
+            </div>
           </div>
+          <div class="view-section"><h4>Appearance</h4>
+            <div class="view-grid">
+              <span class="view-label">Eyes:</span><span class="view-value" id="view-eyeColor"></span>
+              <span class="view-label">Hair:</span><span class="view-value" id="view-hairColor"></span>
+              <span class="view-label">Skin:</span><span class="view-value" id="view-skinColor"></span>
+              <span class="view-label">Tattoos/Scars:</span><span class="view-value" id="view-tattoos"></span>
+            </div>
+            <div id="view-appNotes" style="margin-top:4px; font-size:0.75rem;"></div>
+          </div>
+          <div class="view-section"><h4>Notes</h4><div id="view-notes" style="white-space:pre-wrap;"></div></div>
         </div>
       </div>
     </div>
     
-    <!-- Edit Panel -->
+    <!-- EDIT PANEL with Bottom Tabs -->
     <div class="edit-panel">
       <div class="edit-tabs" id="edit-tabs"></div>
       <div class="edit-content" id="edit-content">
@@ -609,1981 +375,375 @@
 <div id="new-person-modal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-title">Create New Character</div>
-    <div class="form-group">
-      <label>Name</label>
-      <div class="name-with-random">
-        <input id="new-name" placeholder="Character name">
-        <button class="random-btn" onclick="randomNameForNew()">🎲</button>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Gender</label>
-        <select id="new-gender">
-          <option value="unknown">Unknown</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Birth Year</label>
-        <input type="number" id="new-birthYear" placeholder="Optional">
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Birth Compound</label>
-      <input id="new-birthComp" placeholder="Birth location">
-    </div>
-    <div style="display:flex; gap:12px; margin-top:20px;">
-      <button class="primary" style="flex:1;" onclick="createPerson()">Create</button>
-      <button style="flex:1; background:var(--bg3); border:1px solid var(--border2); border-radius:6px; cursor:pointer;" onclick="closeNewPersonModal()">Cancel</button>
-    </div>
+    <div class="form-group"><label>Name</label><div class="name-with-random"><input id="new-name"><button class="random-btn" onclick="randomNameForNew()">🎲</button></div></div>
+    <div class="form-row"><div class="form-group"><label>Gender</label><select id="new-gender"><option value="unknown">Unknown</option><option value="male">Male</option><option value="female">Female</option></select></div>
+    <div class="form-group"><label>Birth Year</label><input type="number" id="new-birthYear"></div></div>
+    <div class="form-group"><label>Birth Compound</label><input id="new-birthComp"></div>
+    <div style="display:flex; gap:12px; margin-top:20px;"><button class="primary" style="flex:1;" onclick="createPerson()">Create</button><button style="flex:1; background:var(--bg3); border:1px solid var(--border2); border-radius:6px;" onclick="closeNewPersonModal()">Cancel</button></div>
   </div>
 </div>
 
 <script>
 // ============================================
-// STILL WATERS - CHARACTER MANAGER
-// Modular Tab System - Each tab is self-contained
+// STILL WATERS - COMPLETE CHARACTER MANAGER
 // ============================================
 
-// ====================== CORE DATA & UTILITIES ======================
-const STORAGE_KEY = 'stillwaters_manager_v2';
+// ====================== CORE DATA ======================
+const STORAGE_KEY = 'stillwaters_manager_v3';
+const LOCATIONS = ['Tahi', 'Arenui', 'Makanga', 'Matukia', 'Tonga', 'Raki', 'Lupe', 'Fiu', 'Pase', 'Havaiti', 'Lanu', 'Fatu'];
 const DEFAULT_NAMES = {
   male: ['Kai', 'Mako', 'Tane', 'Rangi', 'Koa', 'Keanu', 'Ari', 'Leo', 'Nico', 'Ikaia', 'Sione', 'Tama', 'Vaea', 'Laki', 'Kaleo'],
   female: ['Leilani', 'Moana', 'Nani', 'Tui', 'Hina', 'Lani', 'Malia', 'Rai', 'Tara', 'Vai', 'Manaia', 'Aroha', 'Eponi', 'Luna', 'Mira']
 };
 
-let DATA = {
-  version: '2.0',
-  currentYear: 1460,
-  people: {},
-  relationships: {},
-  lastSaved: null,
-  stableIdIndex: {}
-};
+let DATA = { version: '3.0', currentYear: 1460, people: {}, relationships: {}, lastSaved: null, stableIdIndex: {} };
+let activeId = null, activeTab = null;
 
-let activeId = null;
-let activeTab = null;
+// Filter state
+window.partnerFilters = { gender: null, widowed: false, peer: false, status: null };
+window.friendFilters = { gender: null, peer: false };
+window.childFilters = { gender: null, orphan: false, hasParents: false };
 
-// ====================== TAB REGISTRY ======================
-// This is where all tabs are registered. To add/remove a tab, just modify this array.
-const TABS = [
-  {
-    id: 'edit',
-    label: 'Edit',
-    render: function(container, person) {
-      // This is the ENTIRE Edit Tab HTML and logic - self-contained
-      container.innerHTML = `
-        <div class="tab-edit">
-          <div class="collapsible-section">
-            <div class="section-header" onclick="toggleSection(this)">
-              <span>Identity</span>
-              <span class="arrow">▼</span>
-            </div>
-            <div class="section-content">
-              <div class="section-inner">
-                <div class="form-group">
-                  <label>Name</label>
-                  <div class="name-with-random">
-                    <input id="edit-name" placeholder="Character name" value="${escapeHtml(person?.name || '')}">
-                    <button class="random-btn" onclick="randomNameForCurrent()">🎲</button>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Stable ID</label>
-                  <input id="edit-stableId" readonly style="background:var(--bg); font-family:monospace;" value="${escapeHtml(person?.stableId || '')}">
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Gender</label>
-                    <select id="edit-gender">
-                      <option value="unknown" ${person?.gender === 'unknown' ? 'selected' : ''}>Unknown</option>
-                      <option value="male" ${person?.gender === 'male' ? 'selected' : ''}>Male</option>
-                      <option value="female" ${person?.gender === 'female' ? 'selected' : ''}>Female</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label>Attraction</label>
-                    <select id="edit-attraction">
-                      <option value="both" ${person?.attraction === 'both' ? 'selected' : ''}>Both</option>
-                      <option value="men" ${person?.attraction === 'men' ? 'selected' : ''}>Men</option>
-                      <option value="women" ${person?.attraction === 'women' ? 'selected' : ''}>Women</option>
-                      <option value="neither" ${person?.attraction === 'neither' ? 'selected' : ''}>Neither</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Birth Year</label>
-                    <input type="number" id="edit-birthYear" value="${person?.birthYear || ''}" oninput="updateAgeFromBirth()">
-                  </div>
-                  <div class="form-group">
-                    <label>Age</label>
-                    <input type="number" id="edit-age" value="${person?.age || ''}" oninput="updateBirthFromAge()">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Role / Occupation</label>
-                  <input id="edit-role" placeholder="e.g., Farmer, Fisher, Chief" value="${escapeHtml(person?.role || '')}">
-                </div>
-                <div class="checkbox-row" style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-                  <input type="checkbox" id="edit-deceased" ${person?.deceased ? 'checked' : ''} onchange="toggleDeathFields()">
-                  <label style="margin:0;">Deceased</label>
-                </div>
-                <div id="death-fields" style="display:${person?.deceased ? 'block' : 'none'}; margin-top:8px;">
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label>Death Year</label>
-                      <input type="number" id="edit-deathYear" value="${person?.deathYear || ''}" oninput="updateAgeFromBirth()">
-                    </div>
-                    <div class="form-group">
-                      <label>Cause</label>
-                      <input id="edit-causeDeath" placeholder="Cause of death" value="${escapeHtml(person?.causeDeath || '')}">
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="collapsible-section">
-            <div class="section-header" onclick="toggleSection(this)">
-              <span>Ranks</span>
-              <span class="arrow">▼</span>
-            </div>
-            <div class="section-content">
-              <div class="section-inner">
-                <div class="ranks-container" id="ranks-container"></div>
-                <div class="rank-buttons">
-                  <button class="rank-btn" onclick="addRank('Chief')">★ Chief</button>
-                  <button class="rank-btn" onclick="addRank('Elder')">▲ Elder</button>
-                  <button class="rank-btn" onclick="addRank('Master')">◆ Master</button>
-                  <button class="rank-btn" onclick="addRank('Commoner')">· Commoner</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="collapsible-section">
-            <div class="section-header" onclick="toggleSection(this)">
-              <span>Location</span>
-              <span class="arrow">▼</span>
-            </div>
-            <div class="section-content">
-              <div class="section-inner">
-                <div class="form-group">
-                  <label>Birth Compound</label>
-                  <input id="edit-birthComp" value="${escapeHtml(person?.birthComp || '')}" placeholder="Birth location">
-                </div>
-                <div class="form-group">
-                  <label>Current Compound</label>
-                  <input id="edit-currComp" value="${escapeHtml(person?.currComp || '')}" placeholder="Current location">
-                </div>
-                <div class="form-group">
-                  <label>Household</label>
-                  <input id="edit-household" value="${escapeHtml(person?.household || '')}" placeholder="Household name">
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="collapsible-section">
-            <div class="section-header" onclick="toggleSection(this)">
-              <span>Notes</span>
-              <span class="arrow">▼</span>
-            </div>
-            <div class="section-content">
-              <div class="section-inner">
-                <textarea id="edit-notes" rows="3" placeholder="Character notes...">${escapeHtml(person?.notes || '')}</textarea>
-              </div>
-            </div>
-          </div>
-          
-          <div class="action-buttons">
-            <button class="primary" onclick="saveCurrentPerson()">Save Changes</button>
-            <button class="danger" onclick="deleteCurrentPerson()">Delete Character</button>
-          </div>
-        </div>
-      `;
-      
-      // Update ranks display after rendering
-      setTimeout(() => updateRanksDisplay(), 0);
-    },
-    refresh: function() {
-      updateRanksDisplay();
-    }
-  },
-  
-  {
-  id: 'relations',
-  label: 'Relations',
-  render: function(container, person) {
-    if (!person) {
-      container.innerHTML = `<div class="empty-msg">Select a character to manage relations</div>`;
-      return;
-    }
-    
-    // Get all relationship data
-    const rel = DATA.relationships[activeId] || {
-      ongoing: [], ended: [], widowed: [], friends: [], 
-      friendDetails: {}, details: {}
-    };
-    const partners = getPartners(activeId);
-    const friends = getFriends(activeId);
-    const parents = [];
-    if (rel.father) parents.push({ id: rel.father, relation: 'Father' });
-    if (rel.mother) parents.push({ id: rel.mother, relation: 'Mother' });
-    const children = getChildren(activeId);
-    const siblings = getSiblings(activeId);
-    
-    container.innerHTML = `
-      <div class="tab-relations">
-        <!-- ====================== PARENTS SECTION ====================== -->
-        <div class="collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <span>Parents</span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
-              <div id="parents-list"></div>
-              <div class="add-row" style="margin-top:12px;">
-                <div id="father-picker" style="flex:1;"></div>
-                <button class="primary" style="margin-left:8px;" onclick="setParent('father')">Set Father</button>
-              </div>
-              <div class="add-row" style="margin-top:8px;">
-                <div id="mother-picker" style="flex:1;"></div>
-                <button class="primary" style="margin-left:8px;" onclick="setParent('mother')">Set Mother</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- ====================== PARTNERS SECTION ====================== -->
-        <div class="collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <span>Partners (${partners.length})</span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
-              <div id="partners-list"></div>
-              <div class="add-row" style="margin-top:12px;">
-                <div id="partner-picker" style="flex:1;"></div>
-                <button class="primary" style="margin-left:8px;" onclick="addPartner()">Add Partner</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- ====================== CHILDREN SECTION ====================== -->
-        <div class="collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <span>Children (${children.length})</span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
-              <div id="children-list"></div>
-              <div class="add-row" style="margin-top:12px;">
-                <div id="child-picker" style="flex:1;"></div>
-                <button class="primary" style="margin-left:8px;" onclick="addChild()">Add Child</button>
-              </div>
-              <button class="primary" style="margin-top:8px; width:100%;" onclick="generateNewborn()">✨ Generate Newborn</button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- ====================== SIBLINGS SECTION ====================== -->
-        <div class="collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <span>Siblings (${siblings.length})</span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
-              <div id="siblings-list"></div>
-              <div class="add-row" style="margin-top:12px;">
-                <div id="sibling-picker" style="flex:1;"></div>
-                <button class="primary" style="margin-left:8px;" onclick="addSibling()">Add Sibling</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- ====================== FRIENDS SECTION ====================== -->
-        <div class="collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <span>Friends (${friends.length})</span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
-              <div id="friends-list"></div>
-              <div class="add-row" style="margin-top:12px;">
-                <div id="friend-picker" style="flex:1;"></div>
-                <button class="primary" style="margin-left:8px;" onclick="addFriend()">Add Friend</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    // Render all the lists after container is populated
-    setTimeout(() => {
-      renderParentsList(parents);
-      renderPartnersList(partners, rel);
-      renderChildrenList(children);
-      renderSiblingsList(siblings);
-      renderFriendsList(friends);
-      setupPickers();
-    }, 0);
-  },
-  refresh: function() {
-    // Refresh all lists when data changes
-    if (!activeId) return;
-    const rel = DATA.relationships[activeId] || {};
-    const partners = getPartners(activeId);
-    const friends = getFriends(activeId);
-    const parents = [];
-    if (rel.father) parents.push({ id: rel.father, relation: 'Father' });
-    if (rel.mother) parents.push({ id: rel.mother, relation: 'Mother' });
-    const children = getChildren(activeId);
-    const siblings = getSiblings(activeId);
-    
-    renderParentsList(parents);
-    renderPartnersList(partners, rel);
-    renderChildrenList(children);
-    renderSiblingsList(siblings);
-    renderFriendsList(friends);
-  }
-},
-  
-  {
-    id: 'professions',
-    label: 'Professions',
-    render: function(container, person) {
-      // Placeholder - Add your full Professions tab HTML here
-      container.innerHTML = `
-        <div class="tab-professions">
-          <div class="empty-msg" style="padding: 40px;">
-            <h4 style="margin-bottom: 16px;">Professions & Apprentices</h4>
-            <p style="margin-bottom: 12px;">Coming soon: Manage professions, specializations, and apprentices.</p>
-            <p>This tab will include:</p>
-            <ul style="margin-top: 12px; text-align: left; display: inline-block;">
-              <li>• Assigned professions</li>
-              <li>• Primary profession selection</li>
-              <li>• Specializations</li>
-              <li>• Apprentices and masters</li>
-            </ul>
-          </div>
-        </div>
-      `;
-    },
-    refresh: function() {
-      // Nothing to refresh yet
-    }
-  }
-];
-// ====================== RELATIONSHIP HELPER FUNCTIONS ======================
-// Add these functions right after the TABS array and before initTabs()
-
-function getPartners(id) {
-  const rel = DATA.relationships[id] || {};
-  const partners = [];
-  (rel.ongoing || []).forEach(pid => { 
-    const personId = getPersonId(pid);
-    if (personId && DATA.people[personId]) partners.push({ id: pid, status: 'ongoing' }); 
-  });
-  (rel.ended || []).forEach(pid => { 
-    const personId = getPersonId(pid);
-    if (personId && DATA.people[personId]) partners.push({ id: pid, status: 'ended' }); 
-  });
-  (rel.widowed || []).forEach(pid => { 
-    const personId = getPersonId(pid);
-    if (personId && DATA.people[personId]) partners.push({ id: pid, status: 'widowed' }); 
-  });
-  return partners;
-}
-
-function getFriends(id) {
-  const rel = DATA.relationships[id] || {};
-  const friends = [];
-  (rel.friends || []).forEach(fid => {
-    const friendId = getPersonId(fid);
-    if (friendId && DATA.people[friendId]) {
-      const details = rel.friendDetails?.[fid] || { level: 'friend', metYear: null, notes: '' };
-      friends.push({ id: fid, level: details.level || 'friend', metYear: details.metYear, notes: details.notes || '' });
-    }
-  });
-  return friends;
-}
-
-function getChildren(id) {
-  const personId = getPersonId(id);
-  const children = [];
-  Object.keys(DATA.people).forEach(childId => {
-    const rel = DATA.relationships[childId] || {};
-    const fatherId = rel.father ? getPersonId(rel.father) : null;
-    const motherId = rel.mother ? getPersonId(rel.mother) : null;
-    if (fatherId === personId || motherId === personId) {
-      children.push({ id: childId });
-    }
-  });
-  return children.sort((a, b) => {
-    const aDisplay = getPersonDisplay(a.id);
-    const bDisplay = getPersonDisplay(b.id);
-    return (aDisplay?.birthYear || 0) - (bDisplay?.birthYear || 0);
-  });
-}
-
-function getSiblings(id) {
-  const personId = getPersonId(id);
-  const current = getPersonDisplay(personId);
-  if (!current) return [];
-  const siblings = [];
-  Object.keys(DATA.people).forEach(siblingId => {
-    if (siblingId === personId) return;
-    const sibling = getPersonDisplay(siblingId);
-    if (!sibling) return;
-    const shareFather = (current.father && sibling.father && getPersonId(sibling.father) === getPersonId(current.father));
-    const shareMother = (current.mother && sibling.mother && getPersonId(sibling.mother) === getPersonId(current.mother));
-    if (shareFather || shareMother) siblings.push(siblingId);
-  });
-  return siblings.sort((a, b) => {
-    const aDisplay = getPersonDisplay(a);
-    const bDisplay = getPersonDisplay(b);
-    return (aDisplay?.birthYear || 0) - (bDisplay?.birthYear || 0);
-  });
-}
-
-function ageAtBirth(parent, child) {
-  const parentDisplay = getPersonDisplay(parent);
-  const childDisplay = getPersonDisplay(child);
-  if (!parentDisplay?.birthYear || !childDisplay?.birthYear) return null;
-  return childDisplay.birthYear - parentDisplay.birthYear;
-}
-
-// ====================== RENDER FUNCTIONS ======================
-
-function renderParentsList(parents) {
-  const container = document.getElementById('parents-list');
-  if (!container) return;
-  
-  if (!parents.length) {
-    container.innerHTML = '<div style="color:var(--dim); font-style:italic; padding:6px;">No parents assigned</div>';
-    return;
-  }
-  
-  container.innerHTML = parents.map(p => {
-    const pd = getPersonDisplay(p.id);
-    if (!pd) return '';
-    const ageAtBirthValue = p.id === activeId ? null : ageAtBirth(p.id, activeId);
-    return `
-      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px; margin-bottom:6px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <a onclick="selectPerson('${p.id}')" style="color:var(--accent); cursor:pointer;">${escapeHtml(pd.name)}</a>
-            <span style="margin-left:8px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">${p.relation}</span>
-            ${ageAtBirthValue ? `<div style="font-size:0.65rem; color:var(--accent);">was ${ageAtBirthValue} at birth</div>` : ''}
-          </div>
-          <button class="danger" style="padding:2px 8px; font-size:0.6rem;" onclick="event.stopPropagation(); removeParent('${p.relation.toLowerCase()}')">✕</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderPartnersList(partners, rel) {
-  const container = document.getElementById('partners-list');
-  if (!container) return;
-  
-  if (!partners.length) {
-    container.innerHTML = '<div style="color:var(--dim); font-style:italic; padding:6px;">No partners</div>';
-    return;
-  }
-  
-  const statusColors = { ongoing: '#4a9060', ended: '#8b4040', widowed: '#8f5e5e' };
-  
-  container.innerHTML = partners.map(p => {
-    const pd = getPersonDisplay(p.id);
-    if (!pd) return '';
-    const details = rel.details?.[p.id] || {};
-    const relationshipWarning = checkRelationship(activeId, p.id);
-    return `
-      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px; margin-bottom:6px; cursor:pointer;" onclick="openPartnerDetails('${p.id}')">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <a onclick="event.stopPropagation(); selectPerson('${p.id}')" style="color:var(--accent); cursor:pointer;">${escapeHtml(pd.name)}</a>
-            <span style="margin-left:8px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:${statusColors[p.status]}20; border:1px solid ${statusColors[p.status]};">${p.status}</span>
-            ${details.type ? `<span style="margin-left:4px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">${details.type}</span>` : ''}
-            ${details.startYear ? `<span style="margin-left:4px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">📅 ${details.startYear}${details.endYear ? `-${details.endYear}` : ''}</span>` : ''}
-            ${relationshipWarning ? `<span style="margin-left:4px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:#8b404020; border:1px solid #8b4040;">⚠️ ${relationshipWarning}</span>` : ''}
-          </div>
-          <button class="danger" style="padding:2px 8px; font-size:0.6rem;" onclick="event.stopPropagation(); removePartnerById('${p.id}')">✕</button>
-        </div>
-        ${details.notes ? `<div style="font-size:0.65rem; color:var(--dim); margin-top:4px;">📝 ${escapeHtml(details.notes)}</div>` : ''}
-      </div>
-    `;
-  }).join('');
-}
-
-function renderChildrenList(children) {
-  const container = document.getElementById('children-list');
-  if (!container) return;
-  
-  if (!children.length) {
-    container.innerHTML = '<div style="color:var(--dim); font-style:italic; padding:6px;">No children</div>';
-    return;
-  }
-  
-  container.innerHTML = children.map(c => {
-    const cd = getPersonDisplay(c.id);
-    if (!cd) return '';
-    const ageAtBirthValue = ageAtBirth(activeId, c.id);
-    return `
-      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px; margin-bottom:6px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <a onclick="selectPerson('${c.id}')" style="color:var(--accent); cursor:pointer;">${escapeHtml(cd.name)}</a>
-            <span style="margin-left:8px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">Child</span>
-            ${cd.age ? `<span style="font-size:0.65rem; color:var(--dim); margin-left:4px;">age ${cd.age}</span>` : ''}
-            ${ageAtBirthValue ? `<div style="font-size:0.65rem; color:var(--accent);">you were ${ageAtBirthValue} at birth</div>` : ''}
-          </div>
-          <button class="danger" style="padding:2px 8px; font-size:0.6rem;" onclick="event.stopPropagation(); removeChild('${c.id}')">✕</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderSiblingsList(siblings) {
-  const container = document.getElementById('siblings-list');
-  if (!container) return;
-  
-  if (!siblings.length) {
-    container.innerHTML = '<div style="color:var(--dim); font-style:italic; padding:6px;">No siblings</div>';
-    return;
-  }
-  
-  container.innerHTML = siblings.map(s => {
-    const sd = getPersonDisplay(s);
-    if (!sd) return '';
-    return `
-      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px; margin-bottom:6px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <a onclick="selectPerson('${s}')" style="color:var(--accent); cursor:pointer;">${escapeHtml(sd.name)}</a>
-            <span style="margin-left:8px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">Sibling</span>
-            ${sd.age ? `<span style="font-size:0.65rem; color:var(--dim); margin-left:4px;">age ${sd.age}</span>` : ''}
-          </div>
-          <button class="danger" style="padding:2px 8px; font-size:0.6rem;" onclick="event.stopPropagation(); removeSibling('${s}')">✕</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderFriendsList(friends) {
-  const container = document.getElementById('friends-list');
-  if (!container) return;
-  
-  if (!friends.length) {
-    container.innerHTML = '<div style="color:var(--dim); font-style:italic; padding:6px;">No friends</div>';
-    return;
-  }
-  
-  const levelLabels = { acquaintance: 'Acquaintance', friend: 'Friend', close: 'Close Friend', best: 'Best Friend' };
-  const levelColors = { acquaintance: '#8aabb8', friend: '#6a9ece', close: '#aa88dd', best: '#bb88ee' };
-  
-  container.innerHTML = friends.map(f => {
-    const fd = getPersonDisplay(f.id);
-    if (!fd) return '';
-    return `
-      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px; margin-bottom:6px; cursor:pointer;" onclick="openFriendDetails('${f.id}')">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <a onclick="event.stopPropagation(); selectPerson('${f.id}')" style="color:var(--accent); cursor:pointer;">${escapeHtml(fd.name)}</a>
-            <span style="margin-left:8px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:${levelColors[f.level]}20; border:1px solid ${levelColors[f.level]};">${levelLabels[f.level]}</span>
-            ${f.metYear ? `<span style="margin-left:4px; font-size:0.6rem; padding:2px 6px; border-radius:10px; background:var(--bg2);">📅 ${f.metYear}</span>` : ''}
-          </div>
-          <button class="danger" style="padding:2px 8px; font-size:0.6rem;" onclick="event.stopPropagation(); removeFriendById('${f.id}')">✕</button>
-        </div>
-        ${f.notes ? `<div style="font-size:0.65rem; color:var(--dim); margin-top:4px;">📝 ${escapeHtml(f.notes)}</div>` : ''}
-      </div>
-    `;
-  }).join('');
-}
-
-// ====================== PICKER FUNCTIONS ======================
-
-function setupPickers() {
-  // Father picker (male only)
-  const fatherPicker = document.getElementById('father-picker');
-  if (fatherPicker) {
-    fatherPicker.innerHTML = makePicker('father-pick', 'Select father...', 
-      p => p.display.gender === 'male' && p.id !== activeId && !p.display.deceased);
-  }
-  
-  // Mother picker (female only)
-  const motherPicker = document.getElementById('mother-picker');
-  if (motherPicker) {
-    motherPicker.innerHTML = makePicker('mother-pick', 'Select mother...', 
-      p => p.display.gender === 'female' && p.id !== activeId && !p.display.deceased);
-  }
-  
-  // Partner picker (adults only)
-  const partnerPicker = document.getElementById('partner-picker');
-  if (partnerPicker) {
-    partnerPicker.innerHTML = makePicker('partner-pick', 'Add partner...', 
-      p => p.id !== activeId && p.display.stage !== 'infant' && p.display.stage !== 'toddler' && p.display.stage !== 'child');
-  }
-  
-  // Child picker
-  const childPicker = document.getElementById('child-picker');
-  if (childPicker) {
-    childPicker.innerHTML = makePicker('child-pick', 'Add child...', 
-      p => p.id !== activeId);
-  }
-  
-  // Sibling picker
-  const siblingPicker = document.getElementById('sibling-picker');
-  if (siblingPicker) {
-    siblingPicker.innerHTML = makePicker('sibling-pick', 'Add sibling...', 
-      p => p.id !== activeId);
-  }
-  
-  // Friend picker (adults only)
-  const friendPicker = document.getElementById('friend-picker');
-  if (friendPicker) {
-    friendPicker.innerHTML = makePicker('friend-pick', 'Add friend...', 
-      p => p.id !== activeId && p.display.stage !== 'infant' && p.display.stage !== 'toddler' && p.display.stage !== 'child');
-  }
-}
-
-function makePicker(id, placeholder, filterFn) {
-  const cand = Object.keys(DATA.people)
-    .map(i => ({ id: i, display: getPersonDisplay(i) }))
-    .filter(p => filterFn ? filterFn(p) : p.id !== activeId)
-    .sort((a, b) => (b.display.birthYear || 0) - (a.display.birthYear || 0));
-  
-  function makeItems(l) {
-    if (!l.length) return '<div style="padding:8px; color:var(--dim);">No candidates</div>';
-    return l.map(p => {
-      const d = p.display;
-      const g = d.gender === 'male' ? '♂' : d.gender === 'female' ? '♀' : '·';
-      const a = d.age ? `age ${d.age}` : '';
-      const by = d.birthYear ? `b.${d.birthYear}` : '';
-      const meta = [by, a].filter(Boolean).join(' · ');
-      return `<div class="picker-item" data-pid="${p.id}" data-stable-id="${d.stableId || ''}" style="display:flex; align-items:center; gap:8px; padding:6px 10px; cursor:pointer; border-bottom:1px solid var(--border2);">
-        <span style="color:var(--dim);">${g}</span>
-        <span style="flex:1;">${escapeHtml(d.name)}${d.deceased ? ' ✝' : ''}</span>
-        <span style="font-size:0.6rem; color:var(--dim);">${escapeHtml(meta)}</span>
-      </div>`;
-    }).join('');
-  }
-  
-  return `<div class="picker-wrap" id="pw-${id}" style="position:relative;">
-    <button class="picker-btn" onclick="togglePicker('${id}')" type="button" style="width:100%; padding:6px 10px; background:var(--bg3); border:1px solid var(--border2); border-radius:4px; cursor:pointer; text-align:left;">
-      <span id="pb-label-${id}" style="color:var(--dim);">${escapeHtml(placeholder)}</span>
-      <span style="float:right;">▼</span>
-    </button>
-    <div class="picker-drop" id="pd-${id}" style="position:absolute; top:100%; left:0; right:0; background:var(--bg2); border:1px solid var(--accent); border-radius:6px; display:none; z-index:1000; max-height:300px; overflow-y:auto;">
-      <div style="padding:8px; border-bottom:1px solid var(--border);">
-        <input placeholder="Search..." oninput="filterPicker('${id}', this.value)" style="width:100%; padding:4px 8px; background:var(--bg); border:1px solid var(--border2); border-radius:4px; color:var(--text);">
-      </div>
-      <div id="pl-${id}" style="max-height:250px; overflow-y:auto;">
-        ${makeItems(cand)}
-      </div>
-    </div>
-  </div>`;
-}
-
-function togglePicker(id) {
-  const drop = document.getElementById('pd-' + id);
-  if (!drop) return;
-  const isOpen = drop.style.display === 'block';
-  document.querySelectorAll('.picker-drop').forEach(d => d.style.display = 'none');
-  drop.style.display = isOpen ? 'none' : 'block';
-}
-
-function filterPicker(id, q) {
-  const list = document.getElementById('pl-' + id);
-  if (!list) return;
-  const queryLower = q.toLowerCase();
-  list.querySelectorAll('.picker-item').forEach(item => {
-    const name = item.querySelector('span:nth-child(2)')?.textContent || '';
-    item.style.display = (!queryLower || name.toLowerCase().includes(queryLower)) ? '' : 'none';
-  });
-}
-
-function getSelectedPickerValue(id) {
-  const label = document.getElementById(`pb-label-${id}`);
-  if (!label) return null;
-  return label.getAttribute('data-selected') || null;
-}
-
-// Close pickers when clicking outside
-document.addEventListener('click', e => {
-  if (!e.target.closest('.picker-wrap')) {
-    document.querySelectorAll('.picker-drop').forEach(d => d.style.display = 'none');
-  }
-});
-
-document.addEventListener('click', e => {
-  const item = e.target.closest('.picker-item[data-pid]');
-  if (!item) return;
-  const drop = item.closest('.picker-drop');
-  if (!drop) return;
-  const pid = item.getAttribute('data-pid');
-  const pickerId = drop.id.replace('pd-', '');
-  const label = document.getElementById('pb-label-' + pickerId);
-  if (label) {
-    const d = getPersonDisplay(pid);
-    label.textContent = d.name + (d.deceased ? ' ✝' : '');
-    label.style.color = 'var(--text)';
-    label.setAttribute('data-selected', pid);
-  }
-  drop.style.display = 'none';
-});
-
-// ====================== RELATIONSHIP ACTIONS ======================
-
-function setParent(role) {
-  const pickerId = role === 'father' ? 'father-pick' : 'mother-pick';
-  const selectedValue = getSelectedPickerValue(pickerId);
-  if (!selectedValue) { showToast('Select a person first'); return; }
-  
-  const parentId = getPersonId(selectedValue);
-  if (!parentId) { showToast('Invalid selection'); return; }
-  
-  const parentStableId = getPersonDisplay(parentId).stableId;
-  if (!parentStableId) { showToast('Invalid parent data'); return; }
-  
-  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  if (!DATA.relationships[parentId]) DATA.relationships[parentId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  
-  if (role === 'father') DATA.relationships[activeId].father = parentStableId;
-  else DATA.relationships[activeId].mother = parentStableId;
-  
-  if (!DATA.relationships[parentId].children) DATA.relationships[parentId].children = [];
-  const childStableId = getPersonDisplay(activeId).stableId;
-  if (!DATA.relationships[parentId].children.includes(childStableId)) {
-    DATA.relationships[parentId].children.push(childStableId);
-  }
-  
-  saveData();
-  refreshCurrentTab();
-  showToast(`Set ${role} to ${getPersonDisplay(parentId).name}`);
-}
-
-function removeParent(role) {
-  if (!confirm(`Remove ${role}?`)) return;
-  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  if (role === 'father') delete DATA.relationships[activeId].father;
-  else delete DATA.relationships[activeId].mother;
-  saveData();
-  refreshCurrentTab();
-  showToast(`${role.charAt(0).toUpperCase() + role.slice(1)} removed`);
-}
-
-function addPartner() {
-  const selectedValue = getSelectedPickerValue('partner-pick');
-  if (!selectedValue) { showToast('Select a person first'); return; }
-  
-  const partnerId = getPersonId(selectedValue);
-  if (!partnerId) { showToast('Invalid selection'); return; }
-  
-  const myStableId = getPersonDisplay(activeId).stableId || activeId;
-  const partnerStableId = getPersonDisplay(partnerId).stableId || partnerId;
-  
-  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  if (!DATA.relationships[partnerId]) DATA.relationships[partnerId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  
-  if (!DATA.relationships[activeId].ongoing) DATA.relationships[activeId].ongoing = [];
-  if (!DATA.relationships[activeId].ongoing.includes(partnerStableId)) DATA.relationships[activeId].ongoing.push(partnerStableId);
-  if (!DATA.relationships[activeId].details) DATA.relationships[activeId].details = {};
-  DATA.relationships[activeId].details[partnerStableId] = { type: null, startYear: null, endYear: null, notes: null };
-  
-  if (!DATA.relationships[partnerId].ongoing) DATA.relationships[partnerId].ongoing = [];
-  if (!DATA.relationships[partnerId].ongoing.includes(myStableId)) DATA.relationships[partnerId].ongoing.push(myStableId);
-  if (!DATA.relationships[partnerId].details) DATA.relationships[partnerId].details = {};
-  DATA.relationships[partnerId].details[myStableId] = { type: null, startYear: null, endYear: null, notes: null };
-  
-  saveData();
-  refreshCurrentTab();
-  showToast('Partner added');
-  setTimeout(() => openPartnerDetails(partnerId), 100);
-}
-
-function removePartnerById(partnerId) {
-  if (!confirm('Remove this relationship?')) return;
-  const myStableId = getPersonDisplay(activeId).stableId || activeId;
-  const partnerStableId = getPersonDisplay(partnerId).stableId || partnerId;
-  
-  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  if (!DATA.relationships[partnerId]) DATA.relationships[partnerId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  
-  DATA.relationships[activeId].ongoing = (DATA.relationships[activeId].ongoing || []).filter(id => id !== partnerStableId);
-  DATA.relationships[activeId].ended = (DATA.relationships[activeId].ended || []).filter(id => id !== partnerStableId);
-  DATA.relationships[activeId].widowed = (DATA.relationships[activeId].widowed || []).filter(id => id !== partnerStableId);
-  if (DATA.relationships[activeId].details) delete DATA.relationships[activeId].details[partnerStableId];
-  
-  DATA.relationships[partnerId].ongoing = (DATA.relationships[partnerId].ongoing || []).filter(id => id !== myStableId);
-  DATA.relationships[partnerId].ended = (DATA.relationships[partnerId].ended || []).filter(id => id !== myStableId);
-  DATA.relationships[partnerId].widowed = (DATA.relationships[partnerId].widowed || []).filter(id => id !== myStableId);
-  if (DATA.relationships[partnerId].details) delete DATA.relationships[partnerId].details[myStableId];
-  
-  saveData();
-  refreshCurrentTab();
-  showToast('Relationship removed');
-}
-
-function addChild() {
-  const selectedValue = getSelectedPickerValue('child-pick');
-  if (!selectedValue) { showToast('Select a person first'); return; }
-  
-  const childId = getPersonId(selectedValue);
-  if (!childId) { showToast('Invalid selection'); return; }
-  
-  if (!DATA.relationships[childId]) DATA.relationships[childId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  const myStableId = getPersonDisplay(activeId).stableId || activeId;
-  const myGender = getPersonDisplay(activeId).gender;
-  
-  if (myGender === 'male' && !DATA.relationships[childId].father) DATA.relationships[childId].father = myStableId;
-  if (myGender === 'female' && !DATA.relationships[childId].mother) DATA.relationships[childId].mother = myStableId;
-  
-  saveData();
-  refreshCurrentTab();
-  showToast(`Added ${getPersonDisplay(childId).name} as child`);
-}
-
-function removeChild(childId) {
-  if (!confirm('Remove this child?')) return;
-  if (!DATA.relationships[childId]) DATA.relationships[childId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  const myStableId = getPersonDisplay(activeId).stableId || activeId;
-  if (DATA.relationships[childId].father === myStableId) delete DATA.relationships[childId].father;
-  if (DATA.relationships[childId].mother === myStableId) delete DATA.relationships[childId].mother;
-  saveData();
-  refreshCurrentTab();
-  showToast('Child removed');
-}
-
-function addSibling() {
-  const selectedValue = getSelectedPickerValue('sibling-pick');
-  if (!selectedValue) { showToast('Select a person first'); return; }
-  
-  const siblingId = getPersonId(selectedValue);
-  if (!siblingId) { showToast('Invalid selection'); return; }
-  
-  const myData = getPersonDisplay(activeId);
-  const siblingData = getPersonDisplay(siblingId);
-  if (!myData || !siblingData) return;
-  
-  if (!myData.father && !myData.mother && !siblingData.father && !siblingData.mother) {
-    showToast('No common parent to establish sibling relationship');
-    return;
-  }
-  
-  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  if (!DATA.relationships[siblingId]) DATA.relationships[siblingId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  
-  if (!myData.father && siblingData.father) {
-    DATA.relationships[activeId].father = siblingData.father;
-  }
-  if (!myData.mother && siblingData.mother) {
-    DATA.relationships[activeId].mother = siblingData.mother;
-  }
-  if (!siblingData.father && myData.father) {
-    DATA.relationships[siblingId].father = myData.father;
-  }
-  if (!siblingData.mother && myData.mother) {
-    DATA.relationships[siblingId].mother = myData.mother;
-  }
-  
-  saveData();
-  refreshCurrentTab();
-  showToast(`Added ${siblingData.name} as sibling`);
-}
-
-function removeSibling(siblingId) {
-  if (!confirm('Remove this sibling?')) return;
-  // Just refresh - sibling relationships are inferred from shared parents
-  refreshCurrentTab();
-  showToast('Sibling removed');
-}
-
-function addFriend() {
-  const selectedValue = getSelectedPickerValue('friend-pick');
-  if (!selectedValue) { showToast('Select a person first'); return; }
-  
-  const friendId = getPersonId(selectedValue);
-  if (!friendId) { showToast('Invalid selection'); return; }
-  
-  const myStableId = getPersonDisplay(activeId).stableId || activeId;
-  const friendStableId = getPersonDisplay(friendId).stableId || friendId;
-  
-  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  if (!DATA.relationships[friendId]) DATA.relationships[friendId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  
-  if (!DATA.relationships[activeId].friends) DATA.relationships[activeId].friends = [];
-  if (!DATA.relationships[activeId].friends.includes(friendStableId)) DATA.relationships[activeId].friends.push(friendStableId);
-  if (!DATA.relationships[activeId].friendDetails) DATA.relationships[activeId].friendDetails = {};
-  DATA.relationships[activeId].friendDetails[friendStableId] = { level: 'friend', metYear: DATA.currentYear, notes: '' };
-  
-  if (!DATA.relationships[friendId].friends) DATA.relationships[friendId].friends = [];
-  if (!DATA.relationships[friendId].friends.includes(myStableId)) DATA.relationships[friendId].friends.push(myStableId);
-  if (!DATA.relationships[friendId].friendDetails) DATA.relationships[friendId].friendDetails = {};
-  DATA.relationships[friendId].friendDetails[myStableId] = { level: 'friend', metYear: DATA.currentYear, notes: '' };
-  
-  saveData();
-  refreshCurrentTab();
-  showToast('Friend added');
-  setTimeout(() => openFriendDetails(friendId), 100);
-}
-
-function removeFriendById(friendId) {
-  if (!confirm('Remove this friendship?')) return;
-  const myStableId = getPersonDisplay(activeId).stableId || activeId;
-  const friendStableId = getPersonDisplay(friendId).stableId || friendId;
-  
-  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  if (!DATA.relationships[friendId]) DATA.relationships[friendId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  
-  DATA.relationships[activeId].friends = (DATA.relationships[activeId].friends || []).filter(id => id !== friendStableId);
-  if (DATA.relationships[activeId].friendDetails) delete DATA.relationships[activeId].friendDetails[friendStableId];
-  
-  DATA.relationships[friendId].friends = (DATA.relationships[friendId].friends || []).filter(id => id !== myStableId);
-  if (DATA.relationships[friendId].friendDetails) delete DATA.relationships[friendId].friendDetails[myStableId];
-  
-  saveData();
-  refreshCurrentTab();
-  showToast('Friend removed');
-}
-
-// ====================== MODAL FUNCTIONS ======================
-
-function openPartnerDetails(partnerId) {
-  const partner = getPersonDisplay(partnerId);
-  if (!partner) return;
-  const rel = DATA.relationships[activeId] || {};
-  const details = rel.details?.[partnerId] || {};
-  
-  let status = 'ongoing';
-  if (rel.ended?.includes(partnerId)) status = 'ended';
-  if (rel.widowed?.includes(partnerId)) status = 'widowed';
-  
-  let modal = document.getElementById('partner-details-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'partner-details-modal';
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal-box">
-        <div class="modal-title" id="partner-modal-title">Partner Details</div>
-        <div id="partner-modal-content"></div>
-        <div style="display:flex; gap:8px; margin-top:16px;">
-          <button class="primary" style="flex:2;" onclick="savePartnerDetails()">Save</button>
-          <button class="danger" style="flex:1;" onclick="removePartnerById(window.currentEditingPartner)">Remove</button>
-          <button style="flex:1;" onclick="closePartnerModal()">Cancel</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-  
-  document.getElementById('partner-modal-title').textContent = `${escapeHtml(partner.name)} - Relationship`;
-  document.getElementById('partner-modal-content').innerHTML = `
-    <div class="form-group">
-      <label>Status</label>
-      <select id="partner-status">
-        <option value="ongoing" ${status === 'ongoing' ? 'selected' : ''}>Ongoing</option>
-        <option value="ended" ${status === 'ended' ? 'selected' : ''}>Ended</option>
-        <option value="widowed" ${status === 'widowed' ? 'selected' : ''}>Widowed</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Type</label>
-      <select id="partner-type">
-        <option value="">—</option>
-        <option value="casual" ${details.type === 'casual' ? 'selected' : ''}>Casual</option>
-        <option value="serious" ${details.type === 'serious' ? 'selected' : ''}>Serious</option>
-        <option value="affair" ${details.type === 'affair' ? 'selected' : ''}>Affair</option>
-        <option value="promised" ${details.type === 'promised' ? 'selected' : ''}>Promised</option>
-        <option value="arranged" ${details.type === 'arranged' ? 'selected' : ''}>Arranged</option>
-      </select>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Start Year</label>
-        <input type="number" id="partner-start" value="${details.startYear || ''}">
-      </div>
-      <div class="form-group">
-        <label>End Year</label>
-        <input type="number" id="partner-end" value="${details.endYear || ''}">
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Notes</label>
-      <textarea id="partner-notes" rows="2">${escapeHtml(details.notes || '')}</textarea>
-    </div>
-  `;
-  
-  window.currentEditingPartner = partnerId;
-  modal.style.display = 'flex';
-}
-
-function savePartnerDetails() {
-  if (!window.currentEditingPartner) return;
-  
-  const status = document.getElementById('partner-status').value;
-  const type = document.getElementById('partner-type').value;
-  const startYear = document.getElementById('partner-start').value;
-  const endYear = document.getElementById('partner-end').value;
-  const notes = document.getElementById('partner-notes').value;
-  
-  const myStableId = getPersonDisplay(activeId).stableId || activeId;
-  const partnerStableId = getPersonDisplay(window.currentEditingPartner).stableId || window.currentEditingPartner;
-  
-  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  if (!DATA.relationships[window.currentEditingPartner]) DATA.relationships[window.currentEditingPartner] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  
-  DATA.relationships[activeId].ongoing = (DATA.relationships[activeId].ongoing || []).filter(id => id !== partnerStableId);
-  DATA.relationships[activeId].ended = (DATA.relationships[activeId].ended || []).filter(id => id !== partnerStableId);
-  DATA.relationships[activeId].widowed = (DATA.relationships[activeId].widowed || []).filter(id => id !== partnerStableId);
-  if (!DATA.relationships[activeId][status]) DATA.relationships[activeId][status] = [];
-  if (!DATA.relationships[activeId][status].includes(partnerStableId)) DATA.relationships[activeId][status].push(partnerStableId);
-  if (!DATA.relationships[activeId].details) DATA.relationships[activeId].details = {};
-  DATA.relationships[activeId].details[partnerStableId] = { type: type || null, startYear: startYear ? parseInt(startYear) : null, endYear: endYear ? parseInt(endYear) : null, notes: notes || null };
-  
-  DATA.relationships[window.currentEditingPartner].ongoing = (DATA.relationships[window.currentEditingPartner].ongoing || []).filter(id => id !== myStableId);
-  DATA.relationships[window.currentEditingPartner].ended = (DATA.relationships[window.currentEditingPartner].ended || []).filter(id => id !== myStableId);
-  DATA.relationships[window.currentEditingPartner].widowed = (DATA.relationships[window.currentEditingPartner].widowed || []).filter(id => id !== myStableId);
-  if (!DATA.relationships[window.currentEditingPartner][status]) DATA.relationships[window.currentEditingPartner][status] = [];
-  if (!DATA.relationships[window.currentEditingPartner][status].includes(myStableId)) DATA.relationships[window.currentEditingPartner][status].push(myStableId);
-  if (!DATA.relationships[window.currentEditingPartner].details) DATA.relationships[window.currentEditingPartner].details = {};
-  DATA.relationships[window.currentEditingPartner].details[myStableId] = { type: type || null, startYear: startYear ? parseInt(startYear) : null, endYear: endYear ? parseInt(endYear) : null, notes: notes || null };
-  
-  saveData();
-  closePartnerModal();
-  refreshCurrentTab();
-  showToast('Relationship updated');
-}
-
-function closePartnerModal() {
-  const modal = document.getElementById('partner-details-modal');
-  if (modal) modal.style.display = 'none';
-  window.currentEditingPartner = null;
-}
-
-function openFriendDetails(friendId) {
-  const friend = getPersonDisplay(friendId);
-  if (!friend) return;
-  const rel = DATA.relationships[activeId] || {};
-  const d = rel.friendDetails?.[friendId] || { level: 'friend', metYear: DATA.currentYear, notes: '' };
-  
-  let modal = document.getElementById('friend-details-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'friend-details-modal';
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal-box">
-        <div class="modal-title" id="friend-modal-title">Friend Details</div>
-        <div id="friend-modal-content"></div>
-        <div style="display:flex; gap:8px; margin-top:16px;">
-          <button class="primary" style="flex:2;" onclick="saveFriendDetails()">Save</button>
-          <button class="danger" style="flex:1;" onclick="removeFriendById(window.currentEditingFriend)">Remove</button>
-          <button style="flex:1;" onclick="closeFriendModal()">Cancel</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-  
-  document.getElementById('friend-modal-title').textContent = `${escapeHtml(friend.name)} - Friend Details`;
-  document.getElementById('friend-modal-content').innerHTML = `
-    <div class="form-group">
-      <label>Friendship Level</label>
-      <select id="friend-level">
-        <option value="acquaintance" ${d.level === 'acquaintance' ? 'selected' : ''}>Acquaintance</option>
-        <option value="friend" ${d.level === 'friend' ? 'selected' : ''}>Friend</option>
-        <option value="close" ${d.level === 'close' ? 'selected' : ''}>Close Friend</option>
-        <option value="best" ${d.level === 'best' ? 'selected' : ''}>Best Friend</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Year Met</label>
-      <input type="number" id="friend-met-year" value="${d.metYear || ''}">
-    </div>
-    <div class="form-group">
-      <label>Notes</label>
-      <textarea id="friend-notes" rows="2">${escapeHtml(d.notes || '')}</textarea>
-    </div>
-  `;
-  
-  window.currentEditingFriend = friendId;
-  modal.style.display = 'flex';
-}
-
-function saveFriendDetails() {
-  if (!window.currentEditingFriend) return;
-  
-  const level = document.getElementById('friend-level').value;
-  const metYear = document.getElementById('friend-met-year').value;
-  const notes = document.getElementById('friend-notes').value;
-  
-  const myStableId = getPersonDisplay(activeId).stableId || activeId;
-  const friendStableId = getPersonDisplay(window.currentEditingFriend).stableId || window.currentEditingFriend;
-  
-  if (!DATA.relationships[activeId]) DATA.relationships[activeId] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  if (!DATA.relationships[window.currentEditingFriend]) DATA.relationships[window.currentEditingFriend] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  
-  if (!DATA.relationships[activeId].friendDetails) DATA.relationships[activeId].friendDetails = {};
-  DATA.relationships[activeId].friendDetails[friendStableId] = { level, metYear: metYear ? parseInt(metYear) : null, notes: notes || null };
-  
-  if (!DATA.relationships[window.currentEditingFriend].friendDetails) DATA.relationships[window.currentEditingFriend].friendDetails = {};
-  DATA.relationships[window.currentEditingFriend].friendDetails[myStableId] = { level, metYear: metYear ? parseInt(metYear) : null, notes: notes || null };
-  
-  saveData();
-  closeFriendModal();
-  refreshCurrentTab();
-  showToast('Friend details updated');
-}
-
-function closeFriendModal() {
-  const modal = document.getElementById('friend-details-modal');
-  if (modal) modal.style.display = 'none';
-  window.currentEditingFriend = null;
-}
-
-function checkRelationship(person1Id, person2Id) {
-  const p1 = getPersonDisplay(person1Id);
-  const p2 = getPersonDisplay(person2Id);
-  if (!p1 || !p2) return null;
-  if (p1.father && p2.father && getPersonId(p1.father) === getPersonId(p2.father)) return 'Siblings (same father)';
-  if (p1.mother && p2.mother && getPersonId(p1.mother) === getPersonId(p2.mother)) return 'Siblings (same mother)';
-  if (p1.father === person2Id || p1.mother === person2Id) return 'Parent-child relationship';
-  if (p2.father === person1Id || p2.mother === person1Id) return 'Parent-child relationship';
-  return null;
-}
-
-function generateNewborn() {
-  if (!activeId) { showToast('Select a person first'); return; }
-  
-  const parent = getPersonDisplay(activeId);
-  if (!parent) return;
-  const partners = getPartners(activeId);
-  
-  if (partners.length === 0) { showToast('Need a partner to have a child'); return; }
-  
-  let otherParent = null;
-  if (partners.length === 1) {
-    otherParent = getPersonDisplay(partners[0].id);
-  } else {
-    const choice = prompt(`Select the other parent:\n${partners.map((p, i) => `${i+1}. ${getPersonDisplay(p.id)?.name}`).join('\n')}\n\nEnter number (1-${partners.length}):`);
-    const idx = parseInt(choice) - 1;
-    if (idx >= 0 && idx < partners.length) otherParent = getPersonDisplay(partners[idx].id);
-    else return;
-  }
-  if (!otherParent) return;
-  
-  let mother = null, father = null;
-  if (parent.gender === 'female') { mother = parent; father = otherParent; }
-  else if (parent.gender === 'male') { mother = otherParent; father = parent; }
-  else {
-    const role = confirm(`Is ${parent.name} the mother? Click OK for Mother, Cancel for Father`);
-    if (role) { mother = parent; father = otherParent; }
-    else { mother = otherParent; father = parent; }
-  }
-  
-  if (!mother) { showToast('Need a mother to have a child'); return; }
-  if (!mother.birthYear) { showToast(`${mother.name} has no birth year set.`); return; }
-  
-  const motherBirthYear = mother.birthYear;
-  const minChildBirthYear = motherBirthYear + 18;
-  const maxChildBirthYear = motherBirthYear + 40;
-  const childBirthYear = Math.floor(Math.random() * (maxChildBirthYear - minChildBirthYear + 1)) + minChildBirthYear;
-  const motherAgeAtBirth = childBirthYear - motherBirthYear;
-  
-  const gender = Math.random() < 0.5 ? 'male' : 'female';
-  const maleNames = ['Kai', 'Mako', 'Tane', 'Rangi', 'Koa', 'Ikaia', 'Keanu', 'Leo', 'Nico', 'Ari'];
-  const femaleNames = ['Leilani', 'Moana', 'Nani', 'Tui', 'Hina', 'Lani', 'Malia', 'Rai', 'Tara', 'Vai'];
-  const name = gender === 'male' ? maleNames[Math.floor(Math.random() * maleNames.length)] : femaleNames[Math.floor(Math.random() * femaleNames.length)];
-  
-  const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now().toString(36);
-  const stableId = generateStableId();
-  const childAge = DATA.currentYear - childBirthYear;
-  
-  DATA.people[id] = {
-    stableId: stableId, name: name, gender: gender, attraction: 'both',
-    birthYear: childBirthYear, age: childAge, stage: calculateLifeStage(childAge),
-    role: '', deceased: false, deathYear: null, causeDeath: '',
-    birthComp: father?.currComp || mother?.currComp || '', currComp: father?.currComp || mother?.currComp || '',
-    household: '', notes: '', ranks: []
-  };
-  
-  DATA.relationships[id] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} };
-  if (father) DATA.relationships[id].father = father.stableId;
-  if (mother) DATA.relationships[id].mother = mother.stableId;
-  
-  rebuildStableIdIndex();
-  saveData();
-  renderPersonList();
-  selectPerson(id);
-  showToast(`🎉 ${name} born to ${father?.name || ''} and ${mother?.name || ''} (${mother.name} was ${motherAgeAtBirth})!`);
-}
-// ====================== TAB MANAGEMENT ======================
-function initTabs() {
-  const tabsContainer = document.getElementById('edit-tabs');
-  const contentContainer = document.getElementById('tab-container');
-  
-  // Clear containers
-  tabsContainer.innerHTML = '';
-  contentContainer.innerHTML = '';
-  
-  // Create tabs and content containers
-  TABS.forEach((tab, index) => {
-    // Create tab button
-    const tabBtn = document.createElement('div');
-    tabBtn.className = 'edit-tab';
-    if (index === 0) tabBtn.classList.add('active');
-    tabBtn.textContent = tab.label;
-    tabBtn.dataset.tabId = tab.id;
-    tabBtn.onclick = () => switchTab(tab.id);
-    tabsContainer.appendChild(tabBtn);
-    
-    // Create content container
-    const tabContent = document.createElement('div');
-    tabContent.id = `tab-${tab.id}`;
-    tabContent.className = 'tab-container';
-    if (index === 0) tabContent.classList.add('active');
-    contentContainer.appendChild(tabContent);
-    
-    // Store reference
-    tab.container = tabContent;
-  });
-  
-  activeTab = TABS[0]?.id || null;
-}
-
-function switchTab(tabId) {
-  activeTab = tabId;
-  
-  // Update tab buttons
-  document.querySelectorAll('.edit-tab').forEach(btn => {
-    btn.classList.remove('active');
-    if (btn.dataset.tabId === tabId) btn.classList.add('active');
-  });
-  
-  // Update content containers
-  document.querySelectorAll('.tab-container').forEach(container => {
-    container.classList.remove('active');
-  });
-  document.getElementById(`tab-${tabId}`)?.classList.add('active');
-  
-  // Render current tab if person selected
-  if (activeId && DATA.people[activeId]) {
-    renderCurrentTab();
-  }
-}
-
-function renderCurrentTab() {
-  const person = DATA.people[activeId];
-  const tab = TABS.find(t => t.id === activeTab);
-  const container = document.getElementById(`tab-${activeTab}`);
-  
-  if (tab && container) {
-    tab.render(container, person);
-  }
-}
-
-function refreshCurrentTab() {
-  const tab = TABS.find(t => t.id === activeTab);
-  if (tab && tab.refresh) {
-    tab.refresh();
-  }
-}
-
-// ====================== CORE FUNCTIONS ======================
-function showToast(msg) {
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = msg;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 2500);
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
-}
-
-function generateStableId() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
-  let id = '';
-  for (let i = 0; i < 9; i++) {
-    if (i === 3 || i === 6) id += '-';
-    else id += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return id;
-}
-
-function calculateAge(birthYear, deathYear = null) {
-  if (!birthYear) return null;
-  const year = deathYear || DATA.currentYear;
-  return Math.max(0, year - birthYear);
-}
-
-function calculateLifeStage(age) {
-  if (age === null || age === undefined) return '';
-  if (age < 1) return 'infant';
-  if (age < 4) return 'toddler';
-  if (age < 13) return 'child';
-  if (age < 20) return 'adolescent';
-  if (age < 30) return 'young adult';
-  if (age < 50) return 'adult';
-  if (age < 70) return 'middle-aged';
-  return 'elder';
-}
-
-function getPersonId(ref) {
-  if (!ref) return null;
-  if (DATA.people[ref]) return ref;
-  if (DATA.stableIdIndex[ref]) return DATA.stableIdIndex[ref];
-  return null;
-}
-
-function getPersonDisplay(id) {
-  const p = DATA.people[id];
-  if (!p) return null;
-  const isDeceased = p.deceased === true;
-  const deathYear = isDeceased ? p.deathYear : null;
-  const age = calculateAge(p.birthYear, deathYear);
-  return {
-    id: id,
-    stableId: p.stableId,
-    name: p.name || 'Unnamed',
-    gender: p.gender || 'unknown',
-    birthYear: p.birthYear,
-    age: age,
-    stage: calculateLifeStage(age),
-    role: p.role || '',
-    deceased: isDeceased,
-    deathYear: p.deathYear,
-    causeDeath: p.causeDeath,
-    birthComp: p.birthComp || '',
-    currComp: p.currComp || p.birthComp || '',
-    household: p.household || '',
-    notes: p.notes || '',
-    ranks: p.ranks || []
-  };
-}
-
-function rebuildStableIdIndex() {
-  DATA.stableIdIndex = {};
-  Object.entries(DATA.people).forEach(([id, person]) => {
-    if (person.stableId) DATA.stableIdIndex[person.stableId] = id;
-  });
-}
-
-// ====================== SAVE/LOAD ======================
-function saveData() {
-  DATA.lastSaved = new Date().toISOString();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
-  const saveBtn = document.getElementById('save-btn');
-  if (saveBtn) {
-    saveBtn.style.opacity = '0.6';
-    setTimeout(() => { if (saveBtn) saveBtn.style.opacity = '1'; }, 500);
-  }
-}
-
-function saveAll() {
-  saveData();
-  showToast('All changes saved');
-}
-
-function loadData() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      DATA = { ...DATA, ...parsed };
-      if (!DATA.stableIdIndex) DATA.stableIdIndex = {};
-      rebuildStableIdIndex();
-    } catch(e) { console.error('Load error:', e); }
-  }
-  document.getElementById('current-year').value = DATA.currentYear;
-}
-
-// ====================== YEAR MANAGEMENT ======================
-function updateYear() {
-  const newYear = parseInt(document.getElementById('current-year').value);
-  if (newYear && newYear > 0) {
-    DATA.currentYear = newYear;
-    updateAllAges();
-    renderPersonList();
-    if (activeId) loadView(activeId);
-    showToast(`Year updated to ${newYear}`);
-  }
-}
-
-function updateAllAges() {
-  Object.keys(DATA.people).forEach(id => {
-    const p = DATA.people[id];
-    if (p.birthYear) {
-      const isDeceased = p.deceased === true;
-      const deathYear = isDeceased ? p.deathYear : null;
-      p.age = calculateAge(p.birthYear, deathYear);
-      p.stage = calculateLifeStage(p.age);
-    }
-  });
-}
+// ====================== UTILITIES ======================
+function showToast(msg) { const t = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = 'toast'; toast.textContent = msg; t.appendChild(toast); setTimeout(() => toast.remove(), 2500); }
+function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+function generateStableId() { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'; let id = ''; for (let i = 0; i < 9; i++) { if (i === 3 || i === 6) id += '-'; else id += c[Math.floor(Math.random() * c.length)]; } return id; }
+function calculateAge(b, d = null) { if (!b) return null; const y = d || DATA.currentYear; return Math.max(0, y - b); }
+function calculateLifeStage(a) { if (a === null) return ''; if (a < 1) return 'infant'; if (a < 4) return 'toddler'; if (a < 13) return 'child'; if (a < 20) return 'adolescent'; if (a < 30) return 'young adult'; if (a < 50) return 'adult'; if (a < 70) return 'middle-aged'; return 'elder'; }
+function getPersonId(r) { if (!r) return null; if (DATA.people[r]) return r; if (DATA.stableIdIndex[r]) return DATA.stableIdIndex[r]; return null; }
+function getPersonDisplay(id) { const p = DATA.people[id]; if (!p) return null; const d = p.deceased === true; const dy = d ? p.deathYear : null; const a = calculateAge(p.birthYear, dy); return { id, stableId: p.stableId, name: p.name || 'Unnamed', gender: p.gender || 'unknown', attraction: p.attraction || 'both', birthYear: p.birthYear, age: a, stage: calculateLifeStage(a), role: p.role || '', deceased: d, deathYear: p.deathYear, causeDeath: p.causeDeath, birthComp: p.birthComp || '', currComp: p.currComp || p.birthComp || '', household: p.household || '', notes: p.notes || '', eyeColor: p.eyeColor || '', hairColor: p.hairColor || '', skinColor: p.skinColor || '', tattoos: p.tattoos || '', appNotes: p.appNotes || '', ranks: p.ranks || [], moves: p.moves || [], father: DATA.relationships[id]?.father, mother: DATA.relationships[id]?.mother, ongoing: DATA.relationships[id]?.ongoing || [], ended: DATA.relationships[id]?.ended || [], widowed: DATA.relationships[id]?.widowed || [], friends: DATA.relationships[id]?.friends || [] }; }
+function rebuildStableIdIndex() { DATA.stableIdIndex = {}; Object.entries(DATA.people).forEach(([id, p]) => { if (p.stableId) DATA.stableIdIndex[p.stableId] = id; }); }
+function saveData() { DATA.lastSaved = new Date().toISOString(); localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA)); const btn = document.getElementById('save-btn'); if (btn) { btn.style.opacity = '0.6'; setTimeout(() => { if (btn) btn.style.opacity = '1'; }, 500); } }
+function saveAll() { saveData(); showToast('All changes saved'); }
+function loadData() { const s = localStorage.getItem(STORAGE_KEY); if (s) { try { const p = JSON.parse(s); DATA = { ...DATA, ...p }; if (!DATA.stableIdIndex) DATA.stableIdIndex = {}; rebuildStableIdIndex(); } catch(e) {} } document.getElementById('current-year').value = DATA.currentYear; }
+function updateYear() { const ny = parseInt(document.getElementById('current-year').value); if (ny && ny > 0) { DATA.currentYear = ny; updateAllAges(); renderPersonList(); if (activeId) loadView(activeId); showToast(`Year updated to ${ny}`); } }
+function updateAllAges() { Object.keys(DATA.people).forEach(id => { const p = DATA.people[id]; if (p.birthYear) { const d = p.deceased === true; const dy = d ? p.deathYear : null; p.age = calculateAge(p.birthYear, dy); p.stage = calculateLifeStage(p.age); } }); }
 
 // ====================== PERSON LIST ======================
 function renderPersonList() {
-  const container = document.getElementById('person-list');
-  if (!container) return;
-  
-  const peopleList = Object.entries(DATA.people).map(([id, p]) => ({
-    id,
-    display: getPersonDisplay(id)
-  }));
-  
-  const searchTerm = document.getElementById('search-box')?.value.toLowerCase() || '';
-  const ageMin = parseInt(document.getElementById('filter-age-min')?.value) || null;
-  const ageMax = parseInt(document.getElementById('filter-age-max')?.value) || null;
-  const genderFilter = document.getElementById('filter-gender')?.value || '';
-  const stageFilter = document.getElementById('filter-stage')?.value || '';
-  const showDeceased = document.getElementById('filter-show-deceased')?.checked || false;
-  
-  const filtered = peopleList.filter(({ display }) => {
-    if (searchTerm && !display.name.toLowerCase().includes(searchTerm) && 
-        !(display.role || '').toLowerCase().includes(searchTerm)) return false;
-    if (ageMin !== null && (display.age || 0) < ageMin) return false;
-    if (ageMax !== null && (display.age || 999) > ageMax) return false;
-    if (genderFilter && display.gender !== genderFilter) return false;
-    if (stageFilter && display.stage !== stageFilter) return false;
-    if (!showDeceased && display.deceased) return false;
+  const c = document.getElementById('person-list'); if (!c) return;
+  const list = Object.entries(DATA.people).map(([id, p]) => ({ id, display: getPersonDisplay(id) }));
+  const st = document.getElementById('search-box')?.value.toLowerCase() || '';
+  const aMin = parseInt(document.getElementById('filter-age-min')?.value) || null;
+  const aMax = parseInt(document.getElementById('filter-age-max')?.value) || null;
+  const gF = document.getElementById('filter-gender')?.value || '';
+  const sF = document.getElementById('filter-stage')?.value || '';
+  const showD = document.getElementById('filter-show-deceased')?.checked || false;
+  const filtered = list.filter(({ display }) => {
+    if (st && !display.name.toLowerCase().includes(st) && !(display.role || '').toLowerCase().includes(st)) return false;
+    if (aMin !== null && (display.age || 0) < aMin) return false;
+    if (aMax !== null && (display.age || 999) > aMax) return false;
+    if (gF && display.gender !== gF) return false;
+    if (sF && display.stage !== sF) return false;
+    if (!showD && display.deceased) return false;
     return true;
   });
-  
   const stages = ['elder', 'middle-aged', 'adult', 'young adult', 'adolescent', 'child', 'toddler', 'infant'];
-  const groups = {};
-  stages.forEach(s => groups[s] = []);
-  groups.deceased = [];
-  groups.notBorn = [];
-  
+  const groups = {}; stages.forEach(s => groups[s] = []); groups.deceased = []; groups.notBorn = [];
   filtered.forEach(({ id, display }) => {
-    if (display.birthYear && display.birthYear > DATA.currentYear && !display.deceased) {
-      groups.notBorn.push({ id, display });
-    } else if (display.deceased) {
-      groups.deceased.push({ id, display });
-    } else if (display.stage && stages.includes(display.stage)) {
-      groups[display.stage].push({ id, display });
-    } else {
-      groups.adult.push({ id, display });
-    }
+    if (display.birthYear && display.birthYear > DATA.currentYear && !display.deceased) groups.notBorn.push({ id, display });
+    else if (display.deceased) groups.deceased.push({ id, display });
+    else if (display.stage && stages.includes(display.stage)) groups[display.stage].push({ id, display });
+    else groups.adult.push({ id, display });
   });
-  
-  Object.keys(groups).forEach(k => {
-    groups[k].sort((a, b) => (b.display.age || 0) - (a.display.age || 0));
-  });
-  
+  Object.keys(groups).forEach(k => groups[k].sort((a, b) => (b.display.age || 0) - (a.display.age || 0)));
   let html = '';
-  
-  stages.forEach(stage => {
-    if (groups[stage].length) {
-      const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
-      html += `<div class="list-group">
-        <div class="group-header" onclick="toggleGroup(this)">
-          <span>${stageName} (${groups[stage].length})</span>
-          <span class="arrow">▼</span>
-        </div>
-        <div class="group-content">
-          ${groups[stage].map(({ id, display }) => renderPersonItem(id, display)).join('')}
-        </div>
-      </div>`;
-    }
-  });
-  
-  if (groups.deceased.length) {
-    html += `<div class="list-group">
-      <div class="group-header" onclick="toggleGroup(this)">
-        <span>Deceased (${groups.deceased.length})</span>
-        <span class="arrow">▼</span>
-      </div>
-      <div class="group-content">
-        ${groups.deceased.map(({ id, display }) => renderPersonItem(id, display)).join('')}
-      </div>
-    </div>`;
-  }
-  
-  if (groups.notBorn.length) {
-    html += `<div class="list-group">
-      <div class="group-header" onclick="toggleGroup(this)">
-        <span>Not Born Yet (${groups.notBorn.length})</span>
-        <span class="arrow">▼</span>
-      </div>
-      <div class="group-content">
-        ${groups.notBorn.map(({ id, display }) => renderPersonItem(id, display, true)).join('')}
-      </div>
-    </div>`;
-  }
-  
+  stages.forEach(stage => { if (groups[stage].length) { const sn = stage.charAt(0).toUpperCase() + stage.slice(1); html += `<div class="list-group"><div class="group-header" onclick="toggleGroup(this)"><span>${sn} (${groups[stage].length})</span><span class="arrow">▼</span></div><div class="group-content">${groups[stage].map(({ id, display }) => `<div class="person-item ${activeId === id ? 'selected' : ''} ${display.deceased ? 'deceased' : ''}" onclick="selectPerson('${id}')"><div class="person-name">${display.gender === 'male' ? '♂' : display.gender === 'female' ? '♀' : '·'} ${escapeHtml(display.name)}${display.deceased ? '<span class="deceased-mark">†</span>' : ''}</div><div class="person-detail">${display.age !== null ? `${display.age} yrs` : ''}${display.role ? ` • ${escapeHtml(display.role)}` : ''}</div></div>`).join('')}</div></div>`; } });
+  if (groups.deceased.length) html += `<div class="list-group"><div class="group-header" onclick="toggleGroup(this)"><span>Deceased (${groups.deceased.length})</span><span class="arrow">▼</span></div><div class="group-content">${groups.deceased.map(({ id, display }) => `<div class="person-item ${activeId === id ? 'selected' : ''} deceased" onclick="selectPerson('${id}')"><div class="person-name">${display.gender === 'male' ? '♂' : display.gender === 'female' ? '♀' : '·'} ${escapeHtml(display.name)}†</div><div class="person-detail">${display.age !== null ? `${display.age} yrs` : ''}</div></div>`).join('')}</div></div>`;
+  if (groups.notBorn.length) html += `<div class="list-group"><div class="group-header" onclick="toggleGroup(this)"><span>Not Born Yet (${groups.notBorn.length})</span><span class="arrow">▼</span></div><div class="group-content">${groups.notBorn.map(({ id, display }) => `<div class="person-item ${activeId === id ? 'selected' : ''}" onclick="selectPerson('${id}')"><div class="person-name">${display.gender === 'male' ? '♂' : display.gender === 'female' ? '♀' : '·'} ${escapeHtml(display.name)}</div><div class="person-detail"><span class="not-born-yet">Born ${display.birthYear}</span></div></div>`).join('')}</div></div>`;
   if (!html) html = '<div class="empty-msg">No characters match</div>';
-  container.innerHTML = html;
+  c.innerHTML = html;
 }
+function toggleGroup(header) { header.classList.toggle('collapsed'); const content = header.nextElementSibling; if (content) content.classList.toggle('collapsed'); }
+function toggleFilters() { const p = document.getElementById('filters-panel'); if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
+function clearFilters() { document.getElementById('search-box').value = ''; document.getElementById('filter-age-min').value = ''; document.getElementById('filter-age-max').value = ''; document.getElementById('filter-gender').value = ''; document.getElementById('filter-stage').value = ''; document.getElementById('filter-show-deceased').checked = false; renderPersonList(); }
+function selectPerson(id) { if (!DATA.people[id]) { const r = getPersonId(id); if (r && DATA.people[r]) id = r; else return; } activeId = id; loadView(activeId); renderCurrentTab(); renderPersonList(); if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('mobile-visible'); document.getElementById('edit-empty').style.display = 'none'; }
+function loadView(id) { const d = getPersonDisplay(id); if (!d) return; document.getElementById('view-empty').style.display = 'none'; document.getElementById('view-filled').style.display = 'block'; document.getElementById('view-name').textContent = d.name; document.getElementById('view-stableId').textContent = d.stableId; document.getElementById('view-gender').textContent = d.gender; document.getElementById('view-attraction').textContent = d.attraction; document.getElementById('view-birthYear').textContent = d.birthYear || '—'; document.getElementById('view-age').textContent = d.age !== null ? `${d.age} years` : '—'; document.getElementById('view-stage').textContent = d.stage; document.getElementById('view-role').textContent = d.role || '—'; document.getElementById('view-deceased').textContent = d.deceased ? 'Yes' : 'No'; document.getElementById('view-deathYear').textContent = d.deathYear || '—'; document.getElementById('view-causeDeath').textContent = d.causeDeath || '—'; document.getElementById('view-birthComp').textContent = d.birthComp || '—'; document.getElementById('view-currComp').textContent = d.currComp || '—'; document.getElementById('view-moves').textContent = d.moves?.length ? `${d.moves.length} moves` : 'None'; document.getElementById('view-eyeColor').textContent = d.eyeColor || '—'; document.getElementById('view-hairColor').textContent = d.hairColor || '—'; document.getElementById('view-skinColor').textContent = d.skinColor || '—'; document.getElementById('view-tattoos').textContent = d.tattoos || '—'; document.getElementById('view-appNotes').textContent = d.appNotes || ''; document.getElementById('view-notes').textContent = d.notes || ''; const rc = document.getElementById('view-ranks'); if (d.ranks?.length) rc.innerHTML = d.ranks.map(r => `<span class="rank-chip">${r.value === 'Chief' ? '★' : r.value === 'Elder' ? '▲' : r.value === 'Master' ? '◆' : '·'} ${r.value}</span>`).join(''); else rc.innerHTML = ''; }
+function toggleViewPanel() { const p = document.getElementById('view-panel'); const b = document.getElementById('view-collapse-btn'); if (p.style.maxHeight === '35%' || !p.style.maxHeight) { p.style.maxHeight = '52px'; b.innerHTML = '▲'; } else { p.style.maxHeight = '35%'; b.innerHTML = '▼'; } }
+function toggleMobileSidebar() { document.getElementById('sidebar').classList.toggle('mobile-visible'); }
+function toggleSection(header) { header.classList.toggle('collapsed'); const c = header.nextElementSibling; if (c) c.classList.toggle('collapsed'); }
+function startAutoSave() { if (window.autoSaveTimer) clearInterval(window.autoSaveTimer); window.autoSaveTimer = setInterval(() => { if (document.getElementById('autosave-toggle')?.checked) saveData(); }, 30000); }
 
-function renderPersonItem(id, display, notBorn = false) {
-  const genderSym = { male: '♂', female: '♀', unknown: '·' }[display.gender] || '';
-  const deceasedMark = display.deceased ? '<span class="deceased-mark">†</span>' : '';
-  const selectedClass = activeId === id ? 'selected' : '';
+// ====================== PICKER FUNCTIONS ======================
+window.togglePicker = function(id) { const d = document.getElementById('pd-' + id); if (d) { const isOpen = d.style.display === 'block'; document.querySelectorAll('.picker-drop').forEach(p => p.style.display = 'none'); d.style.display = isOpen ? 'none' : 'block'; } };
+window.filterPicker = function(id, q) { const l = document.getElementById('pl-' + id); if (!l) return; const ql = q.toLowerCase(); l.querySelectorAll('.picker-item').forEach(item => { const n = item.querySelector('.pi-name')?.textContent || ''; item.style.display = (!ql || n.toLowerCase().includes(ql)) ? '' : 'none'; }); };
+window.getSelectedPickerValue = function(id) { const l = document.getElementById(`pb-label-${id}`); return l?.getAttribute('data-selected') || null; };
+document.addEventListener('click', e => { if (!e.target.closest('.picker-wrap')) document.querySelectorAll('.picker-drop').forEach(d => d.style.display = 'none'); });
+document.addEventListener('click', e => { const item = e.target.closest('.picker-item[data-pid]'); if (!item) return; const drop = item.closest('.picker-drop'); if (!drop) return; const pid = item.getAttribute('data-pid'); const pid2 = drop.id.replace('pd-', ''); const label = document.getElementById(`pb-label-${pid2}`); if (label) { const d = getPersonDisplay(pid); label.textContent = d.name + (d.deceased ? ' ✝' : ''); label.style.color = 'var(--text)'; label.setAttribute('data-selected', pid); } drop.style.display = 'none'; });
+
+function makePicker(id, placeholder, filterFn) {
+  const cand = Object.keys(DATA.people).map(i => ({ id: i, display: getPersonDisplay(i) }))
+    .filter(p => filterFn ? filterFn(p) : p.id !== activeId)
+    .sort((a, b) => (b.display.birthYear || 0) - (a.display.birthYear || 0));
   
-  return `<div class="person-item ${selectedClass} ${display.deceased ? 'deceased' : ''}" onclick="selectPerson('${id}')">
-    <div class="person-name">
-      ${genderSym ? `<span class="gender-symbol">${genderSym}</span>` : ''}
-      ${escapeHtml(display.name)}${deceasedMark}
-    </div>
-    <div class="person-detail">
-      ${notBorn ? `Born ${display.birthYear}` : (display.age !== null ? `${display.age} yrs` : '')}
-      ${display.role ? ` • ${escapeHtml(display.role)}` : ''}
+  return `<div class="picker-wrap" id="pw-${id}">
+    <button class="picker-btn" onclick="window.togglePicker('${id}')" type="button">
+      <span id="pb-label-${id}">${escapeHtml(placeholder)}</span>
+      <span>▼</span>
+    </button>
+    <div class="picker-drop" id="pd-${id}">
+      <div style="padding:8px; border-bottom:1px solid var(--border);">
+        <input placeholder="Search..." oninput="window.filterPicker('${id}', this.value)" style="width:100%">
+      </div>
+      <div id="pl-${id}" style="max-height:250px; overflow-y:auto;">
+        ${cand.length ? cand.map(p => `<div class="picker-item" data-pid="${p.id}"><span>${p.display.gender === 'male' ? '♂' : p.display.gender === 'female' ? '♀' : '·'}</span><span class="pi-name">${escapeHtml(p.display.name)}${p.display.deceased ? ' ✝' : ''}</span><span class="pi-meta">${p.display.age ? `age ${p.display.age}` : ''}</span></div>`).join('') : '<div style="padding:8px; color:var(--dim);">No candidates</div>'}
+      </div>
     </div>
   </div>`;
 }
 
-function toggleGroup(header) {
-  header.classList.toggle('collapsed');
-  const content = header.nextElementSibling;
-  if (content) content.classList.toggle('collapsed');
-}
+// ====================== TAB DEFINITIONS ======================
+const TABS = [];
 
-// ====================== FILTERS ======================
-function toggleFilters() {
-  const panel = document.getElementById('filters-panel');
-  const btn = document.querySelector('.filter-toggle-btn');
-  const arrow = btn?.querySelector('.arrow');
-  if (panel) {
-    const isCollapsed = panel.style.display === 'none';
-    panel.style.display = isCollapsed ? 'block' : 'none';
-    if (arrow) arrow.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
-  }
-}
+// ----- EDIT TAB -----
+TABS.push({
+  id: 'edit', label: 'Edit',
+  render: function(container, person) {
+    container.innerHTML = `<div class="tab-edit">
+      <div class="collapsible-section"><div class="section-header" onclick="toggleSection(this)"><span>Identity</span><span class="arrow">▼</span></div><div class="section-content"><div class="section-inner">
+        <div class="form-group"><label>Name</label><div class="name-with-random"><input id="edit-name" value="${escapeHtml(person?.name || '')}"><button class="random-btn" onclick="randomNameForCurrent()">🎲</button></div></div>
+        <div class="form-group"><label>Stable ID</label><input id="edit-stableId" readonly value="${escapeHtml(person?.stableId || '')}" style="background:var(--bg);font-family:monospace;"></div>
+        <div class="form-row"><div class="form-group"><label>Gender</label><select id="edit-gender"><option value="unknown">Unknown</option><option value="male" ${person?.gender === 'male' ? 'selected' : ''}>Male</option><option value="female" ${person?.gender === 'female' ? 'selected' : ''}>Female</option></select></div>
+        <div class="form-group"><label>Attraction</label><select id="edit-attraction"><option value="both">Both</option><option value="men">Men</option><option value="women">Women</option><option value="neither">Neither</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label>Birth Year</label><input type="number" id="edit-birthYear" value="${person?.birthYear || ''}" oninput="window.updateAgeFromBirth?.()"></div>
+        <div class="form-group"><label>Age</label><input type="number" id="edit-age" value="${person?.age || ''}" oninput="window.updateBirthFromAge?.()"></div></div>
+        <div class="form-group"><label>Role / Occupation</label><input id="edit-role" value="${escapeHtml(person?.role || '')}"></div>
+        <div class="checkbox-row" style="display:flex; gap:8px; margin-top:8px;"><input type="checkbox" id="edit-deceased" ${person?.deceased ? 'checked' : ''} onchange="window.toggleDeathFields?.()"><label>Deceased</label></div>
+        <div id="death-fields" style="display:${person?.deceased ? 'block' : 'none'}; margin-top:8px;"><div class="form-row"><div class="form-group"><label>Death Year</label><input type="number" id="edit-deathYear" value="${person?.deathYear || ''}" oninput="window.updateAgeFromBirth?.()"></div><div class="form-group"><label>Cause</label><input id="edit-causeDeath" value="${escapeHtml(person?.causeDeath || '')}"></div></div></div>
+      </div></div></div>
+      <div class="collapsible-section"><div class="section-header" onclick="toggleSection(this)"><span>Ranks</span><span class="arrow">▼</span></div><div class="section-content"><div class="section-inner"><div id="ranks-container"></div><div class="rank-buttons"><button class="rank-btn" onclick="window.addRank?.('Chief')">★ Chief</button><button class="rank-btn" onclick="window.addRank?.('Elder')">▲ Elder</button><button class="rank-btn" onclick="window.addRank?.('Master')">◆ Master</button><button class="rank-btn" onclick="window.addRank?.('Commoner')">· Commoner</button></div></div></div></div>
+      <div class="collapsible-section"><div class="section-header" onclick="toggleSection(this)"><span>Location</span><span class="arrow">▼</span></div><div class="section-content"><div class="section-inner">
+        <div class="form-group"><label>Birth Compound</label><select id="edit-birthComp">${LOCATIONS.map(l => `<option value="${l}" ${person?.birthComp === l ? 'selected' : ''}>${l}</option>`).join('')}<option value="new">+ Add New...</option></select></div>
+        <div class="form-group"><label>Current Compound</label><select id="edit-currComp">${LOCATIONS.map(l => `<option value="${l}" ${person?.currComp === l ? 'selected' : ''}>${l}</option>`).join('')}<option value="new">+ Add New...</option></select></div>
+        <div class="form-group"><label>Household</label><input id="edit-household" value="${escapeHtml(person?.household || '')}"></div>
+        <div><button class="primary small" onclick="window.addMove?.()">+ Add Move</button></div>
+        <div id="moves-list"></div>
+      </div></div></div>
+      <div class="collapsible-section"><div class="section-header" onclick="toggleSection(this)"><span>Appearance</span><span class="arrow">▼</span></div><div class="section-content"><div class="section-inner">
+        <div class="form-row"><div class="form-group"><label>Eye Color</label><input id="edit-eyeColor" value="${escapeHtml(person?.eyeColor || '')}"></div><div class="form-group"><label>Hair Color</label><input id="edit-hairColor" value="${escapeHtml(person?.hairColor || '')}"></div></div>
+        <div class="form-row"><div class="form-group"><label>Skin Color</label><input id="edit-skinColor" value="${escapeHtml(person?.skinColor || '')}"></div><div class="form-group"><label>Tattoos/Scars</label><input id="edit-tattoos" value="${escapeHtml(person?.tattoos || '')}"></div></div>
+        <div class="form-group"><label>Appearance Notes</label><textarea id="edit-appNotes" rows="2">${escapeHtml(person?.appNotes || '')}</textarea></div>
+      </div></div></div>
+      <div class="collapsible-section"><div class="section-header" onclick="toggleSection(this)"><span>Notes</span><span class="arrow">▼</span></div><div class="section-content"><div class="section-inner"><textarea id="edit-notes" rows="3">${escapeHtml(person?.notes || '')}</textarea></div></div></div>
+      <div class="action-buttons"><button class="primary" onclick="window.saveCurrentPerson?.()">Save Changes</button><button class="danger" onclick="window.deleteCurrentPerson?.()">Delete Character</button></div>
+    </div>`;
+    setTimeout(() => { window.updateRanksDisplay?.(); window.renderMoves?.(); }, 0);
+  },
+  refresh: function() { window.updateRanksDisplay?.(); window.renderMoves?.(); }
+});
 
-function clearFilters() {
-  document.getElementById('search-box').value = '';
-  document.getElementById('filter-age-min').value = '';
-  document.getElementById('filter-age-max').value = '';
-  document.getElementById('filter-gender').value = '';
-  document.getElementById('filter-stage').value = '';
-  document.getElementById('filter-show-deceased').checked = false;
-  renderPersonList();
-}
+// ----- RELATIONSHIPS TAB -----
+TABS.push({
+  id: 'relationships', label: 'Relationships',
+  render: function(container, person) {
+    if (!person) { container.innerHTML = '<div class="empty-msg">Select a character</div>'; return; }
+    const rel = DATA.relationships[activeId] || {};
+    container.innerHTML = `
+      <div class="tab-relationships">
+        <div class="collapsible-section"><div class="section-header" onclick="toggleSection(this)"><span>Parents</span><span class="arrow">▼</span></div><div class="section-content"><div class="section-inner"><div id="parents-list"></div><div class="add-row"><div id="father-picker"></div><button class="primary" onclick="window.setParent?.('father')">Set Father</button></div><div class="add-row"><div id="mother-picker"></div><button class="primary" onclick="window.setParent?.('mother')">Set Mother</button></div></div></div></div>
+        <div class="collapsible-section"><div class="section-header" onclick="toggleSection(this)"><span>Partners</span><span class="arrow">▼</span></div><div class="section-content"><div class="section-inner"><div id="partners-list"></div><div class="add-row"><div id="partner-picker"></div><button class="primary" onclick="window.addPartner?.()">Add Partner</button></div><div class="filter-bar" id="partner-filters"><button class="filter-tag" data-filter="gender-male" onclick="window.setPartnerFilter?.('gender','male')">♂</button><button class="filter-tag" data-filter="gender-female" onclick="window.setPartnerFilter?.('gender','female')">♀</button><button class="filter-tag" data-filter="widowed" onclick="window.setPartnerFilter?.('widowed',true)">Widowed</button><button class="filter-tag" data-filter="peer" onclick="window.setPartnerFilter?.('peer',true)">Peers (±15)</button><button class="filter-tag" onclick="window.clearPartnerFilters?.()">Clear</button></div></div></div></div>
+        <div class="collapsible-section"><div class="section-header" onclick="toggleSection(this)"><span>Children</span><span class="arrow">▼</span></div><div class="section-content"><div class="section-inner"><div id="children-list"></div><div class="add-row"><div id="child-picker"></div><button class="primary" onclick="window.addChild?.()">Add Child</button></div><button class="primary" style="margin-top:8px; width:100%;" onclick="window.generateNewborn?.()">✨ Generate Newborn</button><div class="filter-bar" id="child-filters"><button class="filter-tag" data-filter="gender-male" onclick="window.setChildFilter?.('gender','male')">♂</button><button class="filter-tag" data-filter="gender-female" onclick="window.setChildFilter?.('gender','female')">♀</button><button class="filter-tag" data-filter="orphan" onclick="window.setChildFilter?.('orphan',true)">Orphan</button><button class="filter-tag" data-filter="has-parents" onclick="window.setChildFilter?.('has-parents',true)">Has Parents</button><button class="filter-tag" onclick="window.clearChildFilters?.()">Clear</button></div></div></div></div>
+        <div class="collapsible-section"><div class="section-header" onclick="toggleSection(this)"><span>Siblings</span><span class="arrow">▼</span></div><div class="section-content"><div class="section-inner"><div id="siblings-list"></div><div class="add-row"><div id="sibling-picker"></div><button class="primary" onclick="window.addSibling?.()">Add Sibling</button></div></div></div></div>
+        <div class="collapsible-section"><div class="section-header" onclick="toggleSection(this)"><span>Friends</span><span class="arrow">▼</span></div><div class="section-content"><div class="section-inner"><div id="friends-list"></div><div class="add-row"><div id="friend-picker"></div><button class="primary" onclick="window.addFriend?.()">Add Friend</button></div><div class="filter-bar" id="friend-filters"><button class="filter-tag" data-filter="gender-male" onclick="window.setFriendFilter?.('gender','male')">♂</button><button class="filter-tag" data-filter="gender-female" onclick="window.setFriendFilter?.('gender','female')">♀</button><button class="filter-tag" data-filter="peer" onclick="window.setFriendFilter?.('peer',true)">Peers (±15)</button><button class="filter-tag" onclick="window.clearFriendFilters?.()">Clear</button></div></div></div></div>
+      </div>`;
+    setTimeout(() => { window.renderParents?.(); window.renderPartners?.(); window.renderChildren?.(); window.renderSiblings?.(); window.renderFriends?.(); window.setupRelationshipPickers?.(); }, 0);
+  },
+  refresh: function() { window.renderParents?.(); window.renderPartners?.(); window.renderChildren?.(); window.renderSiblings?.(); window.renderFriends?.(); }
+});
 
-// ====================== SELECT PERSON ======================
-function selectPerson(id) {
-  if (!DATA.people[id]) {
-    const resolved = getPersonId(id);
-    if (resolved && DATA.people[resolved]) id = resolved;
-    else return;
-  }
-  
-  activeId = id;
-  loadView(activeId);
-  renderCurrentTab();
-  renderPersonList();
-  
-  if (window.innerWidth <= 768) {
-    document.getElementById('sidebar').classList.remove('mobile-visible');
-  }
-  
-  document.getElementById('edit-empty').style.display = 'none';
-}
+// ----- ROLES TAB -----
+TABS.push({ id: 'roles', label: 'Roles', render: (c) => { c.innerHTML = '<div class="empty-msg">Roles management coming soon...</div>'; }, refresh: () => {} });
+// ----- OVERVIEW TAB -----
+TABS.push({ id: 'overview', label: 'Overview', render: (c) => { c.innerHTML = '<div class="empty-msg">Character overview coming soon...</div>'; }, refresh: () => {} });
 
-// ====================== VIEW PANEL ======================
-function loadView(id) {
-  const display = getPersonDisplay(id);
-  if (!display) return;
-  
-  document.getElementById('view-empty').style.display = 'none';
-  document.getElementById('view-filled').style.display = 'block';
-  
-  document.getElementById('view-name').textContent = display.name || '—';
-  document.getElementById('view-stableId').textContent = display.stableId || '—';
-  document.getElementById('view-gender').textContent = display.gender || 'unknown';
-  document.getElementById('view-age').textContent = display.age !== null ? `${display.age} years` : '—';
-  document.getElementById('view-stage').textContent = display.stage || '—';
-  document.getElementById('view-role').textContent = display.role || '—';
-  document.getElementById('view-birthComp').textContent = display.birthComp || '—';
-  document.getElementById('view-currComp').textContent = display.currComp || '—';
-  document.getElementById('view-notes').textContent = display.notes || '';
-  
-  const ranksContainer = document.getElementById('view-ranks');
-  if (display.ranks && display.ranks.length) {
-    ranksContainer.innerHTML = display.ranks.map(r => 
-      `<span class="rank-chip">${getRankSymbol(r.value)} ${r.value}</span>`
-    ).join('');
-  } else {
-    ranksContainer.innerHTML = '';
-  }
+// ====================== TAB MANAGEMENT ======================
+function initTabs() {
+  const tabsC = document.getElementById('edit-tabs'); const contC = document.getElementById('tab-container');
+  tabsC.innerHTML = ''; contC.innerHTML = '';
+  TABS.forEach((tab, i) => {
+    const btn = document.createElement('div'); btn.className = 'edit-tab'; if (i === 0) btn.classList.add('active'); btn.textContent = tab.label; btn.dataset.tabId = tab.id; btn.onclick = () => switchTab(tab.id); tabsC.appendChild(btn);
+    const tc = document.createElement('div'); tc.id = `tab-${tab.id}`; tc.className = 'tab-container'; if (i === 0) tc.classList.add('active'); contC.appendChild(tc); tab.container = tc;
+  });
+  activeTab = TABS[0]?.id;
 }
-
-function getRankSymbol(rank) {
-  const symbols = { 'Chief': '★', 'Elder': '▲', 'Master': '◆', 'Commoner': '·' };
-  return symbols[rank] || '·';
-}
+function switchTab(tabId) { activeTab = tabId; document.querySelectorAll('.edit-tab').forEach(btn => { btn.classList.remove('active'); if (btn.dataset.tabId === tabId) btn.classList.add('active'); }); document.querySelectorAll('.tab-container').forEach(c => c.classList.remove('active')); document.getElementById(`tab-${tabId}`)?.classList.add('active'); if (activeId && DATA.people[activeId]) renderCurrentTab(); }
+function renderCurrentTab() { const tab = TABS.find(t => t.id === activeTab); if (tab && tab.container) tab.render(tab.container, DATA.people[activeId]); }
+function refreshCurrentTab() { const tab = TABS.find(t => t.id === activeTab); if (tab && tab.refresh) tab.refresh(); }
 
 // ====================== EDIT TAB FUNCTIONS ======================
-function updateRanksDisplay() {
-  const container = document.getElementById('ranks-container');
-  const p = DATA.people[activeId];
-  if (!p || !p.ranks || !p.ranks.length) {
-    if (container) container.innerHTML = '<div style="color:var(--dim); font-style:italic;">No ranks assigned</div>';
-    return;
+window.updateAgeFromBirth = function() { const b = parseInt(document.getElementById('edit-birthYear')?.value); const d = document.getElementById('edit-deceased')?.checked; const dy = d ? parseInt(document.getElementById('edit-deathYear')?.value) : null; const a = calculateAge(b, dy); const ai = document.getElementById('edit-age'); if (ai) ai.value = a || ''; };
+window.updateBirthFromAge = function() { const a = parseInt(document.getElementById('edit-age')?.value); const d = document.getElementById('edit-deceased')?.checked; const dy = d ? parseInt(document.getElementById('edit-deathYear')?.value) : null; const b = d && dy ? dy - a : DATA.currentYear - a; const bi = document.getElementById('edit-birthYear'); if (bi && !isNaN(b) && b > 0) bi.value = b; };
+window.toggleDeathFields = function() { const d = document.getElementById('edit-deceased')?.checked; const f = document.getElementById('death-fields'); if (f) f.style.display = d ? 'block' : 'none'; };
+window.updateRanksDisplay = function() { const c = document.getElementById('ranks-container'); const p = DATA.people[activeId]; if (!p || !p.ranks?.length) { if (c) c.innerHTML = '<div style="color:var(--dim);">No ranks assigned</div>'; return; } if (c) c.innerHTML = p.ranks.map(r => `<span class="rank-chip" onclick="window.removeRank('${r.value}')">${r.value === 'Chief' ? '★' : r.value === 'Elder' ? '▲' : r.value === 'Master' ? '◆' : '·'} ${r.value} ✕</span>`).join(''); };
+window.addRank = function(v) { if (!activeId) { showToast('Select a character first'); return; } const p = DATA.people[activeId]; if (!p.ranks) p.ranks = []; if (!p.ranks.some(r => r.value === v)) { p.ranks.push({ value: v }); window.updateRanksDisplay(); saveData(); showToast(`Added ${v}`); } else showToast(`${v} already assigned`); };
+window.removeRank = function(v) { if (!activeId) return; const p = DATA.people[activeId]; if (p.ranks) { p.ranks = p.ranks.filter(r => r.value !== v); window.updateRanksDisplay(); saveData(); showToast(`Removed ${v}`); } };
+window.renderMoves = function() { const c = document.getElementById('moves-list'); const p = DATA.people[activeId]; if (!p?.moves?.length) { if (c) c.innerHTML = '<div style="color:var(--dim);">No recorded moves</div>'; return; } if (c) c.innerHTML = p.moves.map((m, i) => `<div class="move-item"><span>${m.year}: ${m.location}</span><button class="danger small" onclick="window.removeMove(${i})">✕</button></div>`).join(''); };
+window.addMove = function() { const year = prompt('Year of move:'); if (!year) return; const loc = prompt('New location:'); if (!loc) return; const p = DATA.people[activeId]; if (!p.moves) p.moves = []; p.moves.push({ year: parseInt(year), location: loc }); p.moves.sort((a,b) => a.year - b.year); p.currComp = loc; const currSelect = document.getElementById('edit-currComp'); if (currSelect) currSelect.value = loc; saveData(); window.renderMoves(); showToast('Move added'); };
+window.removeMove = function(idx) { const p = DATA.people[activeId]; if (p.moves) { p.moves.splice(idx,1); if (p.moves.length) p.currComp = p.moves[p.moves.length-1].location; saveData(); window.renderMoves(); const currSelect = document.getElementById('edit-currComp'); if (currSelect) currSelect.value = p.currComp; showToast('Move removed'); } };
+window.saveCurrentPerson = function() { if (!activeId) return; const n = document.getElementById('edit-name')?.value.trim(); if (!n) { showToast('Name required'); return; } const p = DATA.people[activeId]; p.name = n; p.gender = document.getElementById('edit-gender')?.value; p.attraction = document.getElementById('edit-attraction')?.value; p.birthYear = parseInt(document.getElementById('edit-birthYear')?.value) || null; p.age = parseInt(document.getElementById('edit-age')?.value) || null; p.role = document.getElementById('edit-role')?.value || ''; p.deceased = document.getElementById('edit-deceased')?.checked || false; p.deathYear = p.deceased ? (parseInt(document.getElementById('edit-deathYear')?.value) || null) : null; p.causeDeath = document.getElementById('edit-causeDeath')?.value || ''; p.birthComp = document.getElementById('edit-birthComp')?.value || ''; p.currComp = document.getElementById('edit-currComp')?.value || p.birthComp; p.household = document.getElementById('edit-household')?.value || ''; p.eyeColor = document.getElementById('edit-eyeColor')?.value || ''; p.hairColor = document.getElementById('edit-hairColor')?.value || ''; p.skinColor = document.getElementById('edit-skinColor')?.value || ''; p.tattoos = document.getElementById('edit-tattoos')?.value || ''; p.appNotes = document.getElementById('edit-appNotes')?.value || ''; p.notes = document.getElementById('edit-notes')?.value || ''; if (p.birthYear) { const dy = p.deceased ? p.deathYear : null; p.age = calculateAge(p.birthYear, dy); p.stage = calculateLifeStage(p.age); } saveData(); renderPersonList(); loadView(activeId); showToast('Saved'); };
+window.deleteCurrentPerson = function() { if (!activeId) return; const n = DATA.people[activeId]?.name; if (!confirm(`Delete ${n} permanently?`)) return; delete DATA.people[activeId]; delete DATA.relationships[activeId]; rebuildStableIdIndex(); activeId = null; saveData(); renderPersonList(); document.getElementById('view-empty').style.display = 'block'; document.getElementById('view-filled').style.display = 'none'; document.getElementById('edit-empty').style.display = 'block'; showToast('Character deleted'); };
+
+// ====================== RELATIONSHIP HELPERS ======================
+function getPartners(id) { const r = DATA.relationships[id] || {}; const p = []; (r.ongoing || []).forEach(pid => { if (getPersonId(pid)) p.push({ id: pid, status: 'ongoing' }); }); (r.ended || []).forEach(pid => { if (getPersonId(pid)) p.push({ id: pid, status: 'ended' }); }); (r.widowed || []).forEach(pid => { if (getPersonId(pid)) p.push({ id: pid, status: 'widowed' }); }); return p; }
+function getFriends(id) { const r = DATA.relationships[id] || {}; const f = []; (r.friends || []).forEach(fid => { if (getPersonId(fid)) { const d = r.friendDetails?.[fid] || {}; f.push({ id: fid, level: d.level || 'friend', metYear: d.metYear, notes: d.notes }); } }); return f; }
+function getChildren(id) { const pid = getPersonId(id); const c = []; Object.keys(DATA.people).forEach(cid => { const r = DATA.relationships[cid] || {}; const fid = r.father ? getPersonId(r.father) : null; const mid = r.mother ? getPersonId(r.mother) : null; if (fid === pid || mid === pid) c.push({ id: cid }); }); return c.sort((a,b) => (getPersonDisplay(a.id)?.birthYear || 0) - (getPersonDisplay(b.id)?.birthYear || 0)); }
+function getSiblings(id) { const pid = getPersonId(id); const cur = getPersonDisplay(pid); if (!cur) return []; const s = []; Object.keys(DATA.people).forEach(sid => { if (sid === pid) return; const sib = getPersonDisplay(sid); if (!sib) return; const shareF = cur.father && sib.father && getPersonId(sib.father) === getPersonId(cur.father); const shareM = cur.mother && sib.mother && getPersonId(sib.mother) === getPersonId(cur.mother); if (shareF || shareM) s.push(sid); }); return s; }
+function checkRelationship(p1, p2) { const a = getPersonDisplay(p1); const b = getPersonDisplay(p2); if (!a || !b) return null; if (a.father && b.father && getPersonId(a.father) === getPersonId(b.father)) return 'Siblings'; if (a.mother && b.mother && getPersonId(a.mother) === getPersonId(b.mother)) return 'Siblings'; if (a.father === p2 || a.mother === p2) return 'Parent-Child'; if (b.father === p1 || b.mother === p1) return 'Parent-Child'; return null; }
+function validateParentAge(parent, childBirthYear) { const p = getPersonDisplay(parent); if (!p?.birthYear) return true; const age = childBirthYear - p.birthYear; if (p.gender === 'female') return age >= 14 && age <= 45; return age >= 14 && age <= 70; }
+
+// ====================== FILTER FUNCTIONS ======================
+window.setPartnerFilter = function(type, value) {
+  if (type === 'gender') window.partnerFilters.gender = window.partnerFilters.gender === value ? null : value;
+  if (type === 'widowed') window.partnerFilters.widowed = !window.partnerFilters.widowed;
+  if (type === 'peer') window.partnerFilters.peer = !window.partnerFilters.peer;
+  document.querySelectorAll('#partner-filters .filter-tag').forEach(btn => btn.classList.remove('active'));
+  if (window.partnerFilters.gender) document.querySelector(`#partner-filters .filter-tag[data-filter="gender-${window.partnerFilters.gender}"]`)?.classList.add('active');
+  if (window.partnerFilters.widowed) document.querySelector('#partner-filters .filter-tag[data-filter="widowed"]')?.classList.add('active');
+  if (window.partnerFilters.peer) document.querySelector('#partner-filters .filter-tag[data-filter="peer"]')?.classList.add('active');
+  window.setupRelationshipPickers();
+};
+window.clearPartnerFilters = function() { window.partnerFilters = { gender: null, widowed: false, peer: false, status: null }; document.querySelectorAll('#partner-filters .filter-tag').forEach(btn => btn.classList.remove('active')); window.setupRelationshipPickers(); };
+window.setFriendFilter = function(type, value) {
+  if (type === 'gender') window.friendFilters.gender = window.friendFilters.gender === value ? null : value;
+  if (type === 'peer') window.friendFilters.peer = !window.friendFilters.peer;
+  document.querySelectorAll('#friend-filters .filter-tag').forEach(btn => btn.classList.remove('active'));
+  if (window.friendFilters.gender) document.querySelector(`#friend-filters .filter-tag[data-filter="gender-${window.friendFilters.gender}"]`)?.classList.add('active');
+  if (window.friendFilters.peer) document.querySelector('#friend-filters .filter-tag[data-filter="peer"]')?.classList.add('active');
+  window.setupRelationshipPickers();
+};
+window.clearFriendFilters = function() { window.friendFilters = { gender: null, peer: false }; document.querySelectorAll('#friend-filters .filter-tag').forEach(btn => btn.classList.remove('active')); window.setupRelationshipPickers(); };
+window.setChildFilter = function(type, value) {
+  if (type === 'gender') window.childFilters.gender = window.childFilters.gender === value ? null : value;
+  if (type === 'orphan') { window.childFilters.orphan = !window.childFilters.orphan; window.childFilters.hasParents = false; }
+  if (type === 'has-parents') { window.childFilters.hasParents = !window.childFilters.hasParents; window.childFilters.orphan = false; }
+  document.querySelectorAll('#child-filters .filter-tag').forEach(btn => btn.classList.remove('active'));
+  if (window.childFilters.gender) document.querySelector(`#child-filters .filter-tag[data-filter="gender-${window.childFilters.gender}"]`)?.classList.add('active');
+  if (window.childFilters.orphan) document.querySelector('#child-filters .filter-tag[data-filter="orphan"]')?.classList.add('active');
+  if (window.childFilters.hasParents) document.querySelector('#child-filters .filter-tag[data-filter="has-parents"]')?.classList.add('active');
+  const childPicker = document.getElementById('child-picker');
+  if (childPicker) {
+    childPicker.innerHTML = makePicker('child-pick', 'Add child...', p => {
+      if (p.id === activeId) return false;
+      if (window.childFilters.gender && p.display.gender !== window.childFilters.gender) return false;
+      const hasParents = !!(p.display.father || p.display.mother);
+      if (window.childFilters.orphan && hasParents) return false;
+      if (window.childFilters.hasParents && !hasParents) return false;
+      return true;
+    });
   }
-  if (container) {
-    container.innerHTML = p.ranks.map(r => 
-      `<span class="rank-chip" onclick="removeRank('${r.value}')" style="cursor:pointer;">${getRankSymbol(r.value)} ${r.value} ✕</span>`
-    ).join('');
-  }
-}
+};
+window.clearChildFilters = function() { window.childFilters = { gender: null, orphan: false, hasParents: false }; document.querySelectorAll('#child-filters .filter-tag').forEach(btn => btn.classList.remove('active')); const childPicker = document.getElementById('child-picker'); if (childPicker) childPicker.innerHTML = makePicker('child-pick', 'Add child...', p => p.id !== activeId); };
 
-function addRank(rankValue) {
-  if (!activeId) {
-    showToast('Select a character first');
-    return;
-  }
-  const p = DATA.people[activeId];
-  if (!p.ranks) p.ranks = [];
-  if (!p.ranks.some(r => r.value === rankValue)) {
-    p.ranks.push({ value: rankValue, type: 'ritual' });
-    updateRanksDisplay();
-    saveData();
-    showToast(`Added ${rankValue} rank`);
-  } else {
-    showToast(`${rankValue} already assigned`);
-  }
-}
+// ====================== RELATIONSHIP RENDER FUNCTIONS ======================
+window.renderParents = function() { const c = document.getElementById('parents-list'); if (!c) return; const rel = DATA.relationships[activeId] || {}; const parents = []; if (rel.father) parents.push({ id: rel.father, role: 'Father' }); if (rel.mother) parents.push({ id: rel.mother, role: 'Mother' }); if (!parents.length) { c.innerHTML = '<div style="color:var(--dim);">No parents assigned</div>'; return; } c.innerHTML = parents.map(p => { const pd = getPersonDisplay(p.id); const ageAtBirth = pd?.birthYear && DATA.people[activeId]?.birthYear ? DATA.people[activeId].birthYear - pd.birthYear : null; return `<div class="rel-card"><div class="rel-card-top"><div><a onclick="selectPerson('${p.id}')">${escapeHtml(pd?.name)}</a><span class="badge">${p.role}</span>${ageAtBirth ? `<div class="rel-card-meta">was ${ageAtBirth} at birth</div>` : ''}</div><button class="danger small" onclick="window.removeParent('${p.role.toLowerCase()}')">✕</button></div></div>`; }).join(''); };
+window.removeParent = function(role) { if (!confirm(`Remove ${role}?`)) return; const rel = DATA.relationships[activeId] || {}; if (role === 'father') delete rel.father; else delete rel.mother; DATA.relationships[activeId] = rel; saveData(); window.renderParents(); showToast(`${role} removed`); };
+window.setParent = function(role) { const pid = window.getSelectedPickerValue(`${role}-pick`); if (!pid) { showToast('Select a person first'); return; } const parentId = getPersonId(pid); if (!parentId) return; const childBirthYear = DATA.people[activeId]?.birthYear; if (childBirthYear && !validateParentAge(parentId, childBirthYear)) { showToast(`${role.charAt(0).toUpperCase() + role.slice(1)} age invalid for birth year!`); return; } const rel = DATA.relationships[activeId] || {}; if (role === 'father') rel.father = getPersonDisplay(parentId).stableId; else rel.mother = getPersonDisplay(parentId).stableId; DATA.relationships[activeId] = rel; const childRel = DATA.relationships[parentId] || {}; if (!childRel.children) childRel.children = []; if (!childRel.children.includes(getPersonDisplay(activeId).stableId)) childRel.children.push(getPersonDisplay(activeId).stableId); DATA.relationships[parentId] = childRel; saveData(); window.renderParents(); showToast(`${role} set`); };
 
-function removeRank(rankValue) {
-  if (!activeId) return;
-  const p = DATA.people[activeId];
-  if (p.ranks) {
-    p.ranks = p.ranks.filter(r => r.value !== rankValue);
-    updateRanksDisplay();
-    saveData();
-    showToast(`Removed ${rankValue}`);
-  }
-}
+window.renderPartners = function() { const c = document.getElementById('partners-list'); if (!c) return; const partners = getPartners(activeId); if (!partners.length) { c.innerHTML = '<div style="color:var(--dim);">No partners</div>'; return; } c.innerHTML = partners.map(p => { const pd = getPersonDisplay(p.id); const details = DATA.relationships[activeId]?.details?.[p.id] || {}; const warn = checkRelationship(activeId, p.id); return `<div class="rel-card" onclick="window.openPartnerDetails('${p.id}')"><div class="rel-card-top"><div><a onclick="event.stopPropagation(); selectPerson('${p.id}')">${escapeHtml(pd?.name)}</a><span class="badge ${p.status === 'ongoing' ? 'badge-ongoing' : p.status === 'ended' ? 'badge-ended' : 'badge-widowed'}">${p.status}</span>${details.type ? `<span class="badge">${details.type}</span>` : ''}${details.startYear ? `<span class="badge">📅 ${details.startYear}${details.endYear ? `-${details.endYear}` : ''}</span>` : ''}${warn ? `<span class="badge" style="background:#8b404020;">⚠️ ${warn}</span>` : ''}</div><button class="danger small" onclick="event.stopPropagation(); window.removePartner('${p.id}')">✕</button></div>${details.notes ? `<div class="rel-card-meta">📝 ${escapeHtml(details.notes)}</div>` : ''}</div>`; }).join(''); };
+window.removePartner = function(pid) { if (!confirm('Remove this relationship?')) return; const mySid = getPersonDisplay(activeId).stableId; const pSid = getPersonDisplay(pid).stableId; const myRel = DATA.relationships[activeId] || {}; const pRel = DATA.relationships[pid] || {}; myRel.ongoing = (myRel.ongoing || []).filter(id => id !== pSid && id !== pid); myRel.ended = (myRel.ended || []).filter(id => id !== pSid && id !== pid); myRel.widowed = (myRel.widowed || []).filter(id => id !== pSid && id !== pid); if (myRel.details) { delete myRel.details[pSid]; delete myRel.details[pid]; } pRel.ongoing = (pRel.ongoing || []).filter(id => id !== mySid && id !== activeId); pRel.ended = (pRel.ended || []).filter(id => id !== mySid && id !== activeId); pRel.widowed = (pRel.widowed || []).filter(id => id !== mySid && id !== activeId); if (pRel.details) { delete pRel.details[mySid]; delete pRel.details[activeId]; } DATA.relationships[activeId] = myRel; DATA.relationships[pid] = pRel; saveData(); window.renderPartners(); showToast('Partner removed'); };
+window.openPartnerDetails = function(pid) { const p = getPersonDisplay(pid); const rel = DATA.relationships[activeId] || {}; const d = rel.details?.[pid] || {}; let status = 'ongoing'; if (rel.ended?.includes(pid)) status = 'ended'; if (rel.widowed?.includes(pid)) status = 'widowed'; const html = `<div class="modal-overlay" id="partner-modal" style="display:flex"><div class="modal-box"><div class="modal-title">${escapeHtml(p.name)} - Relationship</div><div class="form-group"><label>Status</label><select id="partner-status"><option value="ongoing" ${status === 'ongoing' ? 'selected' : ''}>Ongoing</option><option value="ended" ${status === 'ended' ? 'selected' : ''}>Ended</option><option value="widowed" ${status === 'widowed' ? 'selected' : ''}>Widowed</option></select></div><div class="form-group"><label>Type</label><select id="partner-type"><option value="">—</option><option value="casual">Casual</option><option value="serious">Serious</option><option value="affair">Affair</option><option value="betrothed">Betrothed</option><option value="other">Other</option></select></div><div class="form-row"><div class="form-group"><label>Start Year</label><input type="number" id="partner-start" value="${d.startYear || ''}"></div><div class="form-group"><label>End Year</label><input type="number" id="partner-end" value="${d.endYear || ''}"></div></div><div class="form-group"><label>Notes</label><textarea id="partner-notes" rows="2">${escapeHtml(d.notes || '')}</textarea></div><div style="display:flex; gap:8px; margin-top:16px;"><button class="primary" onclick="window.savePartnerDetails('${pid}')">Save</button><button onclick="document.getElementById('partner-modal').remove()">Cancel</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); document.getElementById('partner-type').value = d.type || ''; };
+window.savePartnerDetails = function(pid) { const status = document.getElementById('partner-status').value; const type = document.getElementById('partner-type').value; const start = document.getElementById('partner-start').value; const end = document.getElementById('partner-end').value; const notes = document.getElementById('partner-notes').value; const mySid = getPersonDisplay(activeId).stableId; const pSid = getPersonDisplay(pid).stableId; const myRel = DATA.relationships[activeId] || {}; const pRel = DATA.relationships[pid] || {}; [myRel.ongoing, myRel.ended, myRel.widowed].forEach(a => { if (a) { const i = a.indexOf(pSid); if (i !== -1) a.splice(i,1); const j = a.indexOf(pid); if (j !== -1) a.splice(j,1); } }); if (!myRel[status]) myRel[status] = []; if (!myRel[status].includes(pSid)) myRel[status].push(pSid); if (!myRel.details) myRel.details = {}; myRel.details[pSid] = { type: type || null, startYear: start ? parseInt(start) : null, endYear: end ? parseInt(end) : null, notes: notes || null }; [pRel.ongoing, pRel.ended, pRel.widowed].forEach(a => { if (a) { const i = a.indexOf(mySid); if (i !== -1) a.splice(i,1); const j = a.indexOf(activeId); if (j !== -1) a.splice(j,1); } }); if (!pRel[status]) pRel[status] = []; if (!pRel[status].includes(mySid)) pRel[status].push(mySid); if (!pRel.details) pRel.details = {}; pRel.details[mySid] = { type: type || null, startYear: start ? parseInt(start) : null, endYear: end ? parseInt(end) : null, notes: notes || null }; DATA.relationships[activeId] = myRel; DATA.relationships[pid] = pRel; saveData(); document.getElementById('partner-modal')?.remove(); window.renderPartners(); showToast('Partner updated'); };
+window.addPartner = function() { const selectedId = window.getSelectedPickerValue('partner-pick'); if (!selectedId) { showToast('Select a person first'); return; } const partnerId = getPersonId(selectedId); if (!partnerId) { showToast('Invalid selection'); return; } const mySid = getPersonDisplay(activeId).stableId; const pSid = getPersonDisplay(partnerId).stableId; const myRel = DATA.relationships[activeId] || {}; const pRel = DATA.relationships[partnerId] || {}; if (!myRel.ongoing) myRel.ongoing = []; if (!myRel.details) myRel.details = {}; if (!pRel.ongoing) pRel.ongoing = []; if (!pRel.details) pRel.details = {}; if (!myRel.ongoing.includes(pSid)) myRel.ongoing.push(pSid); myRel.details[pSid] = { type: null, startYear: null, endYear: null, notes: null }; if (!pRel.ongoing.includes(mySid)) pRel.ongoing.push(mySid); pRel.details[mySid] = { type: null, startYear: null, endYear: null, notes: null }; DATA.relationships[activeId] = myRel; DATA.relationships[partnerId] = pRel; saveData(); window.renderPartners(); showToast('Partner added'); setTimeout(() => window.openPartnerDetails(partnerId), 100); };
 
-function updateAgeFromBirth() {
-  const birthYear = parseInt(document.getElementById('edit-birthYear')?.value);
-  const isDeceased = document.getElementById('edit-deceased')?.checked;
-  const deathYear = isDeceased ? parseInt(document.getElementById('edit-deathYear')?.value) : null;
-  const age = calculateAge(birthYear, deathYear);
-  const ageInput = document.getElementById('edit-age');
-  if (ageInput) ageInput.value = age || '';
-}
+window.renderChildren = function() { const c = document.getElementById('children-list'); if (!c) return; const kids = getChildren(activeId); if (!kids.length) { c.innerHTML = '<div style="color:var(--dim);">No children</div>'; return; } c.innerHTML = kids.map(k => { const kd = getPersonDisplay(k.id); const ageAtBirth = kd?.birthYear && DATA.people[activeId]?.birthYear ? kd.birthYear - DATA.people[activeId].birthYear : null; return `<div class="rel-card"><div class="rel-card-top"><div><a onclick="selectPerson('${k.id}')">${escapeHtml(kd?.name)}</a><span class="badge">Child</span>${ageAtBirth ? `<div class="rel-card-meta">you were ${ageAtBirth} at birth</div>` : ''}</div><button class="danger small" onclick="window.removeChildPerson('${k.id}')">✕</button></div></div>`; }).join(''); };
+window.removeChildPerson = function(cid) { if (!confirm('Remove this child?')) return; const cRel = DATA.relationships[cid] || {}; const mySid = getPersonDisplay(activeId).stableId; if (cRel.father === mySid) delete cRel.father; if (cRel.mother === mySid) delete cRel.mother; DATA.relationships[cid] = cRel; saveData(); window.renderChildren(); showToast('Child removed'); };
+window.addChild = function() { const pid = window.getSelectedPickerValue('child-pick'); if (!pid) { showToast('Select a person first'); return; } const childId = getPersonId(pid); const cRel = DATA.relationships[childId] || {}; const mySid = getPersonDisplay(activeId).stableId; const myGender = getPersonDisplay(activeId).gender; if (myGender === 'male' && !cRel.father) cRel.father = mySid; if (myGender === 'female' && !cRel.mother) cRel.mother = mySid; DATA.relationships[childId] = cRel; saveData(); window.renderChildren(); showToast('Child added'); };
 
-function updateBirthFromAge() {
-  const age = parseInt(document.getElementById('edit-age')?.value);
-  const isDeceased = document.getElementById('edit-deceased')?.checked;
-  const deathYear = isDeceased ? parseInt(document.getElementById('edit-deathYear')?.value) : null;
-  const birthYear = isDeceased && deathYear ? deathYear - age : DATA.currentYear - age;
-  const birthInput = document.getElementById('edit-birthYear');
-  if (birthInput && !isNaN(birthYear) && birthYear > 0) {
-    birthInput.value = birthYear;
-  }
-}
+window.renderSiblings = function() { const c = document.getElementById('siblings-list'); if (!c) return; const sibs = getSiblings(activeId); if (!sibs.length) { c.innerHTML = '<div style="color:var(--dim);">No siblings</div>'; return; } c.innerHTML = sibs.map(s => { const sd = getPersonDisplay(s); return `<div class="rel-card"><div class="rel-card-top"><div><a onclick="selectPerson('${s}')">${escapeHtml(sd?.name)}</a><span class="badge">Sibling</span>${sd?.age ? `<div class="rel-card-meta">age ${sd.age}</div>` : ''}</div><button class="danger small" onclick="window.removeSibling('${s}')">✕</button></div></div>`; }).join(''); };
+window.removeSibling = function(sid) { if (!confirm('Remove this sibling?')) return; refreshCurrentTab(); showToast('Sibling removed (inferred from shared parents)'); };
+window.addSibling = function() { const pid = window.getSelectedPickerValue('sibling-pick'); if (!pid) { showToast('Select a person first'); return; } const siblingId = getPersonId(pid); const myData = getPersonDisplay(activeId); const sibData = getPersonDisplay(siblingId); if (!myData.father && !myData.mother && !sibData.father && !sibData.mother) { showToast('No common parent to establish sibling relationship'); return; } const myRel = DATA.relationships[activeId] || {}; const sibRel = DATA.relationships[siblingId] || {}; if (!myData.father && sibData.father) myRel.father = sibData.father; if (!myData.mother && sibData.mother) myRel.mother = sibData.mother; if (!sibData.father && myData.father) sibRel.father = myData.father; if (!sibData.mother && myData.mother) sibRel.mother = myData.mother; DATA.relationships[activeId] = myRel; DATA.relationships[siblingId] = sibRel; saveData(); window.renderSiblings(); showToast('Sibling added'); };
 
-function toggleDeathFields() {
-  const isDeceased = document.getElementById('edit-deceased')?.checked;
-  const deathFields = document.getElementById('death-fields');
-  if (deathFields) deathFields.style.display = isDeceased ? 'block' : 'none';
-}
+window.renderFriends = function() { const c = document.getElementById('friends-list'); if (!c) return; const friends = getFriends(activeId); if (!friends.length) { c.innerHTML = '<div style="color:var(--dim);">No friends</div>'; return; } const levelNames = { acquaintance: 'Acquaintance', friend: 'Friend', close: 'Close Friend', best: 'Best Friend' }; c.innerHTML = friends.map(f => { const fd = getPersonDisplay(f.id); return `<div class="rel-card" onclick="window.openFriendDetails('${f.id}')"><div class="rel-card-top"><div><a onclick="event.stopPropagation(); selectPerson('${f.id}')">${escapeHtml(fd?.name)}</a><span class="badge">${levelNames[f.level] || 'Friend'}</span>${f.metYear ? `<span class="badge">📅 ${f.metYear}</span>` : ''}</div><button class="danger small" onclick="event.stopPropagation(); window.removeFriend('${f.id}')">✕</button></div>${f.notes ? `<div class="rel-card-meta">📝 ${escapeHtml(f.notes)}</div>` : ''}</div>`; }).join(''); };
+window.removeFriend = function(fid) { if (!confirm('Remove this friendship?')) return; const mySid = getPersonDisplay(activeId).stableId; const fSid = getPersonDisplay(fid).stableId; const myRel = DATA.relationships[activeId] || {}; const fRel = DATA.relationships[fid] || {}; myRel.friends = (myRel.friends || []).filter(id => id !== fSid); if (myRel.friendDetails) delete myRel.friendDetails[fSid]; fRel.friends = (fRel.friends || []).filter(id => id !== mySid); if (fRel.friendDetails) delete fRel.friendDetails[mySid]; DATA.relationships[activeId] = myRel; DATA.relationships[fid] = fRel; saveData(); window.renderFriends(); showToast('Friend removed'); };
+window.openFriendDetails = function(fid) { const f = getPersonDisplay(fid); const rel = DATA.relationships[activeId] || {}; const d = rel.friendDetails?.[fid] || { level: 'friend', metYear: null, notes: '' }; const html = `<div class="modal-overlay" id="friend-modal" style="display:flex"><div class="modal-box"><div class="modal-title">${escapeHtml(f.name)} - Friend Details</div><div class="form-group"><label>Level</label><select id="friend-level"><option value="acquaintance">Acquaintance</option><option value="friend">Friend</option><option value="close">Close Friend</option><option value="best">Best Friend</option></select></div><div class="form-group"><label>Year Met</label><input type="number" id="friend-year" value="${d.metYear || ''}"></div><div class="form-group"><label>Notes</label><textarea id="friend-notes" rows="2">${escapeHtml(d.notes || '')}</textarea></div><div style="display:flex; gap:8px;"><button class="primary" onclick="window.saveFriendDetails('${fid}')">Save</button><button onclick="document.getElementById('friend-modal').remove()">Cancel</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); document.getElementById('friend-level').value = d.level || 'friend'; };
+window.saveFriendDetails = function(fid) { const level = document.getElementById('friend-level').value; const year = document.getElementById('friend-year').value; const notes = document.getElementById('friend-notes').value; const mySid = getPersonDisplay(activeId).stableId; const fSid = getPersonDisplay(fid).stableId; const myRel = DATA.relationships[activeId] || {}; const fRel = DATA.relationships[fid] || {}; if (!myRel.friendDetails) myRel.friendDetails = {}; myRel.friendDetails[fSid] = { level, metYear: year ? parseInt(year) : null, notes: notes || null }; if (!fRel.friendDetails) fRel.friendDetails = {}; fRel.friendDetails[mySid] = { level, metYear: year ? parseInt(year) : null, notes: notes || null }; DATA.relationships[activeId] = myRel; DATA.relationships[fid] = fRel; saveData(); document.getElementById('friend-modal')?.remove(); window.renderFriends(); showToast('Friend updated'); };
+window.addFriend = function() { const pid = window.getSelectedPickerValue('friend-pick'); if (!pid) { showToast('Select a person first'); return; } const fid = getPersonId(pid); const mySid = getPersonDisplay(activeId).stableId; const fSid = getPersonDisplay(fid).stableId; const myRel = DATA.relationships[activeId] || {}; const fRel = DATA.relationships[fid] || {}; if (!myRel.friends) myRel.friends = []; if (!myRel.friends.includes(fSid)) myRel.friends.push(fSid); if (!myRel.friendDetails) myRel.friendDetails = {}; myRel.friendDetails[fSid] = { level: 'friend', metYear: DATA.currentYear, notes: '' }; if (!fRel.friends) fRel.friends = []; if (!fRel.friends.includes(mySid)) fRel.friends.push(mySid); if (!fRel.friendDetails) fRel.friendDetails = {}; fRel.friendDetails[mySid] = { level: 'friend', metYear: DATA.currentYear, notes: '' }; DATA.relationships[activeId] = myRel; DATA.relationships[fid] = fRel; saveData(); window.renderFriends(); showToast('Friend added'); setTimeout(() => window.openFriendDetails(fid), 100); };
 
-function saveCurrentPerson() {
-  if (!activeId) return;
-  
-  const name = document.getElementById('edit-name')?.value.trim();
-  if (!name) {
-    showToast('Name is required');
-    return;
-  }
-  
-  const p = DATA.people[activeId];
-  p.name = name;
-  p.gender = document.getElementById('edit-gender')?.value || 'unknown';
-  p.attraction = document.getElementById('edit-attraction')?.value || 'both';
-  p.birthYear = parseInt(document.getElementById('edit-birthYear')?.value) || null;
-  p.age = parseInt(document.getElementById('edit-age')?.value) || null;
-  p.role = document.getElementById('edit-role')?.value || '';
-  p.deceased = document.getElementById('edit-deceased')?.checked || false;
-  p.deathYear = p.deceased ? (parseInt(document.getElementById('edit-deathYear')?.value) || null) : null;
-  p.causeDeath = document.getElementById('edit-causeDeath')?.value || '';
-  p.birthComp = document.getElementById('edit-birthComp')?.value || '';
-  p.currComp = document.getElementById('edit-currComp')?.value || p.birthComp;
-  p.household = document.getElementById('edit-household')?.value || '';
-  p.notes = document.getElementById('edit-notes')?.value || '';
-  
-  if (p.birthYear) {
-    const deathYear = p.deceased ? p.deathYear : null;
-    p.age = calculateAge(p.birthYear, deathYear);
-    p.stage = calculateLifeStage(p.age);
-  }
-  
-  saveData();
-  renderPersonList();
-  loadView(activeId);
-  showToast('Saved');
-}
-
-function deleteCurrentPerson() {
-  if (!activeId) return;
-  const name = DATA.people[activeId]?.name || 'this character';
-  if (!confirm(`Delete ${name} permanently?`)) return;
-  
-  delete DATA.people[activeId];
-  delete DATA.relationships[activeId];
-  rebuildStableIdIndex();
-  
-  activeId = null;
-  saveData();
-  renderPersonList();
-  
-  document.getElementById('view-empty').style.display = 'block';
-  document.getElementById('view-filled').style.display = 'none';
-  document.getElementById('edit-empty').style.display = 'block';
-  
-  showToast('Character deleted');
-}
-
-// ====================== CREATE PERSON ======================
-function createPerson() {
-  const name = document.getElementById('new-name').value.trim();
-  if (!name) {
-    showToast('Name required');
-    return;
-  }
-  
-  const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now().toString(36);
-  const stableId = generateStableId();
-  const birthYear = parseInt(document.getElementById('new-birthYear').value) || null;
-  const age = calculateAge(birthYear);
-  
-  DATA.people[id] = {
-    stableId: stableId,
-    name: name,
-    gender: document.getElementById('new-gender').value,
-    attraction: 'both',
-    birthYear: birthYear,
-    age: age,
-    stage: calculateLifeStage(age),
-    role: '',
-    deceased: false,
-    deathYear: null,
-    causeDeath: '',
-    birthComp: document.getElementById('new-birthComp').value || '',
-    currComp: document.getElementById('new-birthComp').value || '',
-    household: '',
-    notes: '',
-    ranks: []
-  };
-  
-  DATA.relationships[id] = {
-    ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {}
-  };
-  
-  rebuildStableIdIndex();
-  saveData();
-  renderPersonList();
-  closeNewPersonModal();
-  selectPerson(id);
-  showToast(`${name} created`);
-}
-
-function openNewPersonModal() {
-  document.getElementById('new-name').value = '';
-  document.getElementById('new-gender').value = 'unknown';
-  document.getElementById('new-birthYear').value = '';
-  document.getElementById('new-birthComp').value = '';
-  document.getElementById('new-person-modal').style.display = 'flex';
-}
-
-function closeNewPersonModal() {
-  document.getElementById('new-person-modal').style.display = 'none';
-}
-
-// ====================== RANDOM GENERATION ======================
-function randomNameForCurrent() {
-  if (!activeId) {
-    showToast('Select a character first');
-    return;
-  }
-  const gender = document.getElementById('edit-gender')?.value;
-  const names = DEFAULT_NAMES[gender === 'male' ? 'male' : 'female'] || DEFAULT_NAMES.male;
-  const newName = names[Math.floor(Math.random() * names.length)];
-  const nameInput = document.getElementById('edit-name');
-  if (nameInput) nameInput.value = newName;
-  showToast(`Random name: ${newName}`);
-}
-
-function randomNameForNew() {
-  const gender = document.getElementById('new-gender').value;
-  const names = DEFAULT_NAMES[gender === 'male' ? 'male' : 'female'] || DEFAULT_NAMES.male;
-  const newName = names[Math.floor(Math.random() * names.length)];
-  document.getElementById('new-name').value = newName;
-}
-
-function generateRandomPerson() {
-  const gender = Math.random() > 0.5 ? 'male' : 'female';
-  const names = DEFAULT_NAMES[gender];
-  const name = names[Math.floor(Math.random() * names.length)];
-  const age = Math.floor(Math.random() * 70) + 10;
-  const birthYear = DATA.currentYear - age;
-  
-  const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now().toString(36);
-  const stableId = generateStableId();
-  
-  DATA.people[id] = {
-    stableId: stableId,
-    name: name,
-    gender: gender,
-    attraction: Math.random() > 0.7 ? 'both' : (gender === 'male' ? 'women' : 'men'),
-    birthYear: birthYear,
-    age: age,
-    stage: calculateLifeStage(age),
-    role: '',
-    deceased: false,
-    deathYear: null,
-    causeDeath: '',
-    birthComp: '',
-    currComp: '',
-    household: '',
-    notes: '',
-    ranks: []
-  };
-  
-  DATA.relationships[id] = {
-    ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {}
-  };
-  
-  rebuildStableIdIndex();
-  saveData();
-  renderPersonList();
-  selectPerson(id);
-  showToast(`Random character created: ${name}`);
-}
-
-// ====================== EXPORT/IMPORT ======================
-function exportJSON() {
-  const exportData = {
-    version: DATA.version,
-    exportDate: new Date().toISOString(),
-    currentYear: DATA.currentYear,
-    people: DATA.people,
-    relationships: DATA.relationships
-  };
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `stillwaters_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('Exported');
-}
-
-document.getElementById('import-file').onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    try {
-      const imported = JSON.parse(ev.target.result);
-      if (imported.people) Object.assign(DATA.people, imported.people);
-      if (imported.relationships) Object.assign(DATA.relationships, imported.relationships);
-      if (imported.currentYear) DATA.currentYear = imported.currentYear;
-      rebuildStableIdIndex();
-      updateAllAges();
-      saveData();
-      renderPersonList();
-      showToast(`Imported ${Object.keys(imported.people || {}).length} characters`);
-    } catch(err) {
-      showToast('Error importing: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
+window.setupRelationshipPickers = function() {
+  const myData = getPersonDisplay(activeId);
+  const myYear = myData?.birthYear;
+  const fatherP = document.getElementById('father-picker'); 
+  if (fatherP) fatherP.innerHTML = makePicker('father-pick', 'Select father...', p => { if (p.display.gender !== 'male') return false; if (p.id === activeId) return false; if (p.display.deceased) return false; if (myData?.birthYear && p.display.birthYear) { const ageAtBirth = myData.birthYear - p.display.birthYear; if (ageAtBirth < 14 || ageAtBirth > 70) return false; } return true; });
+  const motherP = document.getElementById('mother-picker'); 
+  if (motherP) motherP.innerHTML = makePicker('mother-pick', 'Select mother...', p => { if (p.display.gender !== 'female') return false; if (p.id === activeId) return false; if (p.display.deceased) return false; if (myData?.birthYear && p.display.birthYear) { const ageAtBirth = myData.birthYear - p.display.birthYear; if (ageAtBirth < 14 || ageAtBirth > 45) return false; } return true; });
+  const partnerP = document.getElementById('partner-picker'); 
+  if (partnerP) partnerP.innerHTML = makePicker('partner-pick', 'Add partner...', p => { if (p.id === activeId) return false; if (p.display.stage === 'infant' || p.display.stage === 'toddler' || p.display.stage === 'child') return false; if (window.partnerFilters) { if (window.partnerFilters.gender && p.display.gender !== window.partnerFilters.gender) return false; if (window.partnerFilters.widowed && !(p.display.widowed?.length > 0)) return false; if (window.partnerFilters.peer && myYear && p.display.birthYear) { if (Math.abs(myYear - p.display.birthYear) > 15) return false; } } return true; });
+  const childP = document.getElementById('child-picker'); 
+  if (childP) childP.innerHTML = makePicker('child-pick', 'Add child...', p => { if (p.id === activeId) return false; if (window.childFilters.gender && p.display.gender !== window.childFilters.gender) return false; const hasParents = !!(p.display.father || p.display.mother); if (window.childFilters.orphan && hasParents) return false; if (window.childFilters.hasParents && !hasParents) return false; return true; });
+  const siblingP = document.getElementById('sibling-picker'); 
+  if (siblingP) siblingP.innerHTML = makePicker('sibling-pick', 'Add sibling...', p => p.id !== activeId);
+  const friendP = document.getElementById('friend-picker'); 
+  if (friendP) friendP.innerHTML = makePicker('friend-pick', 'Add friend...', p => { if (p.id === activeId) return false; if (p.display.stage === 'infant' || p.display.stage === 'toddler' || p.display.stage === 'child') return false; if (p.display.deceased) return false; if (window.friendFilters) { if (window.friendFilters.gender && p.display.gender !== window.friendFilters.gender) return false; if (window.friendFilters.peer && myYear && p.display.birthYear) { if (Math.abs(myYear - p.display.birthYear) > 15) return false; } } return true; });
 };
 
-// ====================== UI HELPERS ======================
-function toggleViewPanel() {
-  const panel = document.getElementById('view-panel');
-  const btn = document.getElementById('view-collapse-btn');
-  if (panel.style.maxHeight === '35%' || !panel.style.maxHeight) {
-    panel.style.maxHeight = '52px';
-    if (btn) btn.innerHTML = '▲';
-  } else {
-    panel.style.maxHeight = '35%';
-    if (btn) btn.innerHTML = '▼';
+window.generateNewborn = function() { 
+  if (!activeId) { showToast('Select a person first'); return; } 
+  const parent = getPersonDisplay(activeId); 
+  if (!parent) return;
+  const partners = getPartners(activeId); 
+  if (partners.length === 0) { showToast('Need a partner to have a child'); return; } 
+  let other = null; 
+  if (partners.length === 1) { other = getPersonDisplay(partners[0].id); } 
+  else { 
+    const options = partners.map((p, i) => `${i+1}. ${getPersonDisplay(p.id)?.name || 'Unknown'} (${p.status})`).join('\n');
+    const choice = prompt(`Select the other parent:\n${options}\n\nEnter number (1-${partners.length}):`); 
+    const idx = parseInt(choice) - 1; 
+    if (idx >= 0 && idx < partners.length) other = getPersonDisplay(partners[idx].id); 
+    else return; 
+  } 
+  if (!other) return; 
+  let mother = null, father = null; 
+  if (parent.gender === 'female') { mother = parent; father = other; } 
+  else if (parent.gender === 'male') { mother = other; father = parent; } 
+  else { 
+    const r = confirm(`Is ${parent.name} the mother? Click OK for Mother, Cancel for Father`); 
+    if (r) { mother = parent; father = other; } 
+    else { mother = other; father = parent; } 
+  } 
+  if (!mother) { showToast('Need a mother to have a child'); return; } 
+  if (!mother.birthYear) { showToast(`${mother.name} needs a birth year set first`); return; } 
+  const minYear = mother.birthYear + 14; 
+  const maxYear = mother.birthYear + 45; 
+  const currentYear = DATA.currentYear;
+  const validMaxYear = Math.min(maxYear, currentYear);
+  if (minYear > validMaxYear) { showToast(`${mother.name} is too old/young to have children`); return; } 
+  const birthYear = Math.floor(Math.random() * (validMaxYear - minYear + 1)) + minYear; 
+  const motherAgeAtBirth = birthYear - mother.birthYear;
+  if (father && father.birthYear) {
+    const fatherAgeAtBirth = birthYear - father.birthYear;
+    if (fatherAgeAtBirth < 14 || fatherAgeAtBirth > 70) { showToast(`${father.name} is too young/old to be a father`); return; }
   }
-}
+  const gender = Math.random() < 0.5 ? 'male' : 'female'; 
+  const names = gender === 'male' ? DEFAULT_NAMES.male : DEFAULT_NAMES.female; 
+  const name = names[Math.floor(Math.random() * names.length)]; 
+  const id = name.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now().toString(36); 
+  const stableId = generateStableId(); 
+  const age = DATA.currentYear - birthYear; 
+  const eyeColor = inheritTrait(mother?.eyeColor, father?.eyeColor);
+  const hairColor = inheritTrait(mother?.hairColor, father?.hairColor);
+  const skinColor = inheritTrait(mother?.skinColor, father?.skinColor);
+  DATA.people[id] = { stableId, name, gender, attraction: 'both', birthYear, age, stage: calculateLifeStage(age), role: '', deceased: false, deathYear: null, causeDeath: '', birthComp: father?.currComp || mother?.currComp || '', currComp: father?.currComp || mother?.currComp || '', household: '', notes: '', eyeColor, hairColor, skinColor, tattoos: '', appNotes: '', ranks: [], moves: [] }; 
+  DATA.relationships[id] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; 
+  if (father) DATA.relationships[id].father = father.stableId; 
+  if (mother) DATA.relationships[id].mother = mother.stableId; 
+  rebuildStableIdIndex(); saveData(); renderPersonList(); selectPerson(id); 
+  const parentNames = [father?.name, mother?.name].filter(Boolean).join(' and ');
+  showToast(`🎉 ${name} born to ${parentNames} (${mother.name} was ${motherAgeAtBirth})!`); 
+};
+function inheritTrait(motherTrait, fatherTrait) { if (!motherTrait && !fatherTrait) return ''; if (!motherTrait) return fatherTrait; if (!fatherTrait) return motherTrait; return Math.random() < 0.5 ? motherTrait : fatherTrait; }
 
-function toggleMobileSidebar() {
-  document.getElementById('sidebar').classList.toggle('mobile-visible');
-}
+// ====================== CREATE PERSON & RANDOM ======================
+function createPerson() { const n = document.getElementById('new-name').value.trim(); if (!n) { showToast('Name required'); return; } const id = n.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now().toString(36); const sid = generateStableId(); const by = parseInt(document.getElementById('new-birthYear').value) || null; const a = calculateAge(by); DATA.people[id] = { stableId: sid, name: n, gender: document.getElementById('new-gender').value, attraction: 'both', birthYear: by, age: a, stage: calculateLifeStage(a), role: '', deceased: false, deathYear: null, causeDeath: '', birthComp: document.getElementById('new-birthComp').value || '', currComp: document.getElementById('new-birthComp').value || '', household: '', notes: '', eyeColor: '', hairColor: '', skinColor: '', tattoos: '', appNotes: '', ranks: [], moves: [] }; DATA.relationships[id] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; rebuildStableIdIndex(); saveData(); renderPersonList(); closeNewPersonModal(); selectPerson(id); showToast(`${n} created`); }
+function openNewPersonModal() { document.getElementById('new-name').value = ''; document.getElementById('new-gender').value = 'unknown'; document.getElementById('new-birthYear').value = ''; document.getElementById('new-birthComp').value = ''; document.getElementById('new-person-modal').style.display = 'flex'; }
+function closeNewPersonModal() { document.getElementById('new-person-modal').style.display = 'none'; }
+function randomNameForCurrent() { if (!activeId) { showToast('Select a character first'); return; } const g = document.getElementById('edit-gender')?.value; const n = (g === 'male' ? DEFAULT_NAMES.male : DEFAULT_NAMES.female)[Math.floor(Math.random() * DEFAULT_NAMES.male.length)]; const ni = document.getElementById('edit-name'); if (ni) ni.value = n; showToast(`Random name: ${n}`); }
+function randomNameForNew() { const g = document.getElementById('new-gender').value; const n = (g === 'male' ? DEFAULT_NAMES.male : DEFAULT_NAMES.female)[Math.floor(Math.random() * DEFAULT_NAMES.male.length)]; document.getElementById('new-name').value = n; }
+function generateRandomPerson() { const g = Math.random() > 0.5 ? 'male' : 'female'; const n = (g === 'male' ? DEFAULT_NAMES.male : DEFAULT_NAMES.female)[Math.floor(Math.random() * DEFAULT_NAMES.male.length)]; const a = Math.floor(Math.random() * 70) + 10; const by = DATA.currentYear - a; const id = n.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now().toString(36); const sid = generateStableId(); DATA.people[id] = { stableId: sid, name: n, gender: g, attraction: Math.random() > 0.7 ? 'both' : (g === 'male' ? 'women' : 'men'), birthYear: by, age: a, stage: calculateLifeStage(a), role: '', deceased: false, deathYear: null, causeDeath: '', birthComp: LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)], currComp: LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)], household: '', notes: '', eyeColor: '', hairColor: '', skinColor: '', tattoos: '', appNotes: '', ranks: [], moves: [] }; DATA.relationships[id] = { ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {} }; rebuildStableIdIndex(); saveData(); renderPersonList(); selectPerson(id); showToast(`Random character: ${n}`); }
+function exportJSON() { const d = { version: DATA.version, exportDate: new Date().toISOString(), currentYear: DATA.currentYear, people: DATA.people, relationships: DATA.relationships }; const b = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `stillwaters_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`; a.click(); URL.revokeObjectURL(u); showToast('Exported'); }
+document.getElementById('import-file').onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => { try { const imp = JSON.parse(ev.target.result); if (imp.people) Object.assign(DATA.people, imp.people); if (imp.relationships) Object.assign(DATA.relationships, imp.relationships); if (imp.currentYear) DATA.currentYear = imp.currentYear; rebuildStableIdIndex(); updateAllAges(); saveData(); renderPersonList(); showToast(`Imported ${Object.keys(imp.people || {}).length} characters`); } catch(err) { showToast('Error: ' + err.message); } }; r.readAsText(f); e.target.value = ''; };
 
-function toggleSection(header) {
-  header.classList.toggle('collapsed');
-  const content = header.nextElementSibling;
-  if (content) content.classList.toggle('collapsed');
-}
-
-// ====================== AUTO-SAVE ======================
-let autoSaveTimer = null;
-
-function startAutoSave() {
-  if (autoSaveTimer) clearInterval(autoSaveTimer);
-  autoSaveTimer = setInterval(() => {
-    const autosaveToggle = document.getElementById('autosave-toggle');
-    if (autosaveToggle && autosaveToggle.checked) {
-      saveData();
-    }
-  }, 30000);
-}
-
-// ====================== INITIALIZATION ======================
-function init() {
-  loadData();
-  initTabs();
-  
-  // Set initial filters panel state
-  const filtersPanel = document.getElementById('filters-panel');
-  if (filtersPanel) filtersPanel.style.display = 'block';
-  
-  renderPersonList();
-  startAutoSave();
-  
-  if (Object.keys(DATA.people).length === 0) {
-    document.getElementById('view-empty').style.display = 'block';
-    document.getElementById('edit-empty').style.display = 'block';
-  } else {
-    const firstId = Object.keys(DATA.people)[0];
-    if (firstId) selectPerson(firstId);
-  }
-  
-  document.getElementById('view-panel').style.maxHeight = '35%';
-}
-
+// ====================== INIT ======================
+function init() { loadData(); initTabs(); document.getElementById('filters-panel').style.display = 'block'; renderPersonList(); startAutoSave(); if (Object.keys(DATA.people).length === 0) { document.getElementById('view-empty').style.display = 'block'; document.getElementById('edit-empty').style.display = 'block'; } else { const f = Object.keys(DATA.people)[0]; if (f) selectPerson(f); } document.getElementById('view-panel').style.maxHeight = '35%'; }
 window.addEventListener('load', init);
 </script>
 </body>
