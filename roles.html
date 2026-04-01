@@ -145,11 +145,6 @@
       font-family: 'Crimson Pro', serif;
     }
     
-    .form-group input:focus, .form-group textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    
     .specializations-section {
       background: var(--bg2);
       border: 1px solid var(--border);
@@ -196,10 +191,6 @@
       padding: 0 4px;
     }
     
-    .spec-tag-item button:hover {
-      color: var(--danger);
-    }
-    
     .empty-specs {
       color: var(--tmut);
       font-size: 0.7rem;
@@ -242,8 +233,8 @@
 <div class="topbar">
   <div class="title">⚒️ ROLES MANAGER</div>
   <div style="flex:1"></div>
-  <button id="importRolesBtn" class="tb-btn">📂 Import JSON</button>
-  <button id="exportRolesBtn" class="tb-btn primary">💾 Export JSON</button>
+  <button id="importBtn" class="tb-btn">📂 Import JSON</button>
+  <button id="exportBtn" class="tb-btn primary">💾 Export JSON</button>
 </div>
 
 <div class="roles-app">
@@ -272,7 +263,7 @@
 </div>
 
 <script>
-  // ==================== UNIFIED DATA STRUCTURE ====================
+  // ==================== UNIFIED MASTER DATA STRUCTURE ====================
   let masterData = {
     version: "2.0",
     lastUpdated: new Date().toISOString(),
@@ -538,22 +529,23 @@
     }
   }
   
-  // ==================== IMPORT/EXPORT (UNIFIED) ====================
+  // ==================== IMPORT/EXPORT (UNIFIED - SAME FOR ALL TOOLS) ====================
   function exportData() {
+    // Export the FULL unified master data
     const exportObj = {
-      type: "roles",
-      version: "2.0",
+      type: "master",
+      version: masterData.version,
       exportDate: new Date().toISOString(),
-      data: getRoles()
+      data: masterData.data
     };
     const dataStr = JSON.stringify(exportObj, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `stillwaters_roles_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+    a.download = `stillwaters_master_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast('Roles exported successfully');
+    showToast('Full master data exported');
   }
   
   function importData() {
@@ -566,66 +558,150 @@
       reader.onload = (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
-          let newRoles = null;
           
-          // Case 1: New unified format with type field
-          if (imported.type === 'roles' && imported.data && Array.isArray(imported.data)) {
-            newRoles = imported.data;
-          }
-          // Case 2: Old format - direct array of roles
-          else if (Array.isArray(imported)) {
-            newRoles = imported;
-          }
-          // Case 3: Master data format with data.roles
-          else if (imported.data && imported.data.roles && Array.isArray(imported.data.roles)) {
-            newRoles = imported.data.roles;
-          }
-          // Case 4: Just a roles array in an object
-          else if (imported.roles && Array.isArray(imported.roles)) {
-            newRoles = imported.roles;
-          }
+          // Universal import handler - works with ANY file from ANY Still Waters tool
+          let newMasterData = null;
           
-          if (newRoles && newRoles.length) {
-            // MERGE - don't replace, add new roles and update existing by ID
-            const currentRoles = getRoles();
-            const mergedRoles = [...currentRoles];
-            
-            newRoles.forEach(importedRole => {
-              const existingIndex = mergedRoles.findIndex(r => r.id === importedRole.id);
-              if (existingIndex !== -1) {
-                // Update existing role
-                mergedRoles[existingIndex] = { 
-                  ...mergedRoles[existingIndex], 
-                  ...importedRole,
-                  specializations: importedRole.specializations || mergedRoles[existingIndex].specializations || []
-                };
-              } else {
-                // Add new role (generate new ID if missing)
-                if (!importedRole.id) importedRole.id = generateId();
-                if (!importedRole.specializations) importedRole.specializations = [];
-                if (!importedRole.notes) importedRole.notes = '';
-                mergedRoles.push(importedRole);
+          // Case 1: Full unified master export (type: "master")
+          if (imported.type === "master" && imported.data) {
+            newMasterData = imported;
+            showToast(`Importing full master data (${Object.keys(imported.data).length} categories)`);
+          }
+          // Case 2: Legacy export with data.roles (from older version)
+          else if (imported.data && imported.data.roles) {
+            newMasterData = imported;
+            showToast(`Importing master data with roles`);
+          }
+          // Case 3: Direct roles array (from old Roles Manager)
+          else if (Array.isArray(imported) && imported[0]?.specializations !== undefined) {
+            newMasterData = {
+              type: "master",
+              version: "2.0",
+              exportDate: new Date().toISOString(),
+              data: {
+                ...masterData.data,
+                roles: imported
               }
-            });
+            };
+            showToast(`Importing roles array (${imported.length} roles) - preserving other data`);
+          }
+          // Case 4: Locations export (has places, locationTypes, governments)
+          else if (imported.places || imported.locationTypes || imported.governments) {
+            newMasterData = {
+              type: "master",
+              version: "2.0",
+              exportDate: new Date().toISOString(),
+              data: {
+                ...masterData.data,
+                places: imported.places || masterData.data.places,
+                locationTypes: imported.locationTypes || masterData.data.locationTypes,
+                governments: imported.governments || masterData.data.governments
+              }
+            };
+            showToast(`Importing locations data - preserving roles and other data`);
+          }
+          // Case 5: Ranks export (array of ranks)
+          else if (Array.isArray(imported) && imported[0]?.priority !== undefined) {
+            newMasterData = {
+              type: "master",
+              version: "2.0",
+              exportDate: new Date().toISOString(),
+              data: {
+                ...masterData.data,
+                ranks: imported
+              }
+            };
+            showToast(`Importing ranks array (${imported.length} ranks) - preserving other data`);
+          }
+          // Case 6: Names export (has nameLists)
+          else if (imported.nameLists || imported.cityNameParts) {
+            newMasterData = {
+              type: "master",
+              version: "2.0",
+              exportDate: new Date().toISOString(),
+              data: {
+                ...masterData.data,
+                nameLists: imported.nameLists || masterData.data.nameLists,
+                cityNameParts: imported.cityNameParts || masterData.data.cityNameParts
+              }
+            };
+            showToast(`Importing names data - preserving roles and other data`);
+          }
+          // Case 7: Characters export (array of characters)
+          else if (Array.isArray(imported) && imported[0]?.gender !== undefined) {
+            newMasterData = {
+              type: "master",
+              version: "2.0",
+              exportDate: new Date().toISOString(),
+              data: {
+                ...masterData.data,
+                characters: imported
+              }
+            };
+            showToast(`Importing characters array (${imported.length} characters) - preserving roles`);
+          }
+          // Case 8: Any other object - try to merge what we can
+          else if (typeof imported === 'object') {
+            newMasterData = {
+              type: "master",
+              version: "2.0",
+              exportDate: new Date().toISOString(),
+              data: {
+                ...masterData.data,
+                ...imported
+              }
+            };
+            showToast(`Importing data - merging with existing`);
+          }
+          
+          if (newMasterData) {
+            // Merge roles specifically (preserve existing, add new)
+            if (newMasterData.data.roles && Array.isArray(newMasterData.data.roles)) {
+              const currentRoles = masterData.data.roles;
+              const newRoles = newMasterData.data.roles;
+              
+              newRoles.forEach(importedRole => {
+                const existingIndex = currentRoles.findIndex(r => r.id === importedRole.id);
+                if (existingIndex !== -1) {
+                  // Update existing role
+                  currentRoles[existingIndex] = { ...currentRoles[existingIndex], ...importedRole };
+                } else {
+                  // Add new role (generate ID if missing)
+                  if (!importedRole.id) importedRole.id = generateId();
+                  if (!importedRole.specializations) importedRole.specializations = [];
+                  if (!importedRole.notes) importedRole.notes = '';
+                  currentRoles.push(importedRole);
+                }
+              });
+              newMasterData.data.roles = currentRoles;
+            }
             
-            setRoles(mergedRoles);
+            // Update master data
+            masterData = {
+              version: newMasterData.version,
+              lastUpdated: new Date().toISOString(),
+              data: newMasterData.data
+            };
+            
+            saveMasterData();
             renderRoleList();
-            showToast(`Imported and merged ${newRoles.length} roles. Total: ${mergedRoles.length}`);
             
-            // If a role was selected, refresh it
+            // Refresh display if a role was selected
             if (selectedRoleId) {
-              const roleExists = mergedRoles.some(r => r.id === selectedRoleId);
+              const roleExists = masterData.data.roles.some(r => r.id === selectedRoleId);
               if (roleExists) {
                 renderRoleEditor(selectedRoleId);
               } else {
                 selectedRoleId = null;
                 document.getElementById('selectedRoleTitle').textContent = 'Select a role to view or edit';
                 document.getElementById('deleteRoleBtn').style.display = 'none';
-                document.getElementById('panelContent').innerHTML = '<div class="empty-state">Select a role from the left sidebar</div>';
+                document.getElementById('panelContent').innerHTML = '<div class="empty-state">Role data updated. Select a role from the list.</div>';
               }
             }
+            
+            showToast(`Import successful! Total roles: ${masterData.data.roles.length}`);
           } else {
-            alert('No valid role data found in file. Please export roles from Roles Manager first.');
+            alert('Unable to parse file format. Please export from one of the Still Waters tools.');
           }
         } catch(err) { 
           alert('Invalid JSON: ' + err.message); 
@@ -667,8 +743,8 @@
     
     document.getElementById('addRoleBtn').addEventListener('click', addNewRole);
     document.getElementById('deleteRoleBtn').addEventListener('click', deleteRole);
-    document.getElementById('importRolesBtn').addEventListener('click', importData);
-    document.getElementById('exportRolesBtn').addEventListener('click', exportData);
+    document.getElementById('importBtn').addEventListener('click', importData);
+    document.getElementById('exportBtn').addEventListener('click', exportData);
     
     // Listen for cross-tab updates
     window.addEventListener('storage', (e) => {
