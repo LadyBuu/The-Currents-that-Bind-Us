@@ -2,670 +2,1029 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>Still Waters — Inconsistencies</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Still Waters — Diagnostics & Repair</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="stillwaters.css">
   <style>
-    .inconsistencies-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-    .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; }
-    .stats-group { display: flex; gap: 12px; flex-wrap: wrap; }
-    .stats-badge { background: var(--accent-dim); border: 1px solid var(--accent); border-radius: 20px; padding: 6px 16px; font-family: 'Cinzel', serif; font-size: 0.7rem; color: var(--accent); cursor: pointer; transition: all 0.15s; }
-    .stats-badge:hover { background: var(--accent); color: var(--bg); }
-    .stats-badge.orphan-badge { border-color: var(--warning); color: var(--warning); }
-    .stats-badge.orphan-badge:hover { background: var(--warning); color: var(--bg); }
-    .stats-badge .count { font-weight: bold; font-size: 1.1rem; margin-right: 4px; }
+    .diagnostics-app {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 44px);
+      overflow: hidden;
+    }
     
-    .category-tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-    .category-tab { padding: 8px 16px; font-family: 'Cinzel', serif; font-size: 0.65rem; color: var(--tdim); cursor: pointer; border-radius: 20px; transition: all 0.15s; white-space: nowrap; }
-    .category-tab:hover { color: var(--accent); background: var(--accent-dim); }
-    .category-tab.active { background: var(--accent-dim); color: var(--accent); }
+    .toolbar {
+      padding: 16px 20px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
     
-    .inconsistency-list, .orphan-list { display: flex; flex-direction: column; gap: 16px; }
-    .inconsistency-card, .orphan-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-    .inconsistency-card:hover, .orphan-card:hover { border-color: var(--warning); }
-    .card-header { background: var(--bg3); padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-    .person-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .person-name { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--accent); cursor: pointer; }
-    .person-name:hover { text-decoration: underline; }
-    .person-details { font-size: 0.7rem; color: var(--tdim); display: flex; gap: 12px; flex-wrap: wrap; }
-    .warning-badge { background: rgba(200,112,64,0.15); border: 1px solid var(--warning); border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; color: var(--warning); font-family: 'Cinzel', serif; }
-    .card-body { padding: 16px 20px; display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: center; }
-    .parents-section { display: flex; gap: 20px; flex-wrap: wrap; flex: 1; }
-    .parent-card { background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 16px; min-width: 180px; cursor: pointer; transition: all 0.15s; }
-    .parent-card:hover { border-color: var(--accent); }
-    .parent-role { font-size: 0.55rem; font-family: 'Cinzel', serif; color: var(--tdim); text-transform: uppercase; margin-bottom: 4px; }
-    .parent-name { font-weight: 600; font-size: 0.85rem; color: var(--text); }
-    .parent-status { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.55rem; margin-top: 6px; }
-    .parent-status.ongoing { background: rgba(74,144,96,0.15); border: 1px solid var(--ok); color: var(--ok); }
-    .parent-status.none { background: rgba(200,112,64,0.15); border: 1px solid var(--warning); color: var(--warning); }
-    .action-buttons { display: flex; gap: 10px; flex-shrink: 0; }
-    .btn.purge { background: rgba(139,64,64,0.2); border-color: var(--danger); color: var(--danger-lt); }
-    .btn.purge:hover { background: var(--danger); color: white; border-color: var(--danger); }
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--tdim); font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.1em; }
-    .error-detail { font-size: 0.7rem; color: var(--danger-lt); margin-top: 4px; }
-    .fix-suggestion { font-size: 0.65rem; color: var(--success); margin-top: 4px; font-style: italic; }
-    .confirm-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; }
-    .confirm-modal { background: var(--bg2); border: 1px solid var(--accent); border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; }
-    .confirm-modal p { margin-bottom: 20px; font-size: 0.9rem; }
-    .confirm-modal .confirm-buttons { display: flex; gap: 12px; justify-content: flex-end; }
-    .confirm-modal .confirm-yes { background: var(--danger); border-color: var(--danger); color: white; }
+    .toolbar .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 280px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+    }
+    
+    .sidebar-header h3 {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      margin-bottom: 12px;
+    }
+    
+    .diagnostic-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    
+    .diagnostic-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .diagnostic-item:hover {
+      border-color: var(--accent);
+      background: var(--bg3);
+    }
+    
+    .diagnostic-item.active {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    
+    .diagnostic-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    
+    .diagnostic-status {
+      font-size: 0.65rem;
+      color: var(--dim);
+      margin-top: 4px;
+    }
+    
+    .diagnostic-status.error {
+      color: var(--danger-lt);
+    }
+    
+    .diagnostic-status.warning {
+      color: var(--warn);
+    }
+    
+    .diagnostic-status.success {
+      color: var(--success);
+    }
+    
+    .panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    
+    .panel-header {
+      padding: 16px 24px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .panel-header h2 {
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+    
+    .result-section {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    
+    .result-header {
+      padding: 12px 16px;
+      background: var(--bg3);
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .result-body {
+      padding: 16px;
+    }
+    
+    .issue-item {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    
+    .issue-item .title {
+      font-weight: bold;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    
+    .issue-item .details {
+      font-size: 0.7rem;
+      color: var(--dim);
+      margin-bottom: 8px;
+    }
+    
+    .code-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.7rem;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+    
+    .stat-label {
+      font-size: 0.6rem;
+      color: var(--dim);
+      margin-top: 4px;
+    }
+    
+    .merge-section {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .file-input-area {
+      border: 2px dashed var(--border2);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 16px;
+    }
+    
+    .file-input-area:hover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    
     @media (max-width: 768px) {
-      .category-tab { padding: 6px 12px; font-size: 0.6rem; }
-      .card-header { flex-direction: column; align-items: flex-start; }
-      .parents-section { flex-direction: column; }
-      .card-body { flex-direction: column; }
+      .main-content {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        max-height: 200px;
+      }
     }
   </style>
 </head>
 <body>
 
-<div id="topbar" class="topbar">
-  <h1>STILL WATERS · INCONSISTENCIES</h1>
-  <div class="tb-sep"></div>
-  <label class="btn primary" style="cursor:pointer">📂 Load JSON<input type="file" id="import-file" accept=".json" style="display:none"></label>
-  <button class="btn" id="load-storage-btn">⟳ From Storage</button>
-  <button class="btn success" id="export-btn">💾 Export Fixed JSON</button>
-  <button class="btn" id="refresh-btn">🔄 Refresh</button>
+<div class="topbar">
+  <div class="title">🔍 DIAGNOSTICS & REPAIR</div>
   <div style="flex:1"></div>
-  <div id="year-control" class="year-control">
-    <label>Year:</label>
-    <input type="number" id="current-year" value="1560">
-  </div>
+  <button id="exportFixedBtn" class="tb-btn primary">💾 Export Fixed JSON</button>
+  <button id="clearStorageBtn" class="tb-btn danger">🗑️ Clear Storage</button>
 </div>
 
-<div id="main-container" style="flex:1; overflow-y: auto; padding: 20px;">
-  <div class="inconsistencies-container">
-    <div class="toolbar">
-      <div class="stats-group" id="stats-group"></div>
-      <button class="btn warning" id="fix-all-btn" style="display:none;">🔧 Fix All Possible Issues</button>
-    </div>
-
-    <div class="category-tabs" id="category-tabs"></div>
-
-    <div id="content-area"></div>
-  </div>
-</div>
-
-<div id="confirm-modal" class="confirm-modal-overlay">
-  <div class="confirm-modal">
-    <p id="confirm-message"></p>
-    <div class="confirm-buttons">
-      <button class="confirm-yes" id="confirm-yes">Yes</button>
-      <button class="confirm-no" id="confirm-no">Cancel</button>
+<div class="diagnostics-app">
+  <div class="toolbar">
+    <div class="btn-group">
+      <button id="loadStorageBtn" class="btn">📂 Load from Storage</button>
+      <button id="loadFileBtn" class="btn">📁 Load JSON File</button>
+      <button id="mergeBtn" class="btn">🔄 Merge Files</button>
+      <button id="runAllBtn" class="btn primary">▶ Run All Diagnostics</button>
     </div>
   </div>
+  
+  <div class="main-content">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>🔬 DIAGNOSTICS</h3>
+      </div>
+      <div class="diagnostic-list" id="diagnosticList"></div>
+    </div>
+    
+    <div class="panel">
+      <div class="panel-header">
+        <h2 id="panelTitle">Select a diagnostic to run</h2>
+      </div>
+      <div class="panel-content" id="panelContent">
+        <div class="empty-state">
+          🔍 Select a diagnostic from the left sidebar to analyze your data<br>
+          <small>Load data from storage or upload a JSON file to begin</small>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-
-<div id="toast-container"></div>
 
 <script>
-  const STORAGE_KEY = 'stillwaters_manager';
-  let DATA = { version: "1.0", currentYear: 1560, people: {}, relationships: {}, locations: {}, professions: [], stableIdIndex: {} };
-  let currentCategory = 'age';
+  // Data storage
+  let currentData = null;
+  let currentDataType = null; // 'characters', 'ranks', 'roles', 'locations', 'names', 'master'
+  let mergeData1 = null;
+  let mergeData2 = null;
   
-  // Define all categories
-  const categories = [
-    { id: 'age', name: '👶 Age Issues', desc: 'Parents younger than children, impossible ages' },
-    { id: 'parents', name: '👪 Unpartnered Parents', desc: 'Parents not in a relationship' },
-    { id: 'orphans', name: '👶 Orphans', desc: 'No parents recorded' },
-    { id: 'timeline', name: '⏰ Timeline', desc: 'Death before birth, impossible dates' },
-    { id: 'family', name: '🏠 Family Structure', desc: 'Self-referential, incest detection' },
-    { id: 'ranks', name: '👑 Rank Issues', desc: 'Multiple chiefs, invalid ranks' },
-    { id: 'locations', name: '🗺️ Location Issues', desc: 'Invalid compounds, missing households' },
-    { id: 'professions', name: '⚒️ Profession Issues', desc: 'Masters without apprentices' },
-    { id: 'relationships', name: '💔 One-way Relationships', desc: 'Unidirectional links' },
-    { id: 'data', name: '📁 Data Integrity', desc: 'Missing stable IDs, duplicate IDs' }
+  // Diagnostic definitions
+  const diagnostics = [
+    { id: 'storageInfo', name: '📊 Storage Info', desc: 'View localStorage contents and statistics' },
+    { id: 'orphans', name: '👶 Children Without Parents', desc: 'Find characters with missing mother/father references' },
+    { id: 'parentNoRelation', name: '💔 Parents Without Relationship', desc: 'Find children whose parents never had a relationship' },
+    { id: 'duplicateIds', name: '🆔 Duplicate IDs', desc: 'Find duplicate stable IDs across entities' },
+    { id: 'ageIssues', name: '📅 Age Issues', desc: 'Find characters with impossible ages' },
+    { id: 'orphanedLocations', name: '📍 Orphaned Locations', desc: 'Find locations with broken parent references' },
+    { id: 'invalidRanks', name: '👑 Invalid Rank References', desc: 'Find characters with missing rank IDs' },
+    { id: 'invalidRoles', name: '⚒️ Invalid Role References', desc: 'Find characters with missing role IDs' },
+    { id: 'timelineIssues', name: '⏰ Timeline Issues', desc: 'Find moves and events with timeline problems' },
+    { id: 'dataSummary', name: '📈 Data Summary', desc: 'Overview of all loaded data' }
   ];
   
-  let categoryData = {};
-
-  function showToast(msg) {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
-  }
-
-  function escapeHtml(text) {
-    if (!text) return '';
-    return String(text).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m);
-  }
-
-  function getPersonId(input) {
-    if (DATA.people[input]) return input;
-    if (DATA.stableIdIndex?.[input]) return DATA.stableIdIndex[input];
-    for (let [id, person] of Object.entries(DATA.people)) if (person.stableId === input) return id;
-    return input;
-  }
-
-  function getPerson(id) { return DATA.people[getPersonId(id)] || {}; }
-  function getRelationships(id) { return DATA.relationships[getPersonId(id)] || {}; }
-
-  function getPersonDisplay(id) {
-    const actualId = getPersonId(id);
-    const core = getPerson(actualId);
-    const rel = getRelationships(actualId);
-    let age = core.age;
-    if (!age && core.birthYear) age = DATA.currentYear - core.birthYear;
-    if (core.deceased && core.deathYear) age = core.deathYear - core.birthYear;
-    return {
-      id: actualId, stableId: core.stableId || actualId, name: core.name || actualId,
-      gender: core.gender || 'unknown', birthYear: core.birthYear, age: age, stage: core.stage || '',
-      deceased: !!(core.deceased || rel.deceased), deathYear: core.deathYear,
-      father: rel.father ? getPersonId(rel.father) : null, mother: rel.mother ? getPersonId(rel.mother) : null,
-      currComp: core.currComp || core.birthComp || '', birthComp: core.birthComp || '',
-      household: core.household || '', ongoing: rel.ongoing || [], ended: rel.ended || [], widowed: rel.widowed || [],
-      ranks: core.ranks || [], professions: core.professions || [], apprentices: core.apprentices || []
-    };
-  }
-
-  // ====================== CHECK FUNCTIONS ======================
+  let currentIssues = [];
   
-  function checkAgeIssues() {
-    const issues = [];
-    Object.keys(DATA.people).forEach(id => {
-      const p = getPersonDisplay(id);
-      if (!p.birthYear) return;
-      
-      if (p.father) {
-        const father = getPersonDisplay(p.father);
-        if (father.birthYear && father.birthYear > p.birthYear) {
-          issues.push({ type: 'parent_younger', person: p, parent: father, role: 'Father' });
-        }
-        if (father.birthYear && p.birthYear - father.birthYear < 12) {
-          issues.push({ type: 'parent_too_young', person: p, parent: father, role: 'Father', ageDiff: p.birthYear - father.birthYear });
-        }
-        if (father.deceased && father.deathYear && father.deathYear < p.birthYear) {
-          issues.push({ type: 'parent_dead_before_birth', person: p, parent: father, role: 'Father' });
-        }
-      }
-      if (p.mother) {
-        const mother = getPersonDisplay(p.mother);
-        if (mother.birthYear && mother.birthYear > p.birthYear) {
-          issues.push({ type: 'parent_younger', person: p, parent: mother, role: 'Mother' });
-        }
-        if (mother.birthYear && p.birthYear - mother.birthYear < 12) {
-          issues.push({ type: 'parent_too_young', person: p, parent: mother, role: 'Mother', ageDiff: p.birthYear - mother.birthYear });
-        }
-        if (mother.birthYear && p.birthYear - mother.birthYear > 50) {
-          issues.push({ type: 'mother_too_old', person: p, parent: mother, ageDiff: p.birthYear - mother.birthYear });
-        }
-        if (mother.deceased && mother.deathYear && mother.deathYear < p.birthYear) {
-          issues.push({ type: 'parent_dead_before_birth', person: p, parent: mother, role: 'Mother' });
-        }
-      }
-    });
-    return issues;
-  }
-
-  function checkTimelineIssues() {
-    const issues = [];
-    Object.keys(DATA.people).forEach(id => {
-      const p = getPersonDisplay(id);
-      if (p.deathYear && p.birthYear && p.deathYear < p.birthYear) {
-        issues.push({ type: 'death_before_birth', person: p });
-      }
-      if (p.deathYear && p.deathYear > DATA.currentYear + 200) {
-        issues.push({ type: 'death_too_far_future', person: p });
-      }
-      if (p.birthYear && p.birthYear > DATA.currentYear + 150) {
-        issues.push({ type: 'birth_too_far_future', person: p });
-      }
-    });
-    return issues;
-  }
-
-  function checkFamilyStructureIssues() {
-    const issues = [];
-    Object.keys(DATA.people).forEach(id => {
-      const p = getPersonDisplay(id);
-      if (p.father === id || p.mother === id) {
-        issues.push({ type: 'self_parent', person: p });
-      }
-      if (p.father && p.mother && p.father === p.mother) {
-        issues.push({ type: 'same_parent', person: p, parent: p.father });
-      }
-      if (p.ongoing) {
-        p.ongoing.forEach(partnerId => {
-          const partner = getPersonDisplay(partnerId);
-          if ((partner.father === p.id || partner.mother === p.id) || (p.father === partner.id || p.mother === partner.id)) {
-            issues.push({ type: 'incest', person: p, partner: partner });
-          }
-        });
-      }
-      const siblings = [];
-      Object.keys(DATA.people).forEach(sibId => {
-        if (sibId !== id) {
-          const sib = getPersonDisplay(sibId);
-          if ((sib.father && sib.father === p.father) || (sib.mother && sib.mother === p.mother)) {
-            if (p.ongoing?.includes(sibId) || p.ended?.includes(sibId) || p.widowed?.includes(sibId)) {
-              issues.push({ type: 'incest_sibling', person: p, partner: sib });
-            }
-          }
-        }
-      });
-    });
-    return issues;
-  }
-
-  function checkRankIssues() {
-    const issues = [];
-    const compounds = {};
-    Object.keys(DATA.people).forEach(id => {
-      const p = getPersonDisplay(id);
-      if (p.ranks?.some(r => r.value === 'Chief')) {
-        const comp = p.currComp || p.birthComp;
-        if (comp) {
-          if (!compounds[comp]) compounds[comp] = [];
-          compounds[comp].push(p);
-        }
-      }
-      if (p.ranks) {
-        const hasCommoner = p.ranks.some(r => r.value === 'Commoner');
-        const hasOther = p.ranks.some(r => r.value !== 'Commoner');
-        if (hasCommoner && hasOther) {
-          issues.push({ type: 'conflicting_ranks', person: p, ranks: p.ranks });
-        }
-        const masterRank = p.ranks.find(r => r.value === 'Master');
-        if (masterRank && (!p.professions || p.professions.length === 0)) {
-          issues.push({ type: 'master_no_profession', person: p });
-        }
-      }
-    });
-    Object.entries(compounds).forEach(([comp, chiefs]) => {
-      if (chiefs.length > 1) {
-        issues.push({ type: 'multiple_chiefs', compound: comp, chiefs: chiefs });
-      }
-    });
-    return issues;
-  }
-
-  function checkLocationIssues() {
-    const issues = [];
-    Object.keys(DATA.people).forEach(id => {
-      const p = getPersonDisplay(id);
-      if (p.currComp) {
-        const exists = Object.values(DATA.locations || {}).some(loc => loc.compKey === p.currComp);
-        if (!exists) issues.push({ type: 'invalid_compound', person: p, compKey: p.currComp });
-      }
-      if (p.birthComp) {
-        const exists = Object.values(DATA.locations || {}).some(loc => loc.compKey === p.birthComp);
-        if (!exists) issues.push({ type: 'invalid_birth_compound', person: p, compKey: p.birthComp });
-      }
-      if (p.household && !p.currComp && !p.birthComp) {
-        issues.push({ type: 'household_no_compound', person: p });
-      }
-    });
-    return issues;
-  }
-
-  function checkProfessionIssues() {
-    const issues = [];
-    Object.keys(DATA.people).forEach(id => {
-      const p = getPersonDisplay(id);
-      if (p.apprentices && p.apprentices.length > 0) {
-        p.apprentices.forEach(appId => {
-          const apprentice = getPersonDisplay(appId);
-          if (!apprentice.masterFor?.includes(id)) {
-            issues.push({ type: 'apprentice_no_master', person: apprentice, master: p });
-          }
-        });
-      }
-      const masterRank = p.ranks?.find(r => r.value === 'Master');
-      if (masterRank && (!p.apprentices || p.apprentices.length === 0)) {
-        issues.push({ type: 'master_no_apprentice', person: p });
-      }
-    });
-    return issues;
-  }
-
-  function checkRelationshipDirectionIssues() {
-    const issues = [];
-    Object.keys(DATA.people).forEach(id => {
-      const p = getPersonDisplay(id);
-      p.ongoing?.forEach(partnerId => {
-        const partner = getPersonDisplay(partnerId);
-        if (!partner.ongoing?.includes(id)) {
-          issues.push({ type: 'one_way_ongoing', person: p, partner: partner });
-        }
-      });
-      p.friends?.forEach(friendId => {
-        const friend = getPersonDisplay(friendId);
-        if (!friend.friends?.includes(id)) {
-          issues.push({ type: 'one_way_friend', person: p, partner: friend });
-        }
-      });
-    });
-    return issues;
-  }
-
-  function checkDataIntegrityIssues() {
-    const issues = [];
-    const stableIds = new Set();
-    Object.keys(DATA.people).forEach(id => {
-      const p = getPersonDisplay(id);
-      if (!p.name || p.name.trim() === '') issues.push({ type: 'missing_name', person: p });
-      if (!p.stableId) issues.push({ type: 'missing_stable_id', person: p });
-      else if (stableIds.has(p.stableId)) issues.push({ type: 'duplicate_stable_id', person: p, stableId: p.stableId });
-      else stableIds.add(p.stableId);
-      if (!p.gender || (p.gender !== 'male' && p.gender !== 'female' && p.gender !== 'unknown')) {
-        issues.push({ type: 'invalid_gender', person: p });
-      }
-    });
-    return issues;
-  }
-
-  function findUnpartneredParents() {
-    const issues = [];
-    Object.keys(DATA.people).forEach(childId => {
-      const child = getPersonDisplay(childId);
-      if (!child.father || !child.mother) return;
-      const father = getPersonDisplay(child.father);
-      const mother = getPersonDisplay(child.mother);
-      const fatherHasMother = father.ongoing?.some(p => getPersonId(p) === mother.id) ||
-                              father.ended?.some(p => getPersonId(p) === mother.id) ||
-                              father.widowed?.some(p => getPersonId(p) === mother.id);
-      if (!fatherHasMother) issues.push({ child, father, mother });
-    });
-    return issues;
-  }
-
-  function findOrphans() {
-    const orphans = [];
-    Object.keys(DATA.people).forEach(id => {
-      const p = getPersonDisplay(id);
-      if (!p.father && !p.mother) orphans.push(p);
-    });
-    return orphans;
-  }
-
-  function runAllChecks() {
-    categoryData = {
-      age: checkAgeIssues(),
-      parents: findUnpartneredParents(),
-      orphans: findOrphans(),
-      timeline: checkTimelineIssues(),
-      family: checkFamilyStructureIssues(),
-      ranks: checkRankIssues(),
-      locations: checkLocationIssues(),
-      professions: checkProfessionIssues(),
-      relationships: checkRelationshipDirectionIssues(),
-      data: checkDataIntegrityIssues()
-    };
-    
-    const statsHtml = categories.map(cat => `
-      <div class="stats-badge ${cat.id === 'orphans' ? 'orphan-badge' : ''}" data-category="${cat.id}">
-        <span class="count">${categoryData[cat.id]?.length || 0}</span>
-        <span>${cat.name.split(' ')[0]}</span>
+  function renderDiagnosticList() {
+    const container = document.getElementById('diagnosticList');
+    container.innerHTML = diagnostics.map(d => `
+      <div class="diagnostic-item" data-id="${d.id}">
+        <div class="diagnostic-name">${d.name}</div>
+        <div class="diagnostic-status">${d.desc}</div>
       </div>
     `).join('');
-    document.getElementById('stats-group').innerHTML = statsHtml;
     
-    document.querySelectorAll('.stats-badge').forEach(badge => {
-      badge.addEventListener('click', () => switchCategory(badge.dataset.category));
+    document.querySelectorAll('.diagnostic-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.diagnostic-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        runDiagnostic(item.dataset.id);
+      });
     });
-    
-    const fixAllBtn = document.getElementById('fix-all-btn');
-    const totalIssues = Object.values(categoryData).reduce((sum, arr) => sum + arr.length, 0);
-    fixAllBtn.style.display = totalIssues > 0 ? 'inline-block' : 'none';
-    
-    renderCurrentCategory();
   }
-
-  function renderCurrentCategory() {
-    const issues = categoryData[currentCategory] || [];
-    const container = document.getElementById('content-area');
-    const category = categories.find(c => c.id === currentCategory);
-    
-    if (issues.length === 0) {
-      container.innerHTML = `<div class="empty-state">✨ No ${category?.name.toLowerCase()} issues found.</div>`;
+  
+  async function runDiagnostic(diagnosticId) {
+    if (!currentData) {
+      showEmptyState('No data loaded. Please load data from storage or upload a JSON file.');
       return;
     }
     
-    let html = `<div class="inconsistency-list">`;
+    document.getElementById('panelTitle').textContent = diagnostics.find(d => d.id === diagnosticId)?.name || 'Results';
     
-    if (currentCategory === 'parents') {
-      issues.forEach(issue => {
-        html += `
-          <div class="inconsistency-card">
-            <div class="card-header">
-              <div class="person-info">
-                <span class="person-name" data-id="${issue.child.id}">${escapeHtml(issue.child.name)}</span>
-                <div class="person-details">${issue.child.age ? issue.child.age + ' yrs' : ''}</div>
-              </div>
-              <div class="warning-badge">⚠️ Parents not in a relationship</div>
-            </div>
-            <div class="card-body">
-              <div class="parents-section">
-                <div class="parent-card" data-id="${issue.father.id}">
-                  <div class="parent-role">FATHER</div>
-                  <div class="parent-name">${escapeHtml(issue.father.name)}</div>
-                </div>
-                <div class="parent-card" data-id="${issue.mother.id}">
-                  <div class="parent-role">MOTHER</div>
-                  <div class="parent-name">${escapeHtml(issue.mother.name)}</div>
-                </div>
-              </div>
-              <button class="btn purge" data-action="remove" data-child="${issue.child.id}" data-father="${issue.father.id}" data-mother="${issue.mother.id}">🗑️ Remove Child</button>
-            </div>
-          </div>`;
-      });
-    } 
-    else if (currentCategory === 'orphans') {
-      issues.forEach(orphan => {
-        html += `
-          <div class="orphan-card">
-            <div class="card-header">
-              <div class="person-info">
-                <span class="person-name" data-id="${orphan.id}">${escapeHtml(orphan.name)}</span>
-                <div class="person-details">${orphan.age ? orphan.age + ' yrs' : ''} · ${orphan.gender === 'male' ? '♂' : orphan.gender === 'female' ? '♀' : '·'}</div>
-              </div>
-              <div class="warning-badge">👶 No parents</div>
-            </div>
-            <div class="card-body">
-              <div class="orphan-stats">📍 ${orphan.currComp || orphan.birthComp || 'No location'}</div>
-              <button class="btn primary" data-action="adopt" data-orphan="${orphan.id}">🏠 Adopt</button>
-            </div>
-          </div>`;
-      });
+    switch(diagnosticId) {
+      case 'storageInfo':
+        await showStorageInfo();
+        break;
+      case 'orphans':
+        await findOrphans();
+        break;
+      case 'parentNoRelation':
+        await findParentsWithoutRelationship();
+        break;
+      case 'duplicateIds':
+        await findDuplicateIds();
+        break;
+      case 'ageIssues':
+        await findAgeIssues();
+        break;
+      case 'orphanedLocations':
+        await findOrphanedLocations();
+        break;
+      case 'invalidRanks':
+        await findInvalidRanks();
+        break;
+      case 'invalidRoles':
+        await findInvalidRoles();
+        break;
+      case 'timelineIssues':
+        await findTimelineIssues();
+        break;
+      case 'dataSummary':
+        await showDataSummary();
+        break;
     }
-    else {
-      issues.forEach((issue, idx) => {
-        let detailHtml = '';
-        if (issue.type === 'parent_younger') detailHtml = `<div class="error-detail">⚠️ ${issue.role} ${escapeHtml(issue.parent.name)} born ${issue.parent.birthYear} after child ${escapeHtml(issue.person.name)} (${issue.person.birthYear})</div>`;
-        else if (issue.type === 'parent_too_young') detailHtml = `<div class="error-detail">⚠️ ${issue.role} ${escapeHtml(issue.parent.name)} was only ${issue.ageDiff} years old at ${escapeHtml(issue.person.name)}'s birth</div>`;
-        else if (issue.type === 'mother_too_old') detailHtml = `<div class="error-detail">⚠️ Mother ${escapeHtml(issue.parent.name)} was ${issue.ageDiff} years old at birth</div>`;
-        else if (issue.type === 'parent_dead_before_birth') detailHtml = `<div class="error-detail">⚠️ ${issue.role} ${escapeHtml(issue.parent.name)} died before ${escapeHtml(issue.person.name)} was born</div>`;
-        else if (issue.type === 'death_before_birth') detailHtml = `<div class="error-detail">⚠️ ${escapeHtml(issue.person.name)} died before birth (${issue.person.deathYear} < ${issue.person.birthYear})</div>`;
-        else if (issue.type === 'self_parent') detailHtml = `<div class="error-detail">⚠️ ${escapeHtml(issue.person.name)} is listed as their own parent</div>`;
-        else if (issue.type === 'incest') detailHtml = `<div class="error-detail">⚠️ ${escapeHtml(issue.person.name)} in relationship with ${escapeHtml(issue.partner.name)} (parent-child)</div>`;
-        else if (issue.type === 'multiple_chiefs') detailHtml = `<div class="error-detail">⚠️ Multiple chiefs in ${issue.compound}: ${issue.chiefs.map(c => c.name).join(', ')}</div>`;
-        else if (issue.type === 'invalid_compound') detailHtml = `<div class="error-detail">⚠️ Compound "${issue.compKey}" does not exist in locations</div>`;
-        else if (issue.type === 'missing_stable_id') detailHtml = `<div class="error-detail">⚠️ Missing stable ID - will be auto-generated on export</div><div class="fix-suggestion">💡 Click "Export Fixed JSON" to generate missing IDs</div>`;
-        else if (issue.type === 'duplicate_stable_id') detailHtml = `<div class="error-detail">⚠️ Duplicate stable ID: ${issue.stableId}</div>`;
-        else if (issue.type === 'master_no_profession') detailHtml = `<div class="error-detail">⚠️ Has Master rank but no profession assigned</div>`;
-        else if (issue.type === 'one_way_ongoing') detailHtml = `<div class="error-detail">⚠️ ${escapeHtml(issue.person.name)} has ${escapeHtml(issue.partner.name)} as partner, but not vice versa</div>`;
-        
-        html += `
-          <div class="inconsistency-card">
-            <div class="card-header">
-              <div class="person-info">
-                <span class="person-name" data-id="${issue.person?.id || issue.id}">${escapeHtml(issue.person?.name || issue.name || 'Unknown')}</span>
-              </div>
-              <div class="warning-badge">⚠️ ${issue.type?.replace(/_/g, ' ') || 'Issue'}</div>
-            </div>
-            <div class="card-body">
-              <div style="flex:1">${detailHtml}</div>
-            </div>
-          </div>`;
-      });
-    }
-    
-    html += `</div>`;
-    container.innerHTML = html;
   }
-
-  function switchCategory(categoryId) {
-    currentCategory = categoryId;
-    document.querySelectorAll('.category-tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelector(`.category-tab[data-category="${categoryId}"]`).classList.add('active');
-    renderCurrentCategory();
-  }
-
-  function customConfirm(message, callback) {
-    const modal = document.getElementById('confirm-modal');
-    const messageEl = document.getElementById('confirm-message');
-    const yesBtn = document.getElementById('confirm-yes');
-    const noBtn = document.getElementById('confirm-no');
-    messageEl.textContent = message;
-    modal.style.display = 'flex';
-    function cleanup() { modal.style.display = 'none'; yesBtn.removeEventListener('click', onYes); noBtn.removeEventListener('click', onNo); }
-    function onYes() { cleanup(); callback(true); }
-    function onNo() { cleanup(); callback(false); }
-    yesBtn.addEventListener('click', onYes);
-    noBtn.addEventListener('click', onNo);
-  }
-
-  function removeChildPerson(childId, fatherId, motherId) {
-    const child = getPersonDisplay(childId);
-    const childRel = DATA.relationships[child.id] || {};
-    const fatherRel = DATA.relationships[fatherId] || {};
-    const motherRel = DATA.relationships[motherId] || {};
-    const childStable = child.stableId;
-    const fatherStable = getPersonDisplay(fatherId).stableId;
-    const motherStable = getPersonDisplay(motherId).stableId;
-    if (childRel.father === fatherId || childRel.father === fatherStable) delete childRel.father;
-    if (childRel.mother === motherId || childRel.mother === motherStable) delete childRel.mother;
-    if (fatherRel.children) fatherRel.children = fatherRel.children.filter(c => getPersonId(c) !== child.id && getPersonId(c) !== childStable);
-    if (motherRel.children) motherRel.children = motherRel.children.filter(c => getPersonId(c) !== child.id && getPersonId(c) !== childStable);
-    DATA.relationships[child.id] = childRel;
-    DATA.relationships[fatherId] = fatherRel;
-    DATA.relationships[motherId] = motherRel;
-    saveData();
-    return true;
-  }
-
-  function adoptOrphan(orphanId) {
-    const orphan = getPersonDisplay(orphanId);
-    const allPeople = Object.keys(DATA.people).map(id => getPersonDisplay(id)).filter(p => p.id !== orphanId);
-    const peopleList = allPeople.map((p, idx) => `${idx + 1}. ${p.name} (${p.gender === 'male' ? '♂' : p.gender === 'female' ? '♀' : '·'})`).join('\n');
-    const choice = prompt(`Select a parent for ${orphan.name}:\n1 - Father\n2 - Mother\n\nEnter number:`);
-    if (!choice) return false;
-    const parentChoice = prompt(`Select person:\n${peopleList}\n\nEnter number:`);
-    if (!parentChoice) return false;
-    const idx = parseInt(parentChoice) - 1;
-    if (idx < 0 || idx >= allPeople.length) return false;
-    const parent = allPeople[idx];
-    const orphanRel = DATA.relationships[orphan.id] || {};
-    const parentRel = DATA.relationships[parent.id] || {};
-    if (choice === '1') orphanRel.father = parent.stableId;
-    else if (choice === '2') orphanRel.mother = parent.stableId;
-    else return false;
-    if (!parentRel.children) parentRel.children = [];
-    if (!parentRel.children.includes(orphan.stableId)) parentRel.children.push(orphan.stableId);
-    DATA.relationships[orphan.id] = orphanRel;
-    DATA.relationships[parent.id] = parentRel;
-    saveData();
-    return true;
-  }
-
-  function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA, null, 2)); }
   
-  function loadData(data) {
-    DATA = {
-      version: data.version || "1.0", currentYear: data.currentYear || 1560,
-      people: data.people || {}, relationships: data.relationships || {},
-      locations: data.locations || {}, professions: data.professions || [],
-      stableIdIndex: data.stableIdIndex || {}
-    };
-    document.getElementById('current-year').value = DATA.currentYear;
-    runAllChecks();
-    showToast(`Loaded ${Object.keys(DATA.people).length} people`);
+  function showEmptyState(message) {
+    document.getElementById('panelContent').innerHTML = `<div class="empty-state">${message}</div>`;
   }
-
-  function refreshAll() { runAllChecks(); }
-
-  function exportFixedJSON() {
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    Object.keys(DATA.people).forEach(id => { if (!DATA.people[id].stableId) DATA.people[id].stableId = `${id.slice(0, 8)}_${Math.random().toString(36).substr(2, 6)}`.toUpperCase(); });
-    const blob = new Blob([JSON.stringify(DATA, null, 2)], {type: 'application/json'});
+  
+  function showResults(title, issues, fixFunction = null) {
+    if (!issues || issues.length === 0) {
+      document.getElementById('panelContent').innerHTML = `
+        <div class="result-section">
+          <div class="result-header">✅ No Issues Found</div>
+          <div class="result-body">All checks passed!</div>
+        </div>
+      `;
+      return;
+    }
+    
+    const fixButton = fixFunction ? `<button id="fixIssuesBtn" class="btn warning">🔧 Fix Issues</button>` : '';
+    
+    document.getElementById('panelContent').innerHTML = `
+      <div class="result-section">
+        <div class="result-header">
+          <span>⚠️ ${title} (${issues.length} issues found)</span>
+          ${fixButton}
+        </div>
+        <div class="result-body">
+          ${issues.map((issue, idx) => `
+            <div class="issue-item">
+              <div class="title">#${idx + 1} ${issue.title || 'Issue'}</div>
+              <div class="details">${issue.details || ''}</div>
+              ${issue.data ? `<pre style="font-size:0.65rem; margin-top:8px;">${JSON.stringify(issue.data, null, 2)}</pre>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    
+    if (fixFunction) {
+      document.getElementById('fixIssuesBtn')?.addEventListener('click', () => fixFunction(issues));
+    }
+  }
+  
+  // ==================== DIAGNOSTIC FUNCTIONS ====================
+  
+  async function showStorageInfo() {
+    const storageKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const value = localStorage.getItem(key);
+      storageKeys.push({
+        key: key,
+        size: (value?.length || 0) + ' bytes',
+        preview: value?.substring(0, 100) + (value?.length > 100 ? '...' : '')
+      });
+    }
+    
+    document.getElementById('panelContent').innerHTML = `
+      <div class="result-section">
+        <div class="result-header">📊 LocalStorage Contents</div>
+        <div class="result-body">
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value">${storageKeys.length}</div><div class="stat-label">Total Keys</div></div>
+            <div class="stat-card"><div class="stat-value">${currentData ? Object.keys(currentData).length : 0}</div><div class="stat-label">Loaded Data Keys</div></div>
+          </div>
+          ${storageKeys.map(k => `
+            <div class="issue-item">
+              <div class="title">🗝️ ${k.key}</div>
+              <div class="details">Size: ${k.size}</div>
+              <pre style="font-size:0.65rem; margin-top:8px;">${escapeHtml(k.preview)}</pre>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  async function findOrphans() {
+    const characters = extractCharacters(currentData);
+    if (!characters.length) {
+      showResults('Orphan Check', [], null);
+      return;
+    }
+    
+    const orphans = characters.filter(c => {
+      const hasMother = c.motherId && characters.find(m => m.id === c.motherId);
+      const hasFather = c.fatherId && characters.find(f => f.id === c.fatherId);
+      return (!hasMother && c.motherId) || (!hasFather && c.fatherId);
+    });
+    
+    const issues = orphans.map(c => ({
+      title: `${c.name} ${c.surname || ''}`,
+      details: `Missing: ${!c.motherId ? '' : 'Mother reference broken'} ${!c.fatherId ? '' : 'Father reference broken'}`,
+      data: { id: c.id, motherId: c.motherId, fatherId: c.fatherId }
+    }));
+    
+    showResults('Children Without Parents', issues, (issuesList) => {
+      issuesList.forEach(issue => {
+        const char = characters.find(c => c.id === issue.data.id);
+        if (char) {
+          if (char.motherId && !characters.find(m => m.id === char.motherId)) char.motherId = null;
+          if (char.fatherId && !characters.find(f => f.id === char.fatherId)) char.fatherId = null;
+        }
+      });
+      updateDataInSource(characters);
+      showToast('Fixed orphaned references');
+      runDiagnostic('orphans');
+    });
+  }
+  
+  async function findParentsWithoutRelationship() {
+    const characters = extractCharacters(currentData);
+    if (!characters.length) {
+      showResults('Parent Relationship Check', [], null);
+      return;
+    }
+    
+    const issues = [];
+    characters.forEach(child => {
+      const mother = child.motherId ? characters.find(m => m.id === child.motherId) : null;
+      const father = child.fatherId ? characters.find(f => f.id === child.fatherId) : null;
+      
+      if (mother && father) {
+        const motherHasRelation = mother.relationships?.some(r => r.partnerId === father.id);
+        const fatherHasRelation = father.relationships?.some(r => r.partnerId === mother.id);
+        
+        if (!motherHasRelation && !fatherHasRelation) {
+          issues.push({
+            title: `${child.name} ${child.surname || ''}`,
+            details: `Parents ${mother.name} and ${father.name} have no recorded relationship`,
+            data: { childId: child.id, motherId: mother.id, fatherId: father.id }
+          });
+        }
+      }
+    });
+    
+    showResults('Parents Without Relationship', issues, (issuesList) => {
+      issuesList.forEach(issue => {
+        const mother = characters.find(m => m.id === issue.data.motherId);
+        const father = characters.find(f => f.id === issue.data.fatherId);
+        if (mother && father) {
+          if (!mother.relationships) mother.relationships = [];
+          if (!father.relationships) father.relationships = [];
+          
+          const relId = 'rel_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+          const relationship = {
+            id: relId,
+            partnerId: father.id,
+            type: 'Serious',
+            status: 'ongoing',
+            startYear: Math.min(child.birthYear - 20, 1200),
+            notes: 'Auto-generated relationship from diagnostics'
+          };
+          mother.relationships.push(relationship);
+          
+          const relId2 = 'rel_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+          const relationship2 = {
+            id: relId2,
+            partnerId: mother.id,
+            type: 'Serious',
+            status: 'ongoing',
+            startYear: Math.min(child.birthYear - 20, 1200),
+            notes: 'Auto-generated relationship from diagnostics'
+          };
+          father.relationships.push(relationship2);
+        }
+      });
+      updateDataInSource(characters);
+      showToast('Added missing parent relationships');
+      runDiagnostic('parentNoRelation');
+    });
+  }
+  
+  async function findDuplicateIds() {
+    const allIds = [];
+    const collectIds = (obj, prefix = '') => {
+      if (obj && typeof obj === 'object') {
+        if (obj.id) allIds.push({ id: obj.id, source: prefix + (obj.name || obj.displayName || 'unknown') });
+        Object.values(obj).forEach(v => collectIds(v, prefix + ' > '));
+      }
+    };
+    collectIds(currentData);
+    
+    const duplicates = allIds.reduce((acc, item) => {
+      acc[item.id] = acc[item.id] || [];
+      acc[item.id].push(item);
+      return acc;
+    }, {});
+    
+    const issues = Object.entries(duplicates)
+      .filter(([id, items]) => items.length > 1)
+      .map(([id, items]) => ({
+        title: `Duplicate ID: ${id}`,
+        details: `Found in ${items.length} locations: ${items.map(i => i.source).join(', ')}`,
+        data: items
+      }));
+    
+    showResults('Duplicate IDs', issues);
+  }
+  
+  async function findAgeIssues() {
+    const characters = extractCharacters(currentData);
+    if (!characters.length) {
+      showResults('Age Issues', [], null);
+      return;
+    }
+    
+    const issues = [];
+    characters.forEach(c => {
+      const age = c.isDeceased && c.deathYear ? c.deathYear - c.birthYear : currentYear - c.birthYear;
+      if (c.birthYear && (c.birthYear < 0 || c.birthYear > currentYear + 10)) {
+        issues.push({ title: `${c.name}`, details: `Impossible birth year: ${c.birthYear}` });
+      }
+      if (c.isDeceased && c.deathYear && c.deathYear < c.birthYear) {
+        issues.push({ title: `${c.name}`, details: `Death year (${c.deathYear}) before birth year (${c.birthYear})` });
+      }
+      if (age > 120) {
+        issues.push({ title: `${c.name}`, details: `Unusually old: ${age} years` });
+      }
+      if (c.motherId && c.fatherId) {
+        const mother = characters.find(m => m.id === c.motherId);
+        const father = characters.find(f => f.id === c.fatherId);
+        if (mother && c.birthYear - mother.birthYear < 12) {
+          issues.push({ title: `${c.name}`, details: `Mother was ${c.birthYear - mother.birthYear} at birth (too young)` });
+        }
+        if (father && c.birthYear - father.birthYear < 12) {
+          issues.push({ title: `${c.name}`, details: `Father was ${c.birthYear - father.birthYear} at birth (too young)` });
+        }
+      }
+    });
+    
+    showResults('Age Issues', issues);
+  }
+  
+  async function findOrphanedLocations() {
+    const places = extractPlaces(currentData);
+    if (!places.length) {
+      showResults('Orphaned Locations', [], null);
+      return;
+    }
+    
+    const orphaned = places.filter(p => p.parentId && !places.find(parent => parent.id === p.parentId));
+    
+    const issues = orphaned.map(p => ({
+      title: p.displayName || p.name,
+      details: `Parent reference missing: ${p.parentId}`,
+      data: p
+    }));
+    
+    showResults('Orphaned Locations', issues, (issuesList) => {
+      issuesList.forEach(issue => {
+        const place = places.find(p => p.id === issue.data.id);
+        if (place) place.parentId = null;
+      });
+      updateDataInSource(places);
+      showToast('Fixed orphaned locations');
+      runDiagnostic('orphanedLocations');
+    });
+  }
+  
+  async function findInvalidRanks() {
+    const characters = extractCharacters(currentData);
+    const ranks = extractRanks(currentData);
+    if (!characters.length) {
+      showResults('Invalid Ranks', [], null);
+      return;
+    }
+    
+    const issues = [];
+    characters.forEach(c => {
+      if (c.rankAssignments) {
+        c.rankAssignments.forEach(ra => {
+          if (ra.rankId && !ranks.find(r => r.id === ra.rankId)) {
+            issues.push({
+              title: c.name,
+              details: `Invalid rank reference: ${ra.rankId}`,
+              data: { characterId: c.id, rankId: ra.rankId }
+            });
+          }
+        });
+      }
+    });
+    
+    showResults('Invalid Rank References', issues, (issuesList) => {
+      issuesList.forEach(issue => {
+        const char = characters.find(c => c.id === issue.data.characterId);
+        if (char && char.rankAssignments) {
+          char.rankAssignments = char.rankAssignments.filter(ra => ra.rankId !== issue.data.rankId);
+        }
+      });
+      updateDataInSource(characters);
+      showToast('Removed invalid rank references');
+      runDiagnostic('invalidRanks');
+    });
+  }
+  
+  async function findInvalidRoles() {
+    const characters = extractCharacters(currentData);
+    const roles = extractRoles(currentData);
+    if (!characters.length) {
+      showResults('Invalid Roles', [], null);
+      return;
+    }
+    
+    const issues = [];
+    characters.forEach(c => {
+      if (c.currentRole && c.currentRole.id && !roles.find(r => r.id === c.currentRole.id)) {
+        issues.push({
+          title: c.name,
+          details: `Invalid role reference: ${c.currentRole.id}`,
+          data: { characterId: c.id, roleId: c.currentRole.id }
+        });
+      }
+    });
+    
+    showResults('Invalid Role References', issues, (issuesList) => {
+      issuesList.forEach(issue => {
+        const char = characters.find(c => c.id === issue.data.characterId);
+        if (char) char.currentRole = null;
+      });
+      updateDataInSource(characters);
+      showToast('Removed invalid role references');
+      runDiagnostic('invalidRoles');
+    });
+  }
+  
+  async function findTimelineIssues() {
+    const characters = extractCharacters(currentData);
+    const issues = [];
+    
+    characters.forEach(c => {
+      if (c.moves && c.moves.length > 1) {
+        for (let i = 1; i < c.moves.length; i++) {
+          if (c.moves[i].year < c.moves[i-1].year) {
+            issues.push({
+              title: c.name,
+              details: `Move timeline issue: ${c.moves[i-1].year} → ${c.moves[i].year} (move out of order)`,
+              data: c.moves
+            });
+            break;
+          }
+        }
+      }
+      if (c.relationships) {
+        c.relationships.forEach(rel => {
+          if (rel.endYear && rel.startYear && rel.endYear < rel.startYear) {
+            issues.push({
+              title: c.name,
+              details: `Relationship timeline issue: started ${rel.startYear}, ended ${rel.endYear}`,
+              data: rel
+            });
+          }
+        });
+      }
+    });
+    
+    showResults('Timeline Issues', issues, (issuesList) => {
+      issuesList.forEach(issue => {
+        if (issue.data && Array.isArray(issue.data)) {
+          issue.data.sort((a, b) => a.year - b.year);
+        }
+      });
+      updateDataInSource(characters);
+      showToast('Sorted move timelines');
+      runDiagnostic('timelineIssues');
+    });
+  }
+  
+  async function showDataSummary() {
+    const stats = {
+      characters: extractCharacters(currentData).length,
+      ranks: extractRanks(currentData).length,
+      roles: extractRoles(currentData).length,
+      places: extractPlaces(currentData).length,
+      locationTypes: extractLocationTypes(currentData).length,
+      governments: extractGovernments(currentData).length,
+      nameLists: Object.keys(extractNameLists(currentData)).length
+    };
+    
+    document.getElementById('panelContent').innerHTML = `
+      <div class="result-section">
+        <div class="result-header">📈 Data Summary</div>
+        <div class="result-body">
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value">${stats.characters}</div><div class="stat-label">Characters</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.ranks}</div><div class="stat-label">Ranks</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.roles}</div><div class="stat-label">Roles</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.places}</div><div class="stat-label">Places</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.locationTypes}</div><div class="stat-label">Location Types</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.governments}</div><div class="stat-label">Governments</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.nameLists}</div><div class="stat-label">Name Lists</div></div>
+          </div>
+          <div class="code-block">${JSON.stringify(currentData, null, 2)}</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // ==================== HELPER FUNCTIONS ====================
+  
+  function extractCharacters(data) {
+    if (data.characters) return data.characters;
+    if (data.data?.characters) return data.data.characters;
+    if (Array.isArray(data) && data[0]?.name && data[0]?.gender !== undefined) return data;
+    return [];
+  }
+  
+  function extractRanks(data) {
+    if (data.ranks) return data.ranks;
+    if (data.data?.ranks) return data.data.ranks;
+    if (Array.isArray(data) && data[0]?.priority !== undefined) return data;
+    return [];
+  }
+  
+  function extractRoles(data) {
+    if (data.roles) return data.roles;
+    if (data.data?.roles) return data.data.roles;
+    if (Array.isArray(data) && data[0]?.specializations !== undefined) return data;
+    return [];
+  }
+  
+  function extractPlaces(data) {
+    if (data.places) return data.places;
+    if (data.data?.places) return data.data.places;
+    return [];
+  }
+  
+  function extractLocationTypes(data) {
+    if (data.locationTypes) return data.locationTypes;
+    if (data.data?.locationTypes) return data.data.locationTypes;
+    return [];
+  }
+  
+  function extractGovernments(data) {
+    if (data.governments) return data.governments;
+    if (data.data?.governments) return data.data.governments;
+    return [];
+  }
+  
+  function extractNameLists(data) {
+    if (data.nameLists) return data.nameLists;
+    if (data.data?.nameLists) return data.data.nameLists;
+    return {};
+  }
+  
+  function updateDataInSource(updatedData) {
+    if (currentData.characters) currentData.characters = updatedData;
+    else if (currentData.data?.characters) currentData.data.characters = updatedData;
+    else if (Array.isArray(currentData) && updatedData[0]?.name) currentData = updatedData;
+  }
+  
+  let currentYear = 1250;
+  
+  // ==================== LOAD FUNCTIONS ====================
+  
+  function loadFromStorage() {
+    const stored = localStorage.getItem('stillwaters_master');
+    if (stored) {
+      try {
+        currentData = JSON.parse(stored);
+        currentDataType = 'master';
+        showToast('Loaded data from localStorage');
+        runDiagnostic('dataSummary');
+      } catch(e) { showToast('Error loading from storage'); }
+    } else {
+      showToast('No data found in localStorage');
+    }
+  }
+  
+  function loadFromFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          currentData = JSON.parse(ev.target.result);
+          currentDataType = 'file';
+          showToast(`Loaded file: ${file.name}`);
+          runDiagnostic('dataSummary');
+        } catch(err) { alert('Invalid JSON: ' + err.message); }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+  
+  function mergeFiles() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:600px;">
+        <h3>🔄 Merge JSON Files</h3>
+        <div class="merge-section">
+          <div class="file-input-area" id="file1Area">
+            📁 Select First JSON File
+            <input type="file" accept="application/json" id="file1Input" style="display:none;">
+          </div>
+          <div id="file1Preview" class="code-block" style="max-height:150px; display:none;"></div>
+        </div>
+        <div class="merge-section">
+          <div class="file-input-area" id="file2Area">
+            📁 Select Second JSON File
+            <input type="file" accept="application/json" id="file2Input" style="display:none;">
+          </div>
+          <div id="file2Preview" class="code-block" style="max-height:150px; display:none;"></div>
+        </div>
+        <div class="action-buttons">
+          <button id="performMergeBtn" class="btn primary" disabled>Merge & Export</button>
+          <button id="closeMergeBtn" class="btn">Cancel</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    let data1 = null, data2 = null;
+    
+    function setupFileInput(areaId, inputId, previewId, setData) {
+      const area = modal.querySelector(areaId);
+      const input = modal.querySelector(inputId);
+      area.addEventListener('click', () => input.click());
+      input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            setData(data);
+            const preview = modal.querySelector(previewId);
+            preview.style.display = 'block';
+            preview.innerHTML = `<strong>${file.name}</strong><br>${JSON.stringify(data, null, 2).substring(0, 500)}${JSON.stringify(data, null, 2).length > 500 ? '...' : ''}`;
+            if (data1 && data2) modal.querySelector('#performMergeBtn').disabled = false;
+          } catch(err) { alert('Invalid JSON'); }
+        };
+        reader.readAsText(file);
+      });
+    }
+    
+    setupFileInput('#file1Area', '#file1Input', '#file1Preview', (d) => data1 = d);
+    setupFileInput('#file2Area', '#file2Input', '#file2Preview', (d) => data2 = d);
+    
+    modal.querySelector('#performMergeBtn').addEventListener('click', () => {
+      const merged = deepMerge(data1, data2);
+      currentData = merged;
+      currentDataType = 'merged';
+      showToast('Files merged successfully');
+      modal.remove();
+      runDiagnostic('dataSummary');
+    });
+    
+    modal.querySelector('#closeMergeBtn').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+  }
+  
+  function deepMerge(target, source) {
+    const result = { ...target };
+    for (const key in source) {
+      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        result[key] = deepMerge(result[key] || {}, source[key]);
+      } else if (Array.isArray(source[key])) {
+        result[key] = [...(result[key] || []), ...source[key]];
+      } else {
+        result[key] = source[key];
+      }
+    }
+    return result;
+  }
+  
+  function exportFixed() {
+    if (!currentData) {
+      showToast('No data to export');
+      return;
+    }
+    const dataStr = JSON.stringify(currentData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `stillwaters_fixed_${timestamp}.json`;
+    a.download = `stillwaters_fixed_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast('Exported fixed JSON');
+    showToast('Fixed data exported');
   }
-
-  // Event Listeners
-  document.addEventListener('DOMContentLoaded', () => {
-    const tabsHtml = categories.map(cat => `<span class="category-tab ${cat.id === 'age' ? 'active' : ''}" data-category="${cat.id}">${cat.name}</span>`).join('');
-    document.getElementById('category-tabs').innerHTML = tabsHtml;
-    document.querySelectorAll('.category-tab').forEach(tab => {
-      tab.addEventListener('click', () => switchCategory(tab.dataset.category));
-    });
-    
-    document.getElementById('import-file').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => { try { loadData(JSON.parse(ev.target.result)); } catch(err) { showToast('Error: ' + err.message); } };
-      reader.readAsText(file);
-    });
-    
-    document.getElementById('load-storage-btn').addEventListener('click', () => {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) { showToast('No saved data'); return; }
-      try { loadData(JSON.parse(raw)); } catch(err) { showToast('Error loading'); }
-    });
-    
-    document.getElementById('export-btn').addEventListener('click', exportFixedJSON);
-    document.getElementById('refresh-btn').addEventListener('click', refreshAll);
-    document.getElementById('current-year').addEventListener('change', () => {
-      DATA.currentYear = parseInt(document.getElementById('current-year').value) || 1560;
-      refreshAll();
-    });
-    
-    document.getElementById('content-area').addEventListener('click', (e) => {
-      const removeBtn = e.target.closest('[data-action="remove"]');
-      if (removeBtn) {
-        const childId = removeBtn.dataset.child;
-        const fatherId = removeBtn.dataset.father;
-        const motherId = removeBtn.dataset.mother;
-        const child = getPersonDisplay(childId);
-        const father = getPersonDisplay(fatherId);
-        const mother = getPersonDisplay(motherId);
-        customConfirm(`Remove ${child.name} as child of ${father.name} and ${mother.name}?`, (confirmed) => {
-          if (confirmed && removeChildPerson(childId, fatherId, motherId)) refreshAll();
-        });
+  
+  function clearStorage() {
+    if (confirm('⚠️ WARNING: This will clear ALL localStorage data. This cannot be undone. Continue?')) {
+      localStorage.clear();
+      showToast('LocalStorage cleared');
+      currentData = null;
+      runDiagnostic('storageInfo');
+    }
+  }
+  
+  function runAllDiagnostics() {
+    if (!currentData) {
+      showToast('Please load data first');
+      return;
+    }
+    const results = [];
+    const runSequential = async (index) => {
+      if (index >= diagnostics.length) {
+        showToast(`Completed all diagnostics. Found ${results.length} total issues.`);
+        return;
       }
-      const adoptBtn = e.target.closest('[data-action="adopt"]');
-      if (adoptBtn) {
-        const orphanId = adoptBtn.dataset.orphan;
-        customConfirm(`Adopt ${getPersonDisplay(orphanId).name}?`, (confirmed) => {
-          if (confirmed && adoptOrphan(orphanId)) refreshAll();
-        });
-      }
-      const personName = e.target.closest('.person-name');
-      if (personName && personName.dataset.id) {
-        window.open('Character Manager3.html', '_blank');
-        showToast(`Opening ${getPersonDisplay(personName.dataset.id).name} in Character Manager`);
-      }
-      const parentCard = e.target.closest('.parent-card');
-      if (parentCard && parentCard.dataset.id) {
-        window.open('Character Manager3.html', '_blank');
-        showToast(`Opening parent in Character Manager`);
-      }
-    });
+      const diag = diagnostics[index];
+      // Simulate running diagnostic and collecting results
+      results.push({ name: diag.name });
+      await runDiagnostic(diag.id);
+      setTimeout(() => runSequential(index + 1), 500);
+    };
+    runSequential(0);
+  }
+  
+  function showToast(msg) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m);
+  }
+  
+  // ==================== INIT ====================
+  function init() {
+    renderDiagnosticList();
     
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) { try { loadData(JSON.parse(raw)); } catch(e) {} }
-    else { runAllChecks(); }
-  });
+    document.getElementById('loadStorageBtn').addEventListener('click', loadFromStorage);
+    document.getElementById('loadFileBtn').addEventListener('click', loadFromFile);
+    document.getElementById('mergeBtn').addEventListener('click', mergeFiles);
+    document.getElementById('runAllBtn').addEventListener('click', runAllDiagnostics);
+    document.getElementById('exportFixedBtn').addEventListener('click', exportFixed);
+    document.getElementById('clearStorageBtn').addEventListener('click', clearStorage);
+  }
+  
+  init();
 </script>
 </body>
 </html>
