@@ -171,14 +171,6 @@
       color: var(--text);
     }
     
-    .population-stat {
-      background: var(--bg3);
-      padding: 16px;
-      border-radius: 8px;
-      margin: 20px 0;
-      border: 1px solid var(--border);
-    }
-    
     .form-group {
       margin-bottom: 18px;
     }
@@ -233,6 +225,83 @@
       border-radius: 4px;
     }
     
+    /* Management Cards */
+    .management-section {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    
+    .management-header {
+      padding: 16px 20px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .management-header h3 {
+      margin: 0;
+      font-size: 0.8rem;
+    }
+    
+    .management-list {
+      padding: 16px;
+    }
+    
+    .management-item {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    .management-item-info {
+      flex: 1;
+    }
+    
+    .management-item-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      color: var(--accent);
+    }
+    
+    .management-item-details {
+      font-size: 0.65rem;
+      color: var(--dim);
+      margin-top: 4px;
+    }
+    
+    .management-item-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .edit-mode {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      align-items: center;
+    }
+    
+    .edit-mode input {
+      flex: 1;
+      padding: 6px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 4px;
+    }
+    
     @media (max-width: 768px) {
       .locations-app {
         flex-direction: column;
@@ -244,6 +313,13 @@
       }
       .form-row {
         grid-template-columns: 1fr;
+      }
+      .management-item {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .management-item-actions {
+        justify-content: flex-end;
       }
     }
   </style>
@@ -274,6 +350,7 @@
     <div class="panel-tabs">
       <button class="tab-btn active" data-tab="view">📖 View</button>
       <button class="tab-btn" data-tab="edit">✏️ Edit</button>
+      <button class="tab-btn" data-tab="manage">⚙️ Manage Types</button>
     </div>
     <div class="panel-content" id="panelContent">
       <div class="empty-selection">Select a place from the list to view or edit details</div>
@@ -327,10 +404,6 @@
       } catch(e) { console.error('Error loading master data', e); }
     } else {
       // Initialize with default data
-      const countryId = generateId();
-      const districtId = generateId();
-      const townId = generateId();
-      
       masterData.data.locationTypes = [
         { id: generateId(), displayName: 'Country', priority: 1 },
         { id: generateId(), displayName: 'District', priority: 2 },
@@ -344,30 +417,7 @@
         { id: generateId(), displayName: 'Republic', priority: 3, leaderRankId: null }
       ];
       
-      masterData.data.places = [
-        { 
-          id: countryId, displayName: 'Aethelgard', typeId: masterData.data.locationTypes[0].id, parentId: null, 
-          variableKey: 'aethelgard', status: 'active', isCapital: true, leaderId: null, 
-          leaderHistory: [], subtype: 'Imperial Seat', economy: 'Trade hub', 
-          export: 'Textiles, Grain', notes: 'Heart of the realm', governmentId: masterData.data.governments[0].id,
-          nameListId: null, cityNameStyle: null
-        },
-        { 
-          id: districtId, displayName: 'Ironhold', typeId: masterData.data.locationTypes[1].id, parentId: countryId, 
-          variableKey: 'ironhold', status: 'active', isCapital: false, leaderId: null, 
-          leaderHistory: [], subtype: 'Mining region', economy: 'Mining', 
-          export: 'Iron ore', notes: '', governmentId: null,
-          nameListId: null, cityNameStyle: null
-        },
-        { 
-          id: townId, displayName: 'Riversmeet', typeId: masterData.data.locationTypes[2].id, parentId: districtId, 
-          variableKey: 'riversmeet', status: 'active', isCapital: false, leaderId: null, 
-          leaderHistory: [], subtype: 'Fishing village', economy: 'Fishing', 
-          export: 'Fish', notes: '', governmentId: null,
-          nameListId: null, cityNameStyle: null
-        }
-      ];
-      
+      masterData.data.places = [];
       saveMasterData();
     }
   }
@@ -390,69 +440,6 @@
   function getPlaceById(id) { return getPlaces().find(p => p.id === id); }
   function getTypeById(id) { return getLocationTypes().find(t => t.id === id); }
   function getGovernmentById(id) { return getGovernments().find(g => g.id === id); }
-  function getCharacterById(id) { return masterData.data.characters.find(c => c.id === id); }
-  
-  // ==================== NAME LIST HELPERS ====================
-  function getNameListOptions(selectedId) {
-    const nameLists = masterData.data.nameLists;
-    const countriesWithLists = Object.keys(nameLists).filter(countryId => {
-      const lists = nameLists[countryId];
-      return lists && (lists.male?.length || lists.female?.length || lists.surnames?.length);
-    });
-    
-    if (!countriesWithLists.length) {
-      return '<option value="" disabled>No name lists found. Create in Names Manager first.</option>';
-    }
-    
-    return countriesWithLists.map(countryId => {
-      const country = getPlaceById(countryId);
-      const lists = nameLists[countryId];
-      const nameCount = (lists.male?.length || 0) + (lists.female?.length || 0) + (lists.surnames?.length || 0);
-      const countryName = country ? country.displayName : countryId.slice(-6);
-      return `<option value="${countryId}" ${selectedId === countryId ? 'selected' : ''}>${escapeHtml(countryName)} (${nameCount} names)</option>`;
-    }).join('');
-  }
-  
-  function generateRandomPlaceName(countryId, style) {
-    const cityNameParts = masterData.data.cityNameParts;
-    const nameLists = masterData.data.nameLists;
-    
-    let prefixes = [...(cityNameParts.prefixes || [])];
-    let roots = [...(cityNameParts.roots || [])];
-    let suffixes = [...(cityNameParts.suffixes || [])];
-    
-    if (countryId && nameLists[countryId]) {
-      const countryLists = nameLists[countryId];
-      if (countryLists.male?.length) prefixes = [...prefixes, ...countryLists.male];
-      if (countryLists.female?.length) prefixes = [...prefixes, ...countryLists.female];
-      if (countryLists.surnames?.length) roots = [...roots, ...countryLists.surnames];
-    }
-    
-    if (!prefixes.length || !roots.length) return null;
-    
-    let name = '';
-    switch(style) {
-      case 'prefix_root':
-        name = prefixes[Math.floor(Math.random() * prefixes.length)] + roots[Math.floor(Math.random() * roots.length)];
-        break;
-      case 'prefix_root_suffix':
-        name = prefixes[Math.floor(Math.random() * prefixes.length)] + roots[Math.floor(Math.random() * roots.length)];
-        if (suffixes.length) name += suffixes[Math.floor(Math.random() * suffixes.length)];
-        break;
-      case 'root_suffix':
-        name = roots[Math.floor(Math.random() * roots.length)];
-        if (suffixes.length) name += suffixes[Math.floor(Math.random() * suffixes.length)];
-        break;
-      case 'prefix_suffix':
-        name = prefixes[Math.floor(Math.random() * prefixes.length)];
-        if (suffixes.length) name += suffixes[Math.floor(Math.random() * suffixes.length)];
-        break;
-      default:
-        name = prefixes[Math.floor(Math.random() * prefixes.length)] + roots[Math.floor(Math.random() * roots.length)];
-    }
-    
-    return name.charAt(0).toUpperCase() + name.slice(1);
-  }
   
   // ==================== HIERARCHY BUILDING ====================
   function buildHierarchy() {
@@ -527,7 +514,7 @@
     });
   }
   
-  // ==================== SELECT PLACE & RENDER ====================
+  // ==================== SELECT PLACE ====================
   function selectPlace(placeId) {
     currentPlaceId = placeId;
     renderPlaceList();
@@ -536,13 +523,14 @@
   
   function renderViewTab() {
     const place = getPlaceById(currentPlaceId);
-    if (!place) return;
+    if (!place) {
+      document.getElementById('panelContent').innerHTML = '<div class="empty-selection">Select a place from the list to view details</div>';
+      return;
+    }
     
     const type = getTypeById(place.typeId);
     const parent = getPlaceById(place.parentId);
     const gov = getGovernmentById(place.governmentId);
-    const leader = getCharacterById(place.leaderId);
-    const nameListPlace = place.nameListId ? getPlaceById(place.nameListId) : null;
     
     const content = `
       <div class="view-section">
@@ -553,20 +541,16 @@
         </div>
         <div class="info-grid">
           <div class="info-label">Type</div><div class="info-value">${type ? type.displayName : 'Unknown'} (Priority ${type?.priority || '-'})</div>
-          <div class="info-label">Parent</div><div class="info-value">${parent ? parent.displayName : '— Root / Capital Region —'}</div>
+          <div class="info-label">Parent</div><div class="info-value">${parent ? parent.displayName : '— Root —'}</div>
           <div class="info-label">Status</div><div class="info-value">${place.status || 'active'}</div>
           <div class="info-label">Capital</div><div class="info-value">${place.isCapital ? '✓ Yes' : '✗ No'}</div>
           <div class="info-label">Variable Key</div><div class="info-value">${place.variableKey || '— Not assignable —'}</div>
           <div class="info-label">Government</div><div class="info-value">${gov ? gov.displayName : '— None —'}</div>
-          <div class="info-label">Current Leader</div><div class="info-value">${leader ? leader.name : '— Vacant —'}</div>
-          <div class="info-label">Name List</div><div class="info-value">${nameListPlace ? nameListPlace.displayName : (place.nameListId ? 'Custom list' : '— None —')}</div>
-          <div class="info-label">Name Style</div><div class="info-value">${place.cityNameStyle || '— Default —'}</div>
           <div class="info-label">Subtype</div><div class="info-value">${place.subtype || '—'}</div>
           <div class="info-label">Economy</div><div class="info-value">${place.economy || '—'}</div>
           <div class="info-label">Main Export</div><div class="info-value">${place.export || '—'}</div>
           <div class="info-label">Notes</div><div class="info-value">${place.notes || '—'}</div>
         </div>
-        ${place.leaderHistory?.length ? `<div class="info-grid"><div class="info-label">Former Leaders</div><div class="info-value">${place.leaderHistory.map(h => `${h.name} (${h.period})`).join(', ')}</div></div>` : ''}
       </div>
     `;
     document.getElementById('panelContent').innerHTML = content;
@@ -574,7 +558,10 @@
   
   function renderEditTab() {
     const place = getPlaceById(currentPlaceId);
-    if (!place) return;
+    if (!place) {
+      document.getElementById('panelContent').innerHTML = '<div class="empty-selection">Select a place to edit</div>';
+      return;
+    }
     
     const locationTypes = getLocationTypes();
     const places = getPlaces();
@@ -583,21 +570,16 @@
     const typeOptions = locationTypes.map(t => `<option value="${t.id}" ${place.typeId === t.id ? 'selected' : ''}>${escapeHtml(t.displayName)} (Prio ${t.priority})</option>`).join('');
     const parentOptions = `<option value="">— None (Root) —</option>${places.filter(p => p.id !== place.id).map(p => `<option value="${p.id}" ${place.parentId === p.id ? 'selected' : ''}>${escapeHtml(p.displayName)}</option>`).join('')}`;
     const govOptions = `<option value="">— None —</option>${governments.map(g => `<option value="${g.id}" ${place.governmentId === g.id ? 'selected' : ''}>${escapeHtml(g.displayName)}</option>`).join('')}`;
-    const nameListOptions = getNameListOptions(place.nameListId);
     
     const content = `
       <div class="edit-section">
         <div class="warning-badge">
-          🔒 Permanent ID: <code class="id-display">${place.id}</code><br>
-          <small>This ID never changes. All character assignments and references remain intact even if you rename the place.</small>
+          🔒 Permanent ID: <code class="id-display">${place.id}</code>
         </div>
         <form id="editPlaceForm">
           <div class="form-group">
-            <label>Place Name (Display Name)</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="editDisplayName" value="${escapeHtml(place.displayName)}" required style="flex:1;">
-              <button type="button" id="randomizeNameBtn" class="btn small">🎲 Random</button>
-            </div>
+            <label>Place Name</label>
+            <input type="text" id="editDisplayName" value="${escapeHtml(place.displayName)}" required>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Type</label><select id="editTypeId">${typeOptions}</select></div>
@@ -612,56 +594,24 @@
             </select></div>
             <div class="form-group"><label><input type="checkbox" id="editIsCapital" ${place.isCapital ? 'checked' : ''}> Capital City</label></div>
           </div>
-          <div class="form-group"><label>Variable Key (for character assignment)</label><input type="text" id="editVariableKey" value="${place.variableKey || ''}" placeholder="e.g., aethelgard"></div>
+          <div class="form-group"><label>Variable Key</label><input type="text" id="editVariableKey" value="${place.variableKey || ''}"></div>
           <div class="form-row">
-            <div class="form-group"><label>Government Type</label><select id="editGovernmentId">${govOptions}</select></div>
-            <div class="form-group"><label>Current Leader</label><select id="editLeaderId"><option value="">— Vacant —</option></select></div>
+            <div class="form-group"><label>Government</label><select id="editGovernmentId">${govOptions}</select></div>
           </div>
-          <div class="form-group">
-            <label>🏷️ Name List for Places</label>
-            <select id="editNameListId">
-              <option value="">— None (manual naming only) —</option>
-              ${nameListOptions}
-            </select>
-            <div class="helper-text">Assign a name list to generate random names for sub-locations in this area</div>
-          </div>
-          <div class="form-group">
-            <label>🎲 Name Generation Style</label>
-            <select id="editCityNameStyle">
-              <option value="">— Default (Prefix+Root) —</option>
-              <option value="prefix_root" ${place.cityNameStyle === 'prefix_root' ? 'selected' : ''}>Prefix + Root (e.g., Ashfield)</option>
-              <option value="prefix_root_suffix" ${place.cityNameStyle === 'prefix_root_suffix' ? 'selected' : ''}>Prefix + Root + Suffix (e.g., Ashfieldia)</option>
-              <option value="root_suffix" ${place.cityNameStyle === 'root_suffix' ? 'selected' : ''}>Root + Suffix (e.g., Fieldia)</option>
-              <option value="prefix_suffix" ${place.cityNameStyle === 'prefix_suffix' ? 'selected' : ''}>Prefix + Suffix (e.g., Ashia)</option>
-            </select>
-            <div class="helper-text">How random names should be constructed</div>
-          </div>
-          <div class="form-group"><label>Subtype (e.g., market town, fishing village)</label><input type="text" id="editSubtype" value="${place.subtype || ''}"></div>
+          <div class="form-group"><label>Subtype</label><input type="text" id="editSubtype" value="${place.subtype || ''}"></div>
           <div class="form-row">
             <div class="form-group"><label>Economy</label><input type="text" id="editEconomy" value="${place.economy || ''}"></div>
             <div class="form-group"><label>Main Export</label><input type="text" id="editExport" value="${place.export || ''}"></div>
           </div>
           <div class="form-group"><label>Notes</label><textarea id="editNotes" rows="3">${place.notes || ''}</textarea></div>
           <div class="action-buttons">
-            <button type="submit" class="btn primary">💾 Save Changes</button>
-            <button type="button" id="deletePlaceBtn" class="btn danger">🗑️ Delete Place</button>
+            <button type="submit" class="btn primary">💾 Save</button>
+            <button type="button" id="deletePlaceBtn" class="btn danger">🗑️ Delete</button>
           </div>
         </form>
       </div>
     `;
     document.getElementById('panelContent').innerHTML = content;
-    
-    document.getElementById('randomizeNameBtn')?.addEventListener('click', () => {
-      const nameListId = document.getElementById('editNameListId')?.value;
-      const style = document.getElementById('editCityNameStyle')?.value;
-      const randomName = generateRandomPlaceName(nameListId, style);
-      if (randomName) {
-        document.getElementById('editDisplayName').value = randomName;
-        showToast(`Random name generated: ${randomName}`);
-      } else {
-        showToast('No name list available. Create one in Names Manager first.');
-      }
-    });
     
     document.getElementById('editPlaceForm').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -674,17 +624,13 @@
     const place = getPlaceById(placeId);
     if (!place) return;
     
-    const newDisplayName = document.getElementById('editDisplayName').value;
-    const oldName = place.displayName;
-    place.displayName = newDisplayName;
+    place.displayName = document.getElementById('editDisplayName').value;
     place.typeId = document.getElementById('editTypeId').value;
     place.parentId = document.getElementById('editParentId').value || null;
     place.status = document.getElementById('editStatus').value;
     place.isCapital = document.getElementById('editIsCapital').checked;
     place.variableKey = document.getElementById('editVariableKey').value || null;
     place.governmentId = document.getElementById('editGovernmentId').value || null;
-    place.nameListId = document.getElementById('editNameListId')?.value || null;
-    place.cityNameStyle = document.getElementById('editCityNameStyle')?.value || null;
     place.subtype = document.getElementById('editSubtype').value;
     place.economy = document.getElementById('editEconomy').value;
     place.export = document.getElementById('editExport').value;
@@ -693,7 +639,7 @@
     setPlaces(getPlaces());
     renderPlaceList();
     selectPlace(placeId);
-    showToast(oldName !== newDisplayName ? `Place renamed from "${oldName}" to "${newDisplayName}"` : `Place saved`);
+    showToast(`Place saved`);
   }
   
   function deletePlace(placeId) {
@@ -709,46 +655,270 @@
     findChildren(placeId);
     setPlaces(places.filter(p => !toDelete.includes(p.id)));
     renderPlaceList();
-    document.getElementById('panelContent').innerHTML = '<div class="empty-selection">Place deleted. Select another from the list.</div>';
+    document.getElementById('panelContent').innerHTML = '<div class="empty-selection">Place deleted</div>';
     currentPlaceId = null;
   }
   
-  // ==================== MODALS ====================
+  // ==================== MANAGE TYPES (NEW) ====================
+  function renderManageTab() {
+    const locationTypes = getLocationTypes();
+    const governments = getGovernments();
+    
+    const content = `
+      <div class="manage-section">
+        <div class="management-section">
+          <div class="management-header">
+            <h3>🏷️ Location Types</h3>
+            <button id="addLocationTypeBtn" class="btn small primary">+ Add Type</button>
+          </div>
+          <div class="management-list" id="locationTypesList">
+            ${renderLocationTypesList(locationTypes)}
+          </div>
+        </div>
+        
+        <div class="management-section">
+          <div class="management-header">
+            <h3>🏛️ Government Types</h3>
+            <button id="addGovernmentTypeBtn" class="btn small primary">+ Add Government</button>
+          </div>
+          <div class="management-list" id="governmentsList">
+            ${renderGovernmentsList(governments)}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('panelContent').innerHTML = content;
+    
+    document.getElementById('addLocationTypeBtn')?.addEventListener('click', () => addLocationType());
+    document.getElementById('addGovernmentTypeBtn')?.addEventListener('click', () => addGovernmentType());
+    
+    attachTypeEditHandlers();
+    attachGovernmentEditHandlers();
+  }
+  
+  function renderLocationTypesList(types) {
+    if (!types.length) {
+      return '<div class="empty-state" style="padding:20px;">No location types defined. Click "Add Type" to create one.</div>';
+    }
+    
+    return types.sort((a, b) => a.priority - b.priority).map(type => `
+      <div class="management-item" data-type-id="${type.id}" data-type="location">
+        <div class="management-item-info" id="view-mode-${type.id}">
+          <div class="management-item-name">${escapeHtml(type.displayName)}</div>
+          <div class="management-item-details">Priority: ${type.priority} | ID: ${type.id.slice(-6)}</div>
+        </div>
+        <div class="edit-mode" id="edit-mode-${type.id}" style="display:none;">
+          <input type="text" id="edit-name-${type.id}" value="${escapeHtml(type.displayName)}" placeholder="Type name">
+          <input type="number" id="edit-priority-${type.id}" value="${type.priority}" placeholder="Priority" style="width:80px;">
+        </div>
+        <div class="management-item-actions">
+          <button class="btn small" data-action="edit" data-type-id="${type.id}" data-type="location">✏️ Edit</button>
+          <button class="btn small danger" data-action="delete" data-type-id="${type.id}" data-type="location">🗑️ Delete</button>
+          <button class="btn small success" data-action="save" data-type-id="${type.id}" data-type="location" style="display:none;">💾 Save</button>
+          <button class="btn small" data-action="cancel" data-type-id="${type.id}" data-type="location" style="display:none;">Cancel</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  function renderGovernmentsList(govs) {
+    if (!govs.length) {
+      return '<div class="empty-state" style="padding:20px;">No government types defined. Click "Add Government" to create one.</div>';
+    }
+    
+    return govs.sort((a, b) => a.priority - b.priority).map(gov => `
+      <div class="management-item" data-gov-id="${gov.id}" data-type="government">
+        <div class="management-item-info" id="view-mode-${gov.id}">
+          <div class="management-item-name">${escapeHtml(gov.displayName)}</div>
+          <div class="management-item-details">Priority: ${gov.priority} | ID: ${gov.id.slice(-6)}</div>
+        </div>
+        <div class="edit-mode" id="edit-mode-${gov.id}" style="display:none;">
+          <input type="text" id="edit-name-${gov.id}" value="${escapeHtml(gov.displayName)}" placeholder="Government name">
+          <input type="number" id="edit-priority-${gov.id}" value="${gov.priority}" placeholder="Priority" style="width:80px;">
+        </div>
+        <div class="management-item-actions">
+          <button class="btn small" data-action="edit" data-gov-id="${gov.id}" data-type="government">✏️ Edit</button>
+          <button class="btn small danger" data-action="delete" data-gov-id="${gov.id}" data-type="government">🗑️ Delete</button>
+          <button class="btn small success" data-action="save" data-gov-id="${gov.id}" data-type="government" style="display:none;">💾 Save</button>
+          <button class="btn small" data-action="cancel" data-gov-id="${gov.id}" data-type="government" style="display:none;">Cancel</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  function attachTypeEditHandlers() {
+    // Edit button handlers
+    document.querySelectorAll('[data-action="edit"][data-type="location"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const typeId = btn.getAttribute('data-type-id');
+        document.getElementById(`view-mode-${typeId}`).style.display = 'none';
+        document.getElementById(`edit-mode-${typeId}`).style.display = 'flex';
+        btn.style.display = 'none';
+        btn.nextElementSibling.style.display = 'none'; // delete button
+        btn.nextElementSibling.nextElementSibling.style.display = 'inline-block'; // save button
+        btn.nextElementSibling.nextElementSibling.nextElementSibling.style.display = 'inline-block'; // cancel button
+      });
+    });
+    
+    // Save button handlers
+    document.querySelectorAll('[data-action="save"][data-type="location"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const typeId = btn.getAttribute('data-type-id');
+        const newName = document.getElementById(`edit-name-${typeId}`).value.trim();
+        const newPriority = parseInt(document.getElementById(`edit-priority-${typeId}`).value);
+        
+        if (!newName) {
+          showToast('Name cannot be empty');
+          return;
+        }
+        
+        const types = getLocationTypes();
+        const typeIndex = types.findIndex(t => t.id === typeId);
+        if (typeIndex !== -1) {
+          types[typeIndex].displayName = newName;
+          types[typeIndex].priority = newPriority;
+          setLocationTypes(types);
+          showToast(`Updated location type to "${newName}"`);
+          renderManageTab();
+        }
+      });
+    });
+    
+    // Cancel button handlers
+    document.querySelectorAll('[data-action="cancel"][data-type="location"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        renderManageTab();
+      });
+    });
+    
+    // Delete button handlers
+    document.querySelectorAll('[data-action="delete"][data-type="location"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const typeId = btn.getAttribute('data-type-id');
+        const type = getLocationTypes().find(t => t.id === typeId);
+        
+        // Check if any places use this type
+        const placesUsingType = getPlaces().filter(p => p.typeId === typeId);
+        if (placesUsingType.length) {
+          if (!confirm(`Warning: ${placesUsingType.length} place(s) use this type. Deleting it will remove the type reference from those places. Continue?`)) {
+            return;
+          }
+          // Remove type reference from places
+          placesUsingType.forEach(place => {
+            place.typeId = null;
+          });
+          setPlaces(getPlaces());
+        }
+        
+        if (confirm(`Delete location type "${type.displayName}"?`)) {
+          const types = getLocationTypes().filter(t => t.id !== typeId);
+          setLocationTypes(types);
+          showToast(`Deleted location type "${type.displayName}"`);
+          renderManageTab();
+        }
+      });
+    });
+  }
+  
+  function attachGovernmentEditHandlers() {
+    // Edit button handlers
+    document.querySelectorAll('[data-action="edit"][data-type="government"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const govId = btn.getAttribute('data-gov-id');
+        document.getElementById(`view-mode-${govId}`).style.display = 'none';
+        document.getElementById(`edit-mode-${govId}`).style.display = 'flex';
+        btn.style.display = 'none';
+        btn.nextElementSibling.style.display = 'none'; // delete button
+        btn.nextElementSibling.nextElementSibling.style.display = 'inline-block'; // save button
+        btn.nextElementSibling.nextElementSibling.nextElementSibling.style.display = 'inline-block'; // cancel button
+      });
+    });
+    
+    // Save button handlers
+    document.querySelectorAll('[data-action="save"][data-type="government"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const govId = btn.getAttribute('data-gov-id');
+        const newName = document.getElementById(`edit-name-${govId}`).value.trim();
+        const newPriority = parseInt(document.getElementById(`edit-priority-${govId}`).value);
+        
+        if (!newName) {
+          showToast('Name cannot be empty');
+          return;
+        }
+        
+        const govs = getGovernments();
+        const govIndex = govs.findIndex(g => g.id === govId);
+        if (govIndex !== -1) {
+          govs[govIndex].displayName = newName;
+          govs[govIndex].priority = newPriority;
+          setGovernments(govs);
+          showToast(`Updated government to "${newName}"`);
+          renderManageTab();
+        }
+      });
+    });
+    
+    // Cancel button handlers
+    document.querySelectorAll('[data-action="cancel"][data-type="government"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        renderManageTab();
+      });
+    });
+    
+    // Delete button handlers
+    document.querySelectorAll('[data-action="delete"][data-type="government"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const govId = btn.getAttribute('data-gov-id');
+        const gov = getGovernments().find(g => g.id === govId);
+        
+        // Check if any places use this government
+        const placesUsingGov = getPlaces().filter(p => p.governmentId === govId);
+        if (placesUsingGov.length) {
+          if (!confirm(`Warning: ${placesUsingGov.length} place(s) use this government. Deleting it will remove the government reference from those places. Continue?`)) {
+            return;
+          }
+          placesUsingGov.forEach(place => {
+            place.governmentId = null;
+          });
+          setPlaces(getPlaces());
+        }
+        
+        if (confirm(`Delete government type "${gov.displayName}"?`)) {
+          const govs = getGovernments().filter(g => g.id !== govId);
+          setGovernments(govs);
+          showToast(`Deleted government "${gov.displayName}"`);
+          renderManageTab();
+        }
+      });
+    });
+  }
+  
   function addLocationType() {
-    const name = prompt('Enter type name:');
+    const name = prompt('Enter location type name (e.g., Region, Province, Barony):');
     if (!name) return;
     const priority = parseInt(prompt('Priority (1 = highest):', getLocationTypes().length + 1) || '10');
     const types = getLocationTypes();
     types.push({ id: generateId(), displayName: name, priority });
     setLocationTypes(types);
-    renderPlaceList();
+    renderManageTab();
     showToast(`Added location type: ${name}`);
   }
   
-  function addGovernment() {
-    const name = prompt('Enter government type:');
+  function addGovernmentType() {
+    const name = prompt('Enter government type name (e.g., Republic, Theocracy, Merchant League):');
     if (!name) return;
-    const priority = parseInt(prompt('Priority:', getGovernments().length + 1) || '10');
+    const priority = parseInt(prompt('Priority (1 = highest):', getGovernments().length + 1) || '10');
     const govs = getGovernments();
     govs.push({ id: generateId(), displayName: name, priority, leaderRankId: null });
     setGovernments(govs);
+    renderManageTab();
     showToast(`Added government: ${name}`);
   }
   
   function addPlace() {
-    let name = prompt('Place name (or leave blank for random):');
-    if (!name || name.trim() === '') {
-      const useRandom = confirm('Generate random name?');
-      if (useRandom) {
-        const randomName = generateRandomPlaceName(null, 'prefix_root');
-        if (randomName) name = randomName;
-        else name = prompt('Enter place name:', 'New Place');
-        if (!name) return;
-      } else {
-        name = prompt('Enter place name:', 'New Place');
-        if (!name) return;
-      }
-    }
+    const name = prompt('Place name:');
+    if (!name) return;
     
     const types = getLocationTypes();
     if (!types.length) { alert('Please add a location type first.'); return; }
@@ -791,26 +961,22 @@
     showToast(`Added place: ${name}`);
   }
   
-  // ==================== IMPORT/EXPORT (UNIFIED) ====================
+  // ==================== IMPORT/EXPORT ====================
   function exportData() {
     const exportObj = {
-      type: "locations",
+      type: "master",
       version: "2.0",
       exportDate: new Date().toISOString(),
-      data: {
-        locationTypes: getLocationTypes(),
-        governments: getGovernments(),
-        places: getPlaces()
-      }
+      data: masterData.data
     };
     const dataStr = JSON.stringify(exportObj, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `stillwaters_locations_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+    a.download = `stillwaters_master_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast('Locations exported successfully');
+    showToast('Master data exported');
   }
   
   function importData() {
@@ -823,69 +989,59 @@
       reader.onload = (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
-          let newTypes = null, newGovs = null, newPlaces = null;
+          let newMasterData = null;
           
-          // Case 1: New unified format with type field
-          if (imported.type === 'locations' && imported.data) {
-            newTypes = imported.data.locationTypes;
-            newGovs = imported.data.governments;
-            newPlaces = imported.data.places;
-          }
-          // Case 2: Old format with separate arrays
-          else if (imported.locationTypes || imported.governments || imported.places) {
-            newTypes = imported.locationTypes;
-            newGovs = imported.governments;
-            newPlaces = imported.places;
-          }
-          // Case 3: Master data format
-          else if (imported.data && (imported.data.locationTypes || imported.data.places)) {
-            newTypes = imported.data.locationTypes;
-            newGovs = imported.data.governments;
-            newPlaces = imported.data.places;
-          }
-          
-          // MERGE location types
-          if (newTypes && newTypes.length) {
-            const currentTypes = getLocationTypes();
-            newTypes.forEach(importedType => {
-              const existing = currentTypes.find(t => t.id === importedType.id);
-              if (!existing && importedType.id) currentTypes.push(importedType);
-              else if (!existing) currentTypes.push({ ...importedType, id: generateId() });
-            });
-            setLocationTypes(currentTypes);
-          }
-          
-          // MERGE governments
-          if (newGovs && newGovs.length) {
-            const currentGovs = getGovernments();
-            newGovs.forEach(importedGov => {
-              const existing = currentGovs.find(g => g.id === importedGov.id);
-              if (!existing && importedGov.id) currentGovs.push(importedGov);
-              else if (!existing) currentGovs.push({ ...importedGov, id: generateId() });
-            });
-            setGovernments(currentGovs);
-          }
-          
-          // MERGE places
-          if (newPlaces && newPlaces.length) {
-            const currentPlaces = getPlaces();
-            newPlaces.forEach(importedPlace => {
-              const existing = currentPlaces.find(p => p.id === importedPlace.id);
-              if (existing) {
-                Object.assign(existing, importedPlace);
-              } else {
-                if (!importedPlace.id) importedPlace.id = generateId();
-                currentPlaces.push(importedPlace);
+          if (imported.type === "master" && imported.data) {
+            newMasterData = imported;
+          } else if (imported.data && (imported.data.places || imported.data.locationTypes)) {
+            newMasterData = imported;
+          } else if (imported.places || imported.locationTypes) {
+            newMasterData = {
+              type: "master",
+              version: "2.0",
+              data: {
+                ...masterData.data,
+                places: imported.places || masterData.data.places,
+                locationTypes: imported.locationTypes || masterData.data.locationTypes,
+                governments: imported.governments || masterData.data.governments
               }
-            });
-            setPlaces(currentPlaces);
+            };
           }
           
-          renderPlaceList();
-          showToast(`Imported and merged locations data`);
-        } catch(err) { 
-          alert('Invalid JSON: ' + err.message); 
-        }
+          if (newMasterData) {
+            // Merge data
+            if (newMasterData.data.places) {
+              const currentPlaces = masterData.data.places;
+              newMasterData.data.places.forEach(importedPlace => {
+                const existing = currentPlaces.find(p => p.id === importedPlace.id);
+                if (existing) Object.assign(existing, importedPlace);
+                else currentPlaces.push(importedPlace);
+              });
+            }
+            if (newMasterData.data.locationTypes) {
+              const currentTypes = masterData.data.locationTypes;
+              newMasterData.data.locationTypes.forEach(importedType => {
+                const existing = currentTypes.find(t => t.id === importedType.id);
+                if (existing) Object.assign(existing, importedType);
+                else currentTypes.push(importedType);
+              });
+            }
+            if (newMasterData.data.governments) {
+              const currentGovs = masterData.data.governments;
+              newMasterData.data.governments.forEach(importedGov => {
+                const existing = currentGovs.find(g => g.id === importedGov.id);
+                if (existing) Object.assign(existing, importedGov);
+                else currentGovs.push(importedGov);
+              });
+            }
+            
+            saveMasterData();
+            renderPlaceList();
+            showToast('Data imported and merged successfully');
+          } else {
+            alert('Unable to parse file format');
+          }
+        } catch(err) { alert('Invalid JSON: ' + err.message); }
       };
       reader.readAsText(file);
     };
@@ -917,7 +1073,7 @@
     renderPlaceList();
     
     document.getElementById('addTypeBtn').addEventListener('click', addLocationType);
-    document.getElementById('addGovBtn').addEventListener('click', addGovernment);
+    document.getElementById('addGovBtn').addEventListener('click', addGovernmentType);
     document.getElementById('addPlaceBtn').addEventListener('click', addPlace);
     document.getElementById('importLocBtn').addEventListener('click', importData);
     document.getElementById('exportLocBtn').addEventListener('click', exportData);
@@ -926,9 +1082,12 @@
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        if (currentPlaceId) {
-          if (btn.getAttribute('data-tab') === 'view') renderViewTab();
-          else renderEditTab();
+        const tab = btn.getAttribute('data-tab');
+        if (tab === 'view' && currentPlaceId) renderViewTab();
+        else if (tab === 'edit' && currentPlaceId) renderEditTab();
+        else if (tab === 'manage') renderManageTab();
+        else if (!currentPlaceId && (tab === 'view' || tab === 'edit')) {
+          document.getElementById('panelContent').innerHTML = '<div class="empty-selection">Select a place from the list first</div>';
         }
       });
     });
@@ -937,9 +1096,7 @@
       if (e.key === 'stillwaters_master') {
         loadMasterData();
         renderPlaceList();
-        if (currentPlaceId && getPlaceById(currentPlaceId)) {
-          renderViewTab();
-        }
+        if (currentPlaceId && getPlaceById(currentPlaceId)) renderViewTab();
       }
     });
   }
