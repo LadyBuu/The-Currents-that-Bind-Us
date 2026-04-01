@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Still Waters — Names Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="stillwaters.css">
+  <style>
+    .names-app {
+      display: flex;
+      height: calc(100vh - 44px);
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 320px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+    }
+    
+    .sidebar-header h3 {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      margin-bottom: 12px;
+    }
+    
+    .country-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    
+    .country-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    
+    .country-header {
+      padding: 12px;
+      background: var(--bg3);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+    }
+    
+    .country-header:hover {
+      background: var(--bg4);
+    }
+    
+    .country-content {
+      padding: 12px;
+      display: none;
+    }
+    
+    .country-content.expanded {
+      display: block;
+    }
+    
+    .main-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    
+    .panel-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      padding: 0 16px;
+    }
+    
+    .tab-btn {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      color: var(--dim);
+      border-bottom: 2px solid transparent;
+    }
+    
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+    
+    .name-section {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    
+    .section-title {
+      padding: 12px 16px;
+      background: var(--bg3);
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .name-grid {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+    
+    .name-tag {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .name-tag button {
+      background: none;
+      border: none;
+      color: var(--danger-lt);
+      cursor: pointer;
+      font-size: 0.7rem;
+      padding: 0 4px;
+    }
+    
+    .upload-area {
+      border: 2px dashed var(--border2);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      margin: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .upload-area:hover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    
+    .city-builder {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .city-part {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .city-part input {
+      flex: 1;
+    }
+    
+    .city-preview {
+      background: var(--bg3);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 16px;
+      font-size: 1.1rem;
+      text-align: center;
+    }
+    
+    .generated-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px;
+      font-family: monospace;
+      font-size: 0.75rem;
+    }
+    
+    .helper-text {
+      font-size: 0.65rem;
+      color: var(--tmut);
+      margin-top: 4px;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--dim);
+    }
+    
+    @media (max-width: 768px) {
+      .names-app {
+        flex-direction: column;
+        height: auto;
+      }
+      .sidebar {
+        width: 100%;
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="title">📜 NAMES MANAGER</div>
+  <div style="flex:1"></div>
+  <button id="importNamesBtn" class="tb-btn">📂 Import JSON</button>
+  <button id="exportNamesBtn" class="tb-btn primary">💾 Export JSON</button>
+</div>
+
+<div class="names-app">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h3>🌍 COUNTRIES</h3>
+      <button id="refreshCountriesBtn" class="btn small primary">⟳ Refresh from Locations</button>
+    </div>
+    <div class="country-list" id="countryList"></div>
+  </div>
+  
+  <div class="main-panel">
+    <div class="panel-tabs">
+      <button class="tab-btn active" data-tab="character">👤 Character Names</button>
+      <button class="tab-btn" data-tab="city">🏙️ City Names</button>
+    </div>
+    <div class="panel-content" id="panelContent"></div>
+  </div>
+</div>
+
+<script>
+  // ==================== UNIFIED DATA STRUCTURE ====================
+  let masterData = {
+    version: "2.0",
+    lastUpdated: new Date().toISOString(),
+    data: {
+      characters: [],
+      locationTypes: [],
+      governments: [],
+      places: [],
+      ranks: [],
+      roles: [],
+      nameLists: {},
+      cityNameParts: { prefixes: [], roots: [], suffixes: [] },
+      currentYear: 1250
+    }
+  };
+  
+  let countries = [];
+  let selectedCountryId = null;
+  
+  function generateId() { return 'ns_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
+  
+  // ==================== LOAD FROM UNIFIED STORAGE ====================
+  function loadMasterData() {
+    const stored = localStorage.getItem('stillwaters_master');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        masterData = {
+          version: parsed.version || "2.0",
+          lastUpdated: parsed.lastUpdated || new Date().toISOString(),
+          data: {
+            characters: parsed.data?.characters || [],
+            locationTypes: parsed.data?.locationTypes || [],
+            governments: parsed.data?.governments || [],
+            places: parsed.data?.places || [],
+            ranks: parsed.data?.ranks || [],
+            roles: parsed.data?.roles || [],
+            nameLists: parsed.data?.nameLists || {},
+            cityNameParts: parsed.data?.cityNameParts || { prefixes: [], roots: [], suffixes: [] },
+            currentYear: parsed.data?.currentYear || 1250
+          }
+        };
+      } catch(e) { console.error('Error loading master data', e); }
+    } else {
+      // Initialize with default name lists
+      masterData.data.nameLists = {};
+      masterData.data.cityNameParts = {
+        prefixes: ['Ash', 'Black', 'Blue', 'Bright', 'Cold', 'Dark', 'Deep', 'Fair', 'Gold', 'Green', 'High', 'Iron', 'Kings', 'Long', 'Mist', 'North', 'Red', 'Silver', 'South', 'Star', 'Storm', 'Sun', 'West', 'White', 'Wind'],
+        roots: ['bridge', 'brook', 'burg', 'chester', 'cross', 'dale', 'field', 'ford', 'gate', 'ham', 'haven', 'hill', 'holm', 'hurst', 'mere', 'mill', 'mouth', 'pool', 'port', 'stead', 'ton', 'vale', 'wall', 'wick', 'worth'],
+        suffixes: ['ia', 'land', 'shire', 'gard', 'heim', 'grad', 'polis', 'burg', 'city', 'town', 'shire', 'fell', 'moor', 'wood', 'bury', 'caster', 'cester', 'by', 'thorpe', 'stoke']
+      };
+      saveMasterData();
+    }
+    
+    // Refresh countries from places
+    refreshCountries();
+  }
+  
+  function saveMasterData() {
+    masterData.lastUpdated = new Date().toISOString();
+    localStorage.setItem('stillwaters_master', JSON.stringify(masterData));
+  }
+  
+  // ==================== COUNTRY FUNCTIONS ====================
+  function refreshCountries() {
+    const places = masterData.data.places;
+    const locationTypes = masterData.data.locationTypes;
+    
+    // Find country type ID
+    const countryType = locationTypes.find(t => t.displayName?.toLowerCase() === 'country');
+    
+    if (countryType) {
+      countries = places.filter(p => p.typeId === countryType.id).map(p => ({ id: p.id, displayName: p.displayName }));
+    } else {
+      // Fallback: treat places with no parent as countries
+      countries = places.filter(p => !p.parentId).map(p => ({ id: p.id, displayName: p.displayName }));
+    }
+  }
+  
+  function renderCountryList() {
+    const container = document.getElementById('countryList');
+    const nameLists = masterData.data.nameLists;
+    
+    if (!countries.length) {
+      container.innerHTML = '<div class="empty-state" style="padding:20px;">No countries found.<br>Create countries in Locations Manager first.</div>';
+      return;
+    }
+    
+    container.innerHTML = countries.map(country => {
+      const lists = nameLists[country.id] || { male: [], female: [], surnames: [] };
+      return `
+        <div class="country-card" data-country-id="${country.id}">
+          <div class="country-header" data-country-id="${country.id}">
+            <span>${escapeHtml(country.displayName)}</span>
+            <span>${selectedCountryId === country.id ? '✓' : '▼'}</span>
+          </div>
+          <div class="country-content" data-country-id="${country.id}">
+            <div style="margin-bottom:12px;">
+              <button class="btn small" data-action="edit-names" data-country-id="${country.id}">✏️ Edit Names</button>
+            </div>
+            <div style="font-size:0.7rem; color:var(--dim);">
+              <div>👨 Male: ${lists.male.length} names</div>
+              <div>👩 Female: ${lists.female.length} names</div>
+              <div>👪 Surnames: ${lists.surnames.length} names</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    // Attach event listeners
+    document.querySelectorAll('.country-header').forEach(header => {
+      header.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const countryId = header.getAttribute('data-country-id');
+        const content = document.querySelector(`.country-content[data-country-id="${countryId}"]`);
+        content.classList.toggle('expanded');
+        const arrow = header.querySelector('span:last-child');
+        if (arrow) arrow.textContent = content.classList.contains('expanded') ? '▲' : '▼';
+      });
+    });
+    
+    document.querySelectorAll('[data-action="edit-names"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const countryId = btn.getAttribute('data-country-id');
+        selectedCountryId = countryId;
+        renderCharacterNamesTab();
+        document.querySelector('.tab-btn[data-tab="character"]').click();
+        renderCountryList();
+      });
+    });
+  }
+  
+  // ==================== CHARACTER NAMES TAB ====================
+  function renderCharacterNamesTab() {
+    if (!selectedCountryId) {
+      document.getElementById('panelContent').innerHTML = `
+        <div class="empty-state">
+          🌍 Select a country from the left sidebar to manage its names.<br>
+          Each country can have its own cultural naming conventions.
+        </div>
+      `;
+      return;
+    }
+    
+    const country = countries.find(c => c.id === selectedCountryId);
+    const nameLists = masterData.data.nameLists;
+    const lists = nameLists[selectedCountryId] || { male: [], female: [], surnames: [] };
+    
+    const content = `
+      <div style="max-width: 900px; margin: 0 auto;">
+        <h2 style="margin-bottom: 20px;">${escapeHtml(country?.displayName || 'Selected Country')} — Name Lists</h2>
+        
+        <div class="name-section">
+          <div class="section-title">👨 Male Given Names</div>
+          <div class="name-grid" id="maleNamesList">
+            ${lists.male.map(name => `<span class="name-tag">${escapeHtml(name)} <button data-name="${escapeHtml(name)}" data-type="male">✖</button></span>`).join('')}
+          </div>
+          <div class="upload-area" data-type="male">
+            📂 Upload male names (one per line)<br>
+            <small>Click or drag file</small>
+            <input type="file" accept=".txt" style="display:none;" data-type="male">
+          </div>
+          <div class="helper-text">Each line = one name. Names will be added to the list.</div>
+        </div>
+        
+        <div class="name-section">
+          <div class="section-title">👩 Female Given Names</div>
+          <div class="name-grid" id="femaleNamesList">
+            ${lists.female.map(name => `<span class="name-tag">${escapeHtml(name)} <button data-name="${escapeHtml(name)}" data-type="female">✖</button></span>`).join('')}
+          </div>
+          <div class="upload-area" data-type="female">
+            📂 Upload female names (one per line)
+            <input type="file" accept=".txt" style="display:none;" data-type="female">
+          </div>
+        </div>
+        
+        <div class="name-section">
+          <div class="section-title">👪 Surnames / Family Names</div>
+          <div class="name-grid" id="surnamesList">
+            ${lists.surnames.map(name => `<span class="name-tag">${escapeHtml(name)} <button data-name="${escapeHtml(name)}" data-type="surnames">✖</button></span>`).join('')}
+          </div>
+          <div class="upload-area" data-type="surnames">
+            📂 Upload surnames (one per line)
+            <input type="file" accept=".txt" style="display:none;" data-type="surnames">
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+          <button id="addManualNameBtn" class="btn">➕ Add Single Name</button>
+          <button id="clearAllNamesBtn" class="btn danger">⚠️ Clear All Names for This Country</button>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('panelContent').innerHTML = content;
+    
+    // Attach delete handlers
+    ['male', 'female', 'surnames'].forEach(type => {
+      document.querySelectorAll(`#${type}NamesList button`).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const name = btn.getAttribute('data-name');
+          if (confirm(`Remove "${name}"?`)) {
+            if (!masterData.data.nameLists[selectedCountryId]) {
+              masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
+            }
+            masterData.data.nameLists[selectedCountryId][type] = masterData.data.nameLists[selectedCountryId][type].filter(n => n !== name);
+            saveMasterData();
+            renderCharacterNamesTab();
+          }
+        });
+      });
+    });
+    
+    // Upload handlers
+    document.querySelectorAll('.upload-area').forEach(area => {
+      const type = area.getAttribute('data-type');
+      const fileInput = area.querySelector('input');
+      
+      area.addEventListener('click', () => fileInput.click());
+      area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.borderColor = 'var(--accent)'; });
+      area.addEventListener('dragleave', () => area.style.borderColor = 'var(--border2)');
+      area.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) processNameFile(file, type);
+        area.style.borderColor = 'var(--border2)';
+      });
+      
+      fileInput.addEventListener('change', (e) => {
+        if (fileInput.files[0]) processNameFile(fileInput.files[0], type);
+        fileInput.value = '';
+      });
+    });
+    
+    document.getElementById('addManualNameBtn').addEventListener('click', () => {
+      const name = prompt('Enter name to add:');
+      if (name && name.trim()) {
+        const type = prompt('Type: male, female, or surnames?', 'male');
+        if (type && ['male', 'female', 'surnames'].includes(type.toLowerCase())) {
+          if (!masterData.data.nameLists[selectedCountryId]) {
+            masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
+          }
+          masterData.data.nameLists[selectedCountryId][type.toLowerCase()].push(name.trim());
+          saveMasterData();
+          renderCharacterNamesTab();
+        } else alert('Invalid type. Use male, female, or surnames.');
+      }
+    });
+    
+    document.getElementById('clearAllNamesBtn').addEventListener('click', () => {
+      if (confirm(`Clear ALL names for ${country?.displayName}? This cannot be undone.`)) {
+        masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
+        saveMasterData();
+        renderCharacterNamesTab();
+      }
+    });
+  }
+  
+  function processNameFile(file, type) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      const names = content.split(/\r?\n/).filter(n => n.trim().length > 0);
+      if (!masterData.data.nameLists[selectedCountryId]) {
+        masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
+      }
+      names.forEach(name => {
+        if (!masterData.data.nameLists[selectedCountryId][type].includes(name.trim())) {
+          masterData.data.nameLists[selectedCountryId][type].push(name.trim());
+        }
+      });
+      saveMasterData();
+      renderCharacterNamesTab();
+      showToast(`Added ${names.length} names to ${type}`);
+    };
+    reader.readAsText(file);
+  }
+  
+  // ==================== CITY NAMES TAB ====================
+  function renderCityNamesTab() {
+    const cityNameParts = masterData.data.cityNameParts;
+    
+    const content = `
+      <div style="max-width: 900px; margin: 0 auto;">
+        <h2 style="margin-bottom: 20px;">🏙️ City Name Generator</h2>
+        
+        <div class="city-builder">
+          <div class="section-title">📖 Prefixes (e.g., Ash, Green, Silver)</div>
+          <div class="name-grid" id="prefixesList">
+            ${cityNameParts.prefixes.map(p => `<span class="name-tag">${escapeHtml(p)} <button data-part="prefixes" data-value="${escapeHtml(p)}">✖</button></span>`).join('')}
+          </div>
+          <div class="upload-area" data-city-part="prefixes">
+            📂 Upload prefixes (one per line)
+            <input type="file" accept=".txt" style="display:none;" data-city-part="prefixes">
+          </div>
+        </div>
+        
+        <div class="city-builder">
+          <div class="section-title">🌿 Roots (e.g., bridge, field, port)</div>
+          <div class="name-grid" id="rootsList">
+            ${cityNameParts.roots.map(r => `<span class="name-tag">${escapeHtml(r)} <button data-part="roots" data-value="${escapeHtml(r)}">✖</button></span>`).join('')}
+          </div>
+          <div class="upload-area" data-city-part="roots">
+            📂 Upload roots (one per line)
+            <input type="file" accept=".txt" style="display:none;" data-city-part="roots">
+          </div>
+        </div>
+        
+        <div class="city-builder">
+          <div class="section-title">✨ Suffixes (e.g., ia, land, shire)</div>
+          <div class="name-grid" id="suffixesList">
+            ${cityNameParts.suffixes.map(s => `<span class="name-tag">${escapeHtml(s)} <button data-part="suffixes" data-value="${escapeHtml(s)}">✖</button></span>`).join('')}
+          </div>
+          <div class="upload-area" data-city-part="suffixes">
+            📂 Upload suffixes (one per line)
+            <input type="file" accept=".txt" style="display:none;" data-city-part="suffixes">
+          </div>
+        </div>
+        
+        <div class="city-builder">
+          <div class="section-title">🎲 Generate Random City Names</div>
+          <div class="city-part">
+            <button id="generateNamesBtn" class="btn primary">Generate 10 Names</button>
+            <button id="generateSingleBtn" class="btn">Generate One</button>
+          </div>
+          <div id="generatedCities" class="generated-list"></div>
+        </div>
+        
+        <div class="city-builder">
+          <div class="section-title">✏️ Manual Addition</div>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <input type="text" id="newPrefix" placeholder="New prefix" style="flex:1;">
+            <button id="addPrefixBtn" class="btn small">Add Prefix</button>
+          </div>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+            <input type="text" id="newRoot" placeholder="New root" style="flex:1;">
+            <button id="addRootBtn" class="btn small">Add Root</button>
+          </div>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+            <input type="text" id="newSuffix" placeholder="New suffix" style="flex:1;">
+            <button id="addSuffixBtn" class="btn small">Add Suffix</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('panelContent').innerHTML = content;
+    
+    // Delete handlers for city parts
+    ['prefixes', 'roots', 'suffixes'].forEach(part => {
+      document.querySelectorAll(`button[data-part="${part}"]`).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const value = btn.getAttribute('data-value');
+          if (confirm(`Remove "${value}"?`)) {
+            masterData.data.cityNameParts[part] = masterData.data.cityNameParts[part].filter(v => v !== value);
+            saveMasterData();
+            renderCityNamesTab();
+          }
+        });
+      });
+    });
+    
+    // Upload handlers for city parts
+    document.querySelectorAll('.upload-area[data-city-part]').forEach(area => {
+      const part = area.getAttribute('data-city-part');
+      const fileInput = area.querySelector('input');
+      
+      area.addEventListener('click', () => fileInput.click());
+      area.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) processCityPartFile(file, part);
+      });
+      
+      fileInput.addEventListener('change', (e) => {
+        if (fileInput.files[0]) processCityPartFile(fileInput.files[0], part);
+        fileInput.value = '';
+      });
+    });
+    
+    // Manual add handlers
+    document.getElementById('addPrefixBtn')?.addEventListener('click', () => {
+      const val = document.getElementById('newPrefix').value.trim();
+      if (val && !masterData.data.cityNameParts.prefixes.includes(val)) {
+        masterData.data.cityNameParts.prefixes.push(val);
+        saveMasterData();
+        renderCityNamesTab();
+      }
+    });
+    document.getElementById('addRootBtn')?.addEventListener('click', () => {
+      const val = document.getElementById('newRoot').value.trim();
+      if (val && !masterData.data.cityNameParts.roots.includes(val)) {
+        masterData.data.cityNameParts.roots.push(val);
+        saveMasterData();
+        renderCityNamesTab();
+      }
+    });
+    document.getElementById('addSuffixBtn')?.addEventListener('click', () => {
+      const val = document.getElementById('newSuffix').value.trim();
+      if (val && !masterData.data.cityNameParts.suffixes.includes(val)) {
+        masterData.data.cityNameParts.suffixes.push(val);
+        saveMasterData();
+        renderCityNamesTab();
+      }
+    });
+    
+    // Generate names
+    document.getElementById('generateNamesBtn')?.addEventListener('click', () => generateCityNames(10));
+    document.getElementById('generateSingleBtn')?.addEventListener('click', () => generateCityNames(1));
+  }
+  
+  function processCityPartFile(file, part) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const names = e.target.result.split(/\r?\n/).filter(n => n.trim().length > 0);
+      names.forEach(name => {
+        if (!masterData.data.cityNameParts[part].includes(name.trim())) {
+          masterData.data.cityNameParts[part].push(name.trim());
+        }
+      });
+      saveMasterData();
+      renderCityNamesTab();
+      showToast(`Added ${names.length} ${part}`);
+    };
+    reader.readAsText(file);
+  }
+  
+  function generateCityNames(count) {
+    const cityNameParts = masterData.data.cityNameParts;
+    if (!cityNameParts.prefixes.length || !cityNameParts.roots.length) {
+      showToast('Need at least one prefix and one root to generate names!');
+      return;
+    }
+    
+    const names = [];
+    for (let i = 0; i < count; i++) {
+      const prefix = cityNameParts.prefixes[Math.floor(Math.random() * cityNameParts.prefixes.length)];
+      const root = cityNameParts.roots[Math.floor(Math.random() * cityNameParts.roots.length)];
+      let name = prefix + root;
+      
+      if (cityNameParts.suffixes.length && Math.random() > 0.6) {
+        const suffix = cityNameParts.suffixes[Math.floor(Math.random() * cityNameParts.suffixes.length)];
+        name += suffix;
+      }
+      
+      name = name.charAt(0).toUpperCase() + name.slice(1);
+      names.push(name);
+    }
+    
+    const container = document.getElementById('generatedCities');
+    container.innerHTML = names.map(n => `<span class="name-tag">${escapeHtml(n)}</span>`).join('');
+  }
+  
+  // ==================== IMPORT/EXPORT (UNIFIED) ====================
+  function exportData() {
+    const exportObj = {
+      type: "names",
+      version: "2.0",
+      exportDate: new Date().toISOString(),
+      data: {
+        nameLists: masterData.data.nameLists,
+        cityNameParts: masterData.data.cityNameParts
+      }
+    };
+    const dataStr = JSON.stringify(exportObj, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `stillwaters_names_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Names exported successfully');
+  }
+  
+  function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          let newNameLists = null;
+          let newCityParts = null;
+          
+          // Case 1: New unified format with type field
+          if (imported.type === 'names' && imported.data) {
+            newNameLists = imported.data.nameLists;
+            newCityParts = imported.data.cityNameParts;
+          }
+          // Case 2: Legacy format with direct nameLists
+          else if (imported.nameLists) {
+            newNameLists = imported.nameLists;
+            newCityParts = imported.cityNameParts;
+          }
+          // Case 3: Master data format
+          else if (imported.data && imported.data.nameLists) {
+            newNameLists = imported.data.nameLists;
+            newCityParts = imported.data.cityNameParts;
+          }
+          
+          // MERGE name lists
+          if (newNameLists) {
+            Object.keys(newNameLists).forEach(countryId => {
+              if (!masterData.data.nameLists[countryId]) {
+                masterData.data.nameLists[countryId] = { male: [], female: [], surnames: [] };
+              }
+              const importedList = newNameLists[countryId];
+              if (importedList.male) {
+                importedList.male.forEach(name => {
+                  if (!masterData.data.nameLists[countryId].male.includes(name)) {
+                    masterData.data.nameLists[countryId].male.push(name);
+                  }
+                });
+              }
+              if (importedList.female) {
+                importedList.female.forEach(name => {
+                  if (!masterData.data.nameLists[countryId].female.includes(name)) {
+                    masterData.data.nameLists[countryId].female.push(name);
+                  }
+                });
+              }
+              if (importedList.surnames) {
+                importedList.surnames.forEach(name => {
+                  if (!masterData.data.nameLists[countryId].surnames.includes(name)) {
+                    masterData.data.nameLists[countryId].surnames.push(name);
+                  }
+                });
+              }
+            });
+          }
+          
+          // MERGE city name parts
+          if (newCityParts) {
+            if (newCityParts.prefixes) {
+              newCityParts.prefixes.forEach(p => {
+                if (!masterData.data.cityNameParts.prefixes.includes(p)) {
+                  masterData.data.cityNameParts.prefixes.push(p);
+                }
+              });
+            }
+            if (newCityParts.roots) {
+              newCityParts.roots.forEach(r => {
+                if (!masterData.data.cityNameParts.roots.includes(r)) {
+                  masterData.data.cityNameParts.roots.push(r);
+                }
+              });
+            }
+            if (newCityParts.suffixes) {
+              newCityParts.suffixes.forEach(s => {
+                if (!masterData.data.cityNameParts.suffixes.includes(s)) {
+                  masterData.data.cityNameParts.suffixes.push(s);
+                }
+              });
+            }
+          }
+          
+          saveMasterData();
+          refreshCountries();
+          renderCountryList();
+          showToast(`Imported and merged name data`);
+        } catch(err) { 
+          alert('Invalid JSON: ' + err.message); 
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+  
+  function showToast(msg) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m);
+  }
+  
+  // ==================== INIT ====================
+  function init() {
+    loadMasterData();
+    renderCountryList();
+    renderCharacterNamesTab();
+    
+    document.getElementById('importNamesBtn').addEventListener('click', importData);
+    document.getElementById('exportNamesBtn').addEventListener('click', exportData);
+    document.getElementById('refreshCountriesBtn').addEventListener('click', () => {
+      refreshCountries();
+      renderCountryList();
+      showToast('Countries refreshed from Locations');
+    });
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (btn.getAttribute('data-tab') === 'character') renderCharacterNamesTab();
+        else renderCityNamesTab();
+      });
+    });
+    
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'stillwaters_master') {
+        loadMasterData();
+        refreshCountries();
+        renderCountryList();
+        if (selectedCountryId) renderCharacterNamesTab();
+      }
+    });
+  }
+  
+  init();
+</script>
+</body>
+</html>
