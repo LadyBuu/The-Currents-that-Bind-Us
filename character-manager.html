@@ -1,527 +1,1623 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Still Waters — Character Manager</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="stillwaters.css">
-  <style>
-    .char-app { display: flex; height: calc(100vh - 44px); overflow: hidden; }
-    .sidebar { width: 320px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-    .sidebar-header { padding: 16px; border-bottom: 1px solid var(--border); background: var(--bg3); display: flex; justify-content: space-between; align-items: center; }
-    .sidebar-header h3 { font-size: 0.7rem; letter-spacing: 0.15em; margin: 0; }
-    .filter-toggle { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 0.7rem; }
-    .filter-container { border-bottom: 1px solid var(--border); overflow: hidden; transition: max-height 0.3s ease; }
-    .filter-bar { padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
-    .filter-group { display: flex; flex-direction: column; gap: 4px; }
-    .filter-group label { font-size: 0.6rem; font-family: 'Cinzel', serif; color: var(--accent); }
-    .filter-group select { padding: 4px 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; font-size: 0.7rem; }
-    .char-list { flex: 1; overflow-y: auto; padding: 12px; }
-    .char-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
-    .char-item:hover, .char-item.selected { border-color: var(--accent); background: var(--bg3); }
-    .char-name { font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 600; color: var(--accent); display: flex; justify-content: space-between; align-items: center; }
-    .char-rank { font-size: 0.7rem; color: var(--dim); }
-    .char-details { font-size: 0.6rem; color: var(--dim); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; }
-    .deceased { color: var(--deceased); text-decoration: line-through; }
-    .main-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .panel-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg2); padding: 0 16px; overflow-x: auto; }
-    .tab-btn { padding: 10px 16px; background: none; border: none; font-family: 'Cinzel', serif; font-size: 0.65rem; cursor: pointer; color: var(--dim); border-bottom: 2px solid transparent; white-space: nowrap; }
-    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-    .panel-content { flex: 1; overflow-y: auto; padding: 20px; }
-    .collapsible-section { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
-    .section-header { padding: 12px 16px; cursor: pointer; font-family: 'Cinzel', serif; font-size: 0.7rem; color: var(--accent); background: var(--bg3); display: flex; justify-content: space-between; align-items: center; }
-    .section-header .arrow { transition: transform 0.2s; }
-    .section-header .arrow.expanded { transform: rotate(90deg); }
-    .section-content { padding: 16px; display: none; }
-    .section-content.expanded { display: block; }
-    .family-card, .love-card, .friend-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; transition: all 0.2s; }
-    .family-card:hover, .love-card:hover, .friend-card:hover { border-color: var(--accent); background: var(--bg4); }
-    .family-card .name, .love-card .name, .friend-card .name { font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 600; color: var(--accent); cursor: pointer; display: inline-block; }
-    .family-card .name:hover, .love-card .name:hover, .friend-card .name:hover { text-decoration: underline; }
-    .family-card .details, .love-card .details, .friend-card .details { font-size: 0.65rem; color: var(--dim); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-    .form-group { margin-bottom: 12px; }
-    .form-group label { display: block; font-size: 0.65rem; font-family: 'Cinzel', serif; color: var(--accent); margin-bottom: 4px; }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 6px 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; font-size: 0.8rem; }
-    .rank-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-    .rank-btn { padding: 4px 12px; background: var(--bg); border: 1px solid var(--border2); border-radius: 20px; font-size: 0.7rem; cursor: pointer; }
-    .assigned-rank { background: var(--bg3); padding: 8px; border-radius: 4px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .action-buttons { display: flex; gap: 8px; margin-top: 16px; }
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--dim); }
-    .warning-badge { background: rgba(200,112,64,0.2); border: 1px solid var(--warn); border-radius: 4px; padding: 8px 12px; font-size: 0.7rem; margin-bottom: 16px; }
-    .info-grid { display: grid; grid-template-columns: 120px 1fr; gap: 12px; margin-bottom: 20px; }
-    .info-label { font-family: 'Cinzel', serif; font-size: 0.65rem; color: var(--accent); }
-    .clickable-name { cursor: pointer; color: var(--accent); }
-    .clickable-name:hover { text-decoration: underline; }
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-    .modal.active { display: flex; }
-    .modal-content { background: var(--bg2); border: 1px solid var(--accent); border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-    .filter-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
-    .partner-option { padding: 8px; border-bottom: 1px solid var(--border); cursor: pointer; }
-    .partner-option:hover { background: var(--bg3); }
-    .partner-option.selected { background: var(--accent-dim); }
-    .separator { border-top: 1px solid var(--border); margin: 16px 0; }
-    @media (max-width: 768px) { .char-app { flex-direction: column; height: auto; } .sidebar { width: 100%; max-height: 400px; } .form-row { grid-template-columns: 1fr; } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>Still Waters — Character Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stillwaters.css">
+<style>
+/* ============================================
+   CHARACTER MANAGER - SPECIFIC STYLES
+   ============================================ */
+
+/* Layout */
+.app-container {
+  display: flex;
+  height: calc(100vh - 44px);
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  z-index: 50;
+}
+
+.sidebar-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+#close-sidebar {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* Person List */
+#person-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  scrollbar-width: thin;
+}
+
+.person-item {
+  padding: 8px 10px;
+  margin: 2px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
+}
+
+.person-item:hover {
+  background: var(--bg3);
+}
+
+.person-item.selected {
+  background: var(--bg3);
+  border-left-color: var(--accent);
+}
+
+.person-item.deceased {
+  opacity: 0.7;
+}
+
+.person-name {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.gender-symbol {
+  font-family: monospace;
+  color: var(--dim);
+  font-size: 0.85rem;
+}
+
+.person-detail {
+  font-size: 0.65rem;
+  color: var(--dim);
+  margin-top: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  min-width: 0;
+}
+
+/* View Panel */
+.view-panel {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  max-height: 35%;
+  overflow-y: auto;
+  flex-shrink: 0;
+  transition: max-height 0.2s ease;
+}
+
+.view-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg2);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.view-header h4 {
+  font-size: 0.7rem;
+  margin: 0;
+}
+
+#view-collapse-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 4px;
+}
+
+.view-content {
+  padding: 12px;
+}
+
+.view-section {
+  margin-bottom: 16px;
+}
+
+.view-section h4 {
+  font-size: 0.65rem;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.view-grid {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 4px 8px;
+  font-size: 0.75rem;
+}
+
+.view-label {
+  color: var(--dim);
+}
+
+.view-value {
+  color: var(--text);
+}
+
+.view-stable-id {
+  font-family: monospace;
+  background: var(--bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+}
+
+/* Edit Panel */
+.edit-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Tabs Container */
+.edit-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 12px;
+  background: var(--bg2);
+  border-bottom: 2px solid var(--accent);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.edit-tab {
+  padding: 10px 16px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  color: var(--dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  margin-bottom: -2px;
+}
+
+.edit-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.edit-tab:hover:not(.active) {
+  color: var(--text);
+}
+
+/* Edit Content Container */
+.edit-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  scrollbar-width: thin;
+}
+
+/* Base Tab Styles - Each tab will have its own container */
+.tab-container {
+  display: none;
+}
+
+.tab-container.active {
+  display: block;
+}
+
+/* Forms (Shared) */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.7rem;
+  font-family: 'Cinzel', serif;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.name-with-random {
+  display: flex;
+  gap: 8px;
+}
+
+.name-with-random input {
+  flex: 1;
+}
+
+.random-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 0 12px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.random-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Rank Management */
+.ranks-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.rank-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rank-btn {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  color: var(--dim);
+  cursor: pointer;
+}
+
+.rank-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.rank-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  cursor: pointer;
+}
+
+.rank-chip:hover {
+  border-color: var(--danger);
+}
+
+/* Empty State */
+.empty-msg {
+  text-align: center;
+  color: var(--dim);
+  padding: 40px 20px;
+  font-style: italic;
+}
+
+/* Collapsible Sections */
+.collapsible-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  background: var(--bg3);
+}
+
+.section-header .arrow {
+  transition: transform 0.3s;
+  font-size: 0.7rem;
+  color: var(--dim);
+}
+
+.section-header.collapsed .arrow {
+  transform: rotate(-90deg);
+}
+
+.section-content {
+  max-height: 2000px;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.section-content.collapsed {
+  max-height: 0;
+}
+
+.section-inner {
+  padding: 16px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    z-index: 200;
+  }
+  
+  .sidebar.mobile-visible {
+    transform: translateX(0);
+  }
+  
+  #close-sidebar {
+    display: block;
+  }
+  
+  #menu-toggle {
+    display: block !important;
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 8px;
+  }
+  
+  .view-panel {
+    max-height: 30%;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 769px) {
+  #menu-toggle {
+    display: none !important;
+  }
+}
+</style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="title">👥 CHARACTER MANAGER</div>
-  <div style="flex:1"></div>
-  <div style="display:flex; align-items:center; gap:8px;">
-    <span style="font-size:0.7rem;">📅 Year:</span>
-    <input type="number" id="currentYear" value="1250" style="width:80px;">
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Topbar -->
+<div class="topbar" id="topbar">
+  <button id="menu-toggle" onclick="toggleMobileSidebar()">☰</button>
+  <h1>The Currents that Bind Us — Character Manager</h1>
+  <button onclick="openNewPersonModal()">+ New</button>
+  <button class="primary" onclick="generateRandomPerson()">🎲 Random</button>
+  <button class="primary" onclick="exportJSON()">Export</button>
+  <button class="primary" id="save-btn" onclick="saveAll()">Save</button>
+  <label style="display:flex; align-items:center; gap:4px; font-size:0.65rem;">
+    <input type="checkbox" id="autosave-toggle" checked> Auto-save
+  </label>
+  <input type="file" id="import-file" accept=".json" style="display:none">
+  <button onclick="document.getElementById('import-file').click()">Import</button>
+  <div id="year-control" style="display:flex; align-items:center; gap:6px; margin-left:auto;">
+    <label>Year:</label>
+    <input type="number" id="current-year" value="1460" onchange="updateYear()" style="width:70px;">
   </div>
-  <button id="importCharsBtn" class="tb-btn">📂 Import</button>
-  <button id="exportCharsBtn" class="tb-btn primary">💾 Export</button>
-  <button id="addPersonBtn" class="tb-btn primary">+ Add Person</button>
-  <button id="generatePersonBtn" class="tb-btn">🎲 Generate</button>
 </div>
 
-<div class="char-app">
-  <div class="sidebar">
+<!-- Main App Container -->
+<div class="app-container">
+  
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h3>📋 CHARACTERS</h3>
-      <button id="filterToggleBtn" class="filter-toggle">▼ Filters</button>
+      <h3>Characters</h3>
+      <button id="close-sidebar" onclick="toggleMobileSidebar()">✕</button>
     </div>
-    <div id="filterContainer" class="filter-container">
-      <div class="filter-bar">
-        <div class="filter-group"><label>Life Stage</label><select id="filterLifeStage"><option value="">All</option><option value="child">Child (0-12)</option><option value="youth">Youth (13-17)</option><option value="adult">Adult (18-59)</option><option value="elder">Elder (60+)</option></select></div>
-        <div class="filter-group"><label>Relationship Status</label><select id="filterRelation"><option value="">All</option><option value="single">Single</option><option value="partnered">Partnered</option><option value="widowed">Widowed</option></select></div>
-        <div class="filter-group"><label>Current Location</label><select id="filterLocation"><option value="">All</option></select></div>
-        <button id="clearFilters" class="btn small">Clear Filters</button>
+    
+    <!-- Search & Filters -->
+    <div style="padding: 12px; border-bottom: 1px solid var(--border);">
+      <input type="text" id="search-box" placeholder="Search characters..." oninput="renderPersonList()" style="width:100%;">
+      
+      <div class="filter-toggle-btn" onclick="toggleFilters()" style="display:flex; justify-content:space-between; padding:8px 0 4px; cursor:pointer;">
+        <span style="color:var(--accent); font-size:0.7rem;">Filters</span>
+        <span class="arrow" style="transition:transform 0.2s;">▼</span>
+      </div>
+      
+      <div id="filters-panel">
+        <div class="filter-group" style="margin-bottom:8px;">
+          <div class="filter-label" style="font-size:0.6rem;">Age Range</div>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="filter-age-min" placeholder="Min" oninput="renderPersonList()" style="width:50%;">
+            <input type="number" id="filter-age-max" placeholder="Max" oninput="renderPersonList()" style="width:50%;">
+          </div>
+        </div>
+        <div class="filter-group" style="margin-bottom:8px;">
+          <div class="filter-label" style="font-size:0.6rem;">Gender</div>
+          <select id="filter-gender" onchange="renderPersonList()" style="width:100%;">
+            <option value="">All</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="filter-group" style="margin-bottom:8px;">
+          <div class="filter-label" style="font-size:0.6rem;">Life Stage</div>
+          <select id="filter-stage" onchange="renderPersonList()" style="width:100%;">
+            <option value="">All</option>
+            <option value="infant">Infant</option>
+            <option value="toddler">Toddler</option>
+            <option value="child">Child</option>
+            <option value="adolescent">Adolescent</option>
+            <option value="young adult">Young Adult</option>
+            <option value="adult">Adult</option>
+            <option value="middle-aged">Middle-Aged</option>
+            <option value="elder">Elder</option>
+          </select>
+        </div>
+        <div class="filter-checkbox" style="margin-bottom:8px;">
+          <input type="checkbox" id="filter-show-deceased" onchange="renderPersonList()">
+          <label style="font-size:0.7rem;">Show Deceased</label>
+        </div>
+        <div class="clear-filters" onclick="clearFilters()" style="text-align:center; padding:8px; font-size:0.6rem; color:var(--warn); cursor:pointer;">Clear all</div>
       </div>
     </div>
-    <div class="char-list" id="charList"></div>
+    
+    <!-- Person List -->
+    <div id="person-list"></div>
   </div>
   
-  <div class="main-panel">
-    <div class="panel-tabs">
-      <button class="tab-btn active" data-tab="view">📖 View</button>
-      <button class="tab-btn" data-tab="edit">✏️ Edit</button>
-      <button class="tab-btn" data-tab="family">👪 Family</button>
-      <button class="tab-btn" data-tab="love">❤️ Love</button>
-      <button class="tab-btn" data-tab="friends">👥 Friends</button>
-      <button class="tab-btn" data-tab="overview">📋 Overview</button>
+  <!-- Main Content -->
+  <div class="main-content">
+    
+    <!-- View Panel (Read-only) -->
+    <div class="view-panel" id="view-panel">
+      <div class="view-header">
+        <h4>Character Info</h4>
+        <button id="view-collapse-btn" onclick="toggleViewPanel()">▼</button>
+      </div>
+      <div class="view-content">
+        <div id="view-empty" class="empty-msg">Select a character</div>
+        <div id="view-filled" style="display:none;">
+          <div class="view-section">
+            <h4>Identity</h4>
+            <div class="view-grid">
+              <span class="view-label">Name:</span>
+              <span class="view-value" id="view-name"></span>
+              <span class="view-label">Stable ID:</span>
+              <span class="view-value"><span class="view-stable-id" id="view-stableId"></span></span>
+              <span class="view-label">Gender:</span>
+              <span class="view-value" id="view-gender"></span>
+              <span class="view-label">Age:</span>
+              <span class="view-value" id="view-age"></span>
+              <span class="view-label">Stage:</span>
+              <span class="view-value" id="view-stage"></span>
+              <span class="view-label">Role:</span>
+              <span class="view-value" id="view-role"></span>
+            </div>
+            <div id="view-ranks" class="view-ranks" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
+          </div>
+          <div class="view-section">
+            <h4>Residence</h4>
+            <div class="view-grid">
+              <span class="view-label">Birth:</span>
+              <span class="view-value" id="view-birthComp"></span>
+              <span class="view-label">Current:</span>
+              <span class="view-value" id="view-currComp"></span>
+            </div>
+          </div>
+          <div class="view-section">
+            <h4>Notes</h4>
+            <div id="view-notes" style="white-space:pre-wrap; font-size:0.75rem;"></div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="panel-content" id="panelContent">
-      <div class="empty-state">Select a character or add a new one</div>
+    
+    <!-- Edit Panel -->
+    <div class="edit-panel">
+      <div class="edit-tabs" id="edit-tabs"></div>
+      <div class="edit-content" id="edit-content">
+        <div id="edit-empty" class="empty-msg">Select or create a character</div>
+        <div id="tab-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Person Modal -->
+<div id="new-person-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Create New Character</div>
+    <div class="form-group">
+      <label>Name</label>
+      <div class="name-with-random">
+        <input id="new-name" placeholder="Character name">
+        <button class="random-btn" onclick="randomNameForNew()">🎲</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Gender</label>
+        <select id="new-gender">
+          <option value="unknown">Unknown</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Birth Year</label>
+        <input type="number" id="new-birthYear" placeholder="Optional">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Birth Compound</label>
+      <input id="new-birthComp" placeholder="Birth location">
+    </div>
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <button class="primary" style="flex:1;" onclick="createPerson()">Create</button>
+      <button style="flex:1; background:var(--bg3); border:1px solid var(--border2); border-radius:6px; cursor:pointer;" onclick="closeNewPersonModal()">Cancel</button>
     </div>
   </div>
 </div>
 
 <script>
-  // ==================== UNIFIED DATA STRUCTURE ====================
-  let masterData = {
-    version: "2.0",
-    lastUpdated: new Date().toISOString(),
-    data: {
-      characters: [],
-      places: [],
-      ranks: [],
-      roles: [],
-      currentYear: 1250
-    }
-  };
-  
-  let selectedCharId = null;
-  let currentYear = 1250;
-  
-  function generateId() { return 'char_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
-  function generateRelId() { return 'rel_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
-  
-  // ==================== LOAD FROM UNIFIED STORAGE ====================
-  function loadMasterData() {
-    const stored = localStorage.getItem('stillwaters_master');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        masterData = {
-          version: parsed.version || "2.0",
-          data: {
-            characters: parsed.data?.characters || [],
-            places: parsed.data?.places || [],
-            ranks: parsed.data?.ranks || [],
-            roles: parsed.data?.roles || [],
-            locationTypes: parsed.data?.locationTypes || [],
-            governments: parsed.data?.governments || [],
-            nameLists: parsed.data?.nameLists || {},
-            currentYear: parsed.data?.currentYear || 1250
-          }
-        };
-      } catch(e) { console.error('Error loading master data', e); }
-    }
-    currentYear = masterData.data.currentYear;
-    document.getElementById('currentYear').value = currentYear;
-  }
-  
-  function saveMasterData() {
-    masterData.lastUpdated = new Date().toISOString();
-    masterData.data.currentYear = currentYear;
-    localStorage.setItem('stillwaters_master', JSON.stringify(masterData));
-  }
-  
-  function calculateAge(birthYear, isDeceased, deathYear) {
-    if (!birthYear) return 0;
-    if (isDeceased && deathYear) return deathYear - birthYear;
-    return currentYear - birthYear;
-  }
-  
-  function getCurrentLocation(char) {
-    if (char.moves?.length) {
-      const currentMove = char.moves[char.moves.length - 1];
-      const loc = masterData.data.places.find(p => p.id === currentMove.locationId);
-      return loc?.displayName || 'Unknown';
-    }
-    const loc = masterData.data.places.find(p => p.id === char.birthplaceId);
-    return loc?.displayName || 'Unknown';
-  }
-  
-  function getActiveRankDisplay(char) {
-    if (!char.rankAssignments) return null;
-    const active = char.rankAssignments.find(r => r.isActive);
-    if (!active) return null;
-    const rank = masterData.data.ranks.find(r => r.id === active.rankId);
-    if (!rank) return null;
-    let display = rank.symbol;
-    if (active.rankNumber) display += active.rankNumber;
-    else display += rank.symbol;
-    return { symbol: rank.symbol, number: active.rankNumber, name: rank.name, display: `${rank.symbol}${active.rankNumber || ''}` };
-  }
-  
-  // ==================== RENDER CHARACTER LIST ====================
-  function renderCharList() {
-    const container = document.getElementById('charList');
-    const lifeStage = document.getElementById('filterLifeStage').value;
-    const relation = document.getElementById('filterRelation').value;
-    const locationFilter = document.getElementById('filterLocation').value;
-    const characters = masterData.data.characters;
-    
-    let filtered = characters.filter(c => {
-      const age = calculateAge(c.birthYear, c.isDeceased, c.deathYear);
-      if (lifeStage === 'child' && age >= 13) return false;
-      if (lifeStage === 'youth' && (age < 13 || age >= 18)) return false;
-      if (lifeStage === 'adult' && (age < 18 || age >= 60)) return false;
-      if (lifeStage === 'elder' && age < 60) return false;
-      const hasPartner = c.relationships?.some(r => r.status === 'ongoing');
-      if (relation === 'single' && hasPartner) return false;
-      if (relation === 'partnered' && !hasPartner) return false;
-      if (locationFilter) {
-        const loc = getCurrentLocation(c);
-        if (loc !== locationFilter) return false;
-      }
-      return true;
-    });
-    
-    if (!filtered.length) { container.innerHTML = '<div class="empty-state">No characters found</div>'; return; }
-    
-    container.innerHTML = filtered.map(c => {
-      const age = calculateAge(c.birthYear, c.isDeceased, c.deathYear);
-      const rankDisplay = getActiveRankDisplay(c);
-      const location = getCurrentLocation(c);
-      return `
-        <div class="char-item ${selectedCharId === c.id ? 'selected' : ''}" data-id="${c.id}">
-          <div class="char-name">
-            <span class="${c.isDeceased ? 'deceased' : ''}">${rankDisplay ? `${rankDisplay.display} ${escapeHtml(c.name)}` : escapeHtml(c.name)} ${escapeHtml(c.surname || '')}</span>
-          </div>
-          <div class="char-details">
-            <span>${c.gender === 'male' ? '♂' : c.gender === 'female' ? '♀' : '⚥'}</span>
-            <span>${age} yrs</span>
-            <span>${location}</span>
-            ${c.isDeceased ? '<span>💀</span>' : ''}
-          </div>
-        </div>
-      `;
-    }).join('');
-    document.querySelectorAll('.char-item').forEach(el => el.addEventListener('click', () => selectCharacter(el.dataset.id)));
-  }
-  
-  function selectCharacter(id) { selectedCharId = id; renderCharList(); renderViewTab(); }
-  
-  // ==================== VIEW TAB ====================
-  function renderViewTab() {
-    const c = masterData.data.characters.find(c => c.id === selectedCharId);
-    if (!c) { document.getElementById('panelContent').innerHTML = '<div class="empty-state">Character not found</div>'; return; }
-    const age = calculateAge(c.birthYear, c.isDeceased, c.deathYear);
-    const rankDisplay = getActiveRankDisplay(c);
-    const birthplace = masterData.data.places.find(l => l.id === c.birthplaceId);
-    const currentLoc = getCurrentLocation(c);
-    const mother = c.motherId ? masterData.data.characters.find(m => m.id === c.motherId) : null;
-    const father = c.fatherId ? masterData.data.characters.find(f => f.id === c.fatherId) : null;
-    const children = masterData.data.characters.filter(ch => ch.motherId === c.id || ch.fatherId === c.id);
-    const partners = c.relationships?.filter(r => r.status === 'ongoing').map(r => masterData.data.characters.find(p => p.id === r.partnerId)) || [];
-    const friends = c.friends || [];
-    
-    document.getElementById('panelContent').innerHTML = `
-      <div class="view-section">
-        <h2>${rankDisplay ? `${rankDisplay.display} ` : ''}${escapeHtml(c.name)} ${escapeHtml(c.surname || '')}</h2>
-        <div class="warning-badge">🆔 ${c.id}</div>
-        <div class="info-grid">
-          <div class="info-label">Gender</div><div class="info-value">${c.gender || 'Unknown'}</div>
-          <div class="info-label">Attraction</div><div class="info-value">${c.attraction || 'Unknown'}</div>
-          <div class="info-label">Born</div><div class="info-value">Year ${c.birthYear || '?'}</div>
-          <div class="info-label">Age</div><div class="info-value">${age} years</div>
-          <div class="info-label">Status</div><div class="info-value">${c.isDeceased ? `Deceased (${c.deathYear})` : 'Living'}</div>
-          <div class="info-label">Rank</div><div class="info-value">${rankDisplay ? `${rankDisplay.symbol} ${rankDisplay.name}${rankDisplay.number ? ` #${rankDisplay.number}` : ''}` : 'None'}</div>
-          <div class="info-label">Birthplace</div><div class="info-value">${birthplace?.displayName || 'Unknown'}</div>
-          <div class="info-label">Current Location</div><div class="info-value">${currentLoc}</div>
-        </div>
-      </div>`;
-  }
-  
-  // ==================== FRIENDS TAB ====================
-  function renderFriendsTab() {
-    const c = masterData.data.characters.find(c => c.id === selectedCharId);
-    if (!c) return;
-    
-    const friends = c.friends || [];
-    const availableChars = masterData.data.characters.filter(ch => ch.id !== c.id && !friends.includes(ch.id));
-    
-    document.getElementById('panelContent').innerHTML = `
-      <div><div class="collapsible-section"><div class="section-header">👥 Friends <span class="arrow expanded">▶</span></div><div class="section-content expanded">
-        ${friends.length ? friends.map((friendId, idx) => {
-          const friend = masterData.data.characters.find(f => f.id === friendId);
-          if (!friend) return '';
-          const age = calculateAge(friend.birthYear, friend.isDeceased, friend.deathYear);
-          const rankDisplay = getActiveRankDisplay(friend);
-          const location = getCurrentLocation(friend);
-          return `
-            <div class="friend-card">
-              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                <span class="name" data-id="${friend.id}">${rankDisplay ? `${rankDisplay.display} ` : ''}${escapeHtml(friend.name)} ${escapeHtml(friend.surname || '')}</span>
-                <button class="btn small danger" data-action="remove" data-idx="${idx}">Remove Friend</button>
-              </div>
-              <div class="details">
-                ${friend.gender === 'male' ? '♂' : friend.gender === 'female' ? '♀' : '⚥'} | Age: ${age} | 📍 ${location}
-                ${friend.isDeceased ? ' | 💀 Deceased' : ''}
+// ============================================
+// STILL WATERS - CHARACTER MANAGER
+// Modular Tab System - Each tab is self-contained
+// ============================================
+
+// ====================== CORE DATA & UTILITIES ======================
+const STORAGE_KEY = 'stillwaters_manager_v2';
+const DEFAULT_NAMES = {
+  male: ['Kai', 'Mako', 'Tane', 'Rangi', 'Koa', 'Keanu', 'Ari', 'Leo', 'Nico', 'Ikaia', 'Sione', 'Tama', 'Vaea', 'Laki', 'Kaleo'],
+  female: ['Leilani', 'Moana', 'Nani', 'Tui', 'Hina', 'Lani', 'Malia', 'Rai', 'Tara', 'Vai', 'Manaia', 'Aroha', 'Eponi', 'Luna', 'Mira']
+};
+
+let DATA = {
+  version: '2.0',
+  currentYear: 1460,
+  people: {},
+  relationships: {},
+  lastSaved: null,
+  stableIdIndex: {}
+};
+
+let activeId = null;
+let activeTab = null;
+
+// ====================== TAB REGISTRY ======================
+// This is where all tabs are registered. To add/remove a tab, just modify this array.
+const TABS = [
+  {
+    id: 'edit',
+    label: 'Edit',
+    render: function(container, person) {
+      // This is the ENTIRE Edit Tab HTML and logic - self-contained
+      container.innerHTML = `
+        <div class="tab-edit">
+          <div class="collapsible-section">
+            <div class="section-header" onclick="toggleSection(this)">
+              <span>Identity</span>
+              <span class="arrow">▼</span>
+            </div>
+            <div class="section-content">
+              <div class="section-inner">
+                <div class="form-group">
+                  <label>Name</label>
+                  <div class="name-with-random">
+                    <input id="edit-name" placeholder="Character name" value="${escapeHtml(person?.name || '')}">
+                    <button class="random-btn" onclick="randomNameForCurrent()">🎲</button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Stable ID</label>
+                  <input id="edit-stableId" readonly style="background:var(--bg); font-family:monospace;" value="${escapeHtml(person?.stableId || '')}">
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Gender</label>
+                    <select id="edit-gender">
+                      <option value="unknown" ${person?.gender === 'unknown' ? 'selected' : ''}>Unknown</option>
+                      <option value="male" ${person?.gender === 'male' ? 'selected' : ''}>Male</option>
+                      <option value="female" ${person?.gender === 'female' ? 'selected' : ''}>Female</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Attraction</label>
+                    <select id="edit-attraction">
+                      <option value="both" ${person?.attraction === 'both' ? 'selected' : ''}>Both</option>
+                      <option value="men" ${person?.attraction === 'men' ? 'selected' : ''}>Men</option>
+                      <option value="women" ${person?.attraction === 'women' ? 'selected' : ''}>Women</option>
+                      <option value="neither" ${person?.attraction === 'neither' ? 'selected' : ''}>Neither</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Birth Year</label>
+                    <input type="number" id="edit-birthYear" value="${person?.birthYear || ''}" oninput="updateAgeFromBirth()">
+                  </div>
+                  <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" id="edit-age" value="${person?.age || ''}" oninput="updateBirthFromAge()">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Role / Occupation</label>
+                  <input id="edit-role" placeholder="e.g., Farmer, Fisher, Chief" value="${escapeHtml(person?.role || '')}">
+                </div>
+                <div class="checkbox-row" style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                  <input type="checkbox" id="edit-deceased" ${person?.deceased ? 'checked' : ''} onchange="toggleDeathFields()">
+                  <label style="margin:0;">Deceased</label>
+                </div>
+                <div id="death-fields" style="display:${person?.deceased ? 'block' : 'none'}; margin-top:8px;">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Death Year</label>
+                      <input type="number" id="edit-deathYear" value="${person?.deathYear || ''}" oninput="updateAgeFromBirth()">
+                    </div>
+                    <div class="form-group">
+                      <label>Cause</label>
+                      <input id="edit-causeDeath" placeholder="Cause of death" value="${escapeHtml(person?.causeDeath || '')}">
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          `;
-        }).join('') : '<div class="empty-state" style="padding:20px;">No friends yet</div>'}
-        <button id="addFriendBtn" class="btn primary" style="margin-top:16px;">+ Add Friend</button>
-      </div></div></div>`;
-    
-    document.querySelectorAll('.friend-card .name').forEach(el => el.addEventListener('click', () => selectCharacter(el.dataset.id)));
-    document.querySelectorAll('[data-action="remove"]').forEach(btn => btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.idx);
-      if (confirm('Remove this friend?')) {
-        c.friends.splice(idx, 1);
-        saveMasterData();
-        renderFriendsTab();
-      }
-    }));
-    document.getElementById('addFriendBtn')?.addEventListener('click', () => openAddFriendModal(c.id));
-    document.querySelectorAll('.collapsible-section .section-header').forEach(h => {
-      const content = h.nextElementSibling;
-      const arrow = h.querySelector('.arrow');
-      h.addEventListener('click', () => { content.classList.toggle('expanded'); arrow?.classList.toggle('expanded'); });
-    });
-  }
-  
-  function openAddFriendModal(charId) {
-    const c = masterData.data.characters.find(c => c.id === charId);
-    const friends = c.friends || [];
-    const available = masterData.data.characters.filter(ch => ch.id !== c.id && !friends.includes(ch.id));
-    
-    const modal = document.createElement('div'); modal.className = 'modal active';
-    modal.innerHTML = `
-      <div class="modal-content">
-        <h3>➕ Add Friend for ${escapeHtml(c.name)}</h3>
-        <div class="form-group">
-          <label>Select Friend</label>
-          <select id="friendSelect">
-            <option value="">-- Select a character --</option>
-            ${available.map(ch => `<option value="${ch.id}">${escapeHtml(ch.name)} ${escapeHtml(ch.surname || '')} (${ch.gender === 'male' ? '♂' : ch.gender === 'female' ? '♀' : '⚥'})</option>`).join('')}
-          </select>
-        </div>
-        <div class="modal-buttons">
-          <button id="confirmFriendBtn" class="btn primary">Add Friend</button>
-          <button id="closeFriendModal" class="btn">Cancel</button>
-        </div>
-      </div>`;
-    document.body.appendChild(modal);
-    
-    modal.querySelector('#confirmFriendBtn').addEventListener('click', () => {
-      const friendId = modal.querySelector('#friendSelect').value;
-      if (!friendId) { alert('Select a friend'); return; }
-      if (!c.friends) c.friends = [];
-      c.friends.push(friendId);
-      saveMasterData();
-      modal.remove();
-      renderFriendsTab();
-    });
-    modal.querySelector('#closeFriendModal').addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
-  }
-  
-  // ==================== OVERVIEW TAB ====================
-  function renderOverviewTab() {
-    const c = masterData.data.characters.find(c => c.id === selectedCharId);
-    if (!c) return;
-    
-    const mother = c.motherId ? masterData.data.characters.find(m => m.id === c.motherId) : null;
-    const father = c.fatherId ? masterData.data.characters.find(f => f.id === c.fatherId) : null;
-    const children = masterData.data.characters.filter(ch => ch.motherId === c.id || ch.fatherId === c.id);
-    const siblings = masterData.data.characters.filter(ch => ch.id !== c.id && ((ch.motherId && ch.motherId === c.motherId) || (ch.fatherId && ch.fatherId === c.fatherId)));
-    const partners = c.relationships?.filter(r => r.status === 'ongoing').map(r => masterData.data.characters.find(p => p.id === r.partnerId)) || [];
-    const friends = (c.friends || []).map(fId => masterData.data.characters.find(f => f.id === fId)).filter(f => f);
-    
-    function renderCharacterCard(char, relationType) {
-      if (!char) return '';
-      const age = calculateAge(char.birthYear, char.isDeceased, char.deathYear);
-      const rankDisplay = getActiveRankDisplay(char);
-      const location = getCurrentLocation(char);
-      return `
-        <div class="family-card">
-          <div class="name" data-id="${char.id}">${rankDisplay ? `${rankDisplay.display} ` : ''}${escapeHtml(char.name)} ${escapeHtml(char.surname || '')}</div>
-          <div class="details">
-            ${char.gender === 'male' ? '♂' : char.gender === 'female' ? '♀' : '⚥'} | Age: ${age} | Rank: ${rankDisplay ? rankDisplay.name : 'None'} | 📍 ${location}
-            ${char.isDeceased ? ' | 💀 Deceased' : ''}
+          </div>
+          
+          <div class="collapsible-section">
+            <div class="section-header" onclick="toggleSection(this)">
+              <span>Ranks</span>
+              <span class="arrow">▼</span>
+            </div>
+            <div class="section-content">
+              <div class="section-inner">
+                <div class="ranks-container" id="ranks-container"></div>
+                <div class="rank-buttons">
+                  <button class="rank-btn" onclick="addRank('Chief')">★ Chief</button>
+                  <button class="rank-btn" onclick="addRank('Elder')">▲ Elder</button>
+                  <button class="rank-btn" onclick="addRank('Master')">◆ Master</button>
+                  <button class="rank-btn" onclick="addRank('Commoner')">· Commoner</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="collapsible-section">
+            <div class="section-header" onclick="toggleSection(this)">
+              <span>Location</span>
+              <span class="arrow">▼</span>
+            </div>
+            <div class="section-content">
+              <div class="section-inner">
+                <div class="form-group">
+                  <label>Birth Compound</label>
+                  <input id="edit-birthComp" value="${escapeHtml(person?.birthComp || '')}" placeholder="Birth location">
+                </div>
+                <div class="form-group">
+                  <label>Current Compound</label>
+                  <input id="edit-currComp" value="${escapeHtml(person?.currComp || '')}" placeholder="Current location">
+                </div>
+                <div class="form-group">
+                  <label>Household</label>
+                  <input id="edit-household" value="${escapeHtml(person?.household || '')}" placeholder="Household name">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="collapsible-section">
+            <div class="section-header" onclick="toggleSection(this)">
+              <span>Notes</span>
+              <span class="arrow">▼</span>
+            </div>
+            <div class="section-content">
+              <div class="section-inner">
+                <textarea id="edit-notes" rows="3" placeholder="Character notes...">${escapeHtml(person?.notes || '')}</textarea>
+              </div>
+            </div>
+          </div>
+          
+          <div class="action-buttons">
+            <button class="primary" onclick="saveCurrentPerson()">Save Changes</button>
+            <button class="danger" onclick="deleteCurrentPerson()">Delete Character</button>
           </div>
         </div>
       `;
+      
+      // Update ranks display after rendering
+      setTimeout(() => updateRanksDisplay(), 0);
+    },
+    refresh: function() {
+      updateRanksDisplay();
     }
+  },
+  
+  {
+    id: 'relations',
+    label: 'Relations',
+    render: function(container, person) {
+      // Placeholder - Add your full Relations tab HTML here
+      container.innerHTML = `
+        <div class="tab-relations">
+          <div class="empty-msg" style="padding: 40px;">
+            <h4 style="margin-bottom: 16px;">Family & Relationships</h4>
+            <p style="margin-bottom: 12px;">Coming soon: Manage parents, siblings, partners, and friends.</p>
+            <p>This tab will include:</p>
+            <ul style="margin-top: 12px; text-align: left; display: inline-block;">
+              <li>• Parents and children</li>
+              <li>• Siblings</li>
+              <li>• Romantic partners</li>
+              <li>• Friendships</li>
+            </ul>
+          </div>
+        </div>
+      `;
+    },
+    refresh: function() {
+      // Nothing to refresh yet
+    }
+  },
+  
+  {
+    id: 'professions',
+    label: 'Professions',
+    render: function(container, person) {
+      // Placeholder - Add your full Professions tab HTML here
+      container.innerHTML = `
+        <div class="tab-professions">
+          <div class="empty-msg" style="padding: 40px;">
+            <h4 style="margin-bottom: 16px;">Professions & Apprentices</h4>
+            <p style="margin-bottom: 12px;">Coming soon: Manage professions, specializations, and apprentices.</p>
+            <p>This tab will include:</p>
+            <ul style="margin-top: 12px; text-align: left; display: inline-block;">
+              <li>• Assigned professions</li>
+              <li>• Primary profession selection</li>
+              <li>• Specializations</li>
+              <li>• Apprentices and masters</li>
+            </ul>
+          </div>
+        </div>
+      `;
+    },
+    refresh: function() {
+      // Nothing to refresh yet
+    }
+  }
+];
+
+// ====================== TAB MANAGEMENT ======================
+function initTabs() {
+  const tabsContainer = document.getElementById('edit-tabs');
+  const contentContainer = document.getElementById('tab-container');
+  
+  // Clear containers
+  tabsContainer.innerHTML = '';
+  contentContainer.innerHTML = '';
+  
+  // Create tabs and content containers
+  TABS.forEach((tab, index) => {
+    // Create tab button
+    const tabBtn = document.createElement('div');
+    tabBtn.className = 'edit-tab';
+    if (index === 0) tabBtn.classList.add('active');
+    tabBtn.textContent = tab.label;
+    tabBtn.dataset.tabId = tab.id;
+    tabBtn.onclick = () => switchTab(tab.id);
+    tabsContainer.appendChild(tabBtn);
     
-    document.getElementById('panelContent').innerHTML = `
-      <div class="overview-tab">
-        <div class="collapsible-section"><div class="section-header">👪 Parents <span class="arrow expanded">▶</span></div><div class="section-content expanded">
-          ${mother ? renderCharacterCard(mother, 'Mother') : '<div class="empty-state" style="padding:20px;">No mother recorded</div>'}
-          ${father ? renderCharacterCard(father, 'Father') : '<div class="empty-state" style="padding:20px;">No father recorded</div>'}
-        </div></div>
-        <div class="separator"></div>
-        <div class="collapsible-section"><div class="section-header">💕 Partners <span class="arrow expanded">▶</span></div><div class="section-content expanded">
-          ${partners.length ? partners.map(p => renderCharacterCard(p, 'Partner')).join('') : '<div class="empty-state" style="padding:20px;">No partners</div>'}
-        </div></div>
-        <div class="separator"></div>
-        <div class="collapsible-section"><div class="section-header">👶 Children <span class="arrow expanded">▶</span></div><div class="section-content expanded">
-          ${children.length ? children.map(ch => renderCharacterCard(ch, 'Child')).join('') : '<div class="empty-state" style="padding:20px;">No children</div>'}
-        </div></div>
-        <div class="separator"></div>
-        <div class="collapsible-section"><div class="section-header">👥 Siblings <span class="arrow expanded">▶</span></div><div class="section-content expanded">
-          ${siblings.length ? siblings.map(s => renderCharacterCard(s, 'Sibling')).join('') : '<div class="empty-state" style="padding:20px;">No siblings</div>'}
-        </div></div>
-        <div class="separator"></div>
-        <div class="collapsible-section"><div class="section-header">🤝 Friends <span class="arrow expanded">▶</span></div><div class="section-content expanded">
-          ${friends.length ? friends.map(f => renderCharacterCard(f, 'Friend')).join('') : '<div class="empty-state" style="padding:20px;">No friends</div>'}
-        </div></div>
+    // Create content container
+    const tabContent = document.createElement('div');
+    tabContent.id = `tab-${tab.id}`;
+    tabContent.className = 'tab-container';
+    if (index === 0) tabContent.classList.add('active');
+    contentContainer.appendChild(tabContent);
+    
+    // Store reference
+    tab.container = tabContent;
+  });
+  
+  activeTab = TABS[0]?.id || null;
+}
+
+function switchTab(tabId) {
+  activeTab = tabId;
+  
+  // Update tab buttons
+  document.querySelectorAll('.edit-tab').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.tabId === tabId) btn.classList.add('active');
+  });
+  
+  // Update content containers
+  document.querySelectorAll('.tab-container').forEach(container => {
+    container.classList.remove('active');
+  });
+  document.getElementById(`tab-${tabId}`)?.classList.add('active');
+  
+  // Render current tab if person selected
+  if (activeId && DATA.people[activeId]) {
+    renderCurrentTab();
+  }
+}
+
+function renderCurrentTab() {
+  const person = DATA.people[activeId];
+  const tab = TABS.find(t => t.id === activeTab);
+  const container = document.getElementById(`tab-${activeTab}`);
+  
+  if (tab && container) {
+    tab.render(container, person);
+  }
+}
+
+function refreshCurrentTab() {
+  const tab = TABS.find(t => t.id === activeTab);
+  if (tab && tab.refresh) {
+    tab.refresh();
+  }
+}
+
+// ====================== CORE FUNCTIONS ======================
+function showToast(msg) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+function generateStableId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
+  let id = '';
+  for (let i = 0; i < 9; i++) {
+    if (i === 3 || i === 6) id += '-';
+    else id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return id;
+}
+
+function calculateAge(birthYear, deathYear = null) {
+  if (!birthYear) return null;
+  const year = deathYear || DATA.currentYear;
+  return Math.max(0, year - birthYear);
+}
+
+function calculateLifeStage(age) {
+  if (age === null || age === undefined) return '';
+  if (age < 1) return 'infant';
+  if (age < 4) return 'toddler';
+  if (age < 13) return 'child';
+  if (age < 20) return 'adolescent';
+  if (age < 30) return 'young adult';
+  if (age < 50) return 'adult';
+  if (age < 70) return 'middle-aged';
+  return 'elder';
+}
+
+function getPersonId(ref) {
+  if (!ref) return null;
+  if (DATA.people[ref]) return ref;
+  if (DATA.stableIdIndex[ref]) return DATA.stableIdIndex[ref];
+  return null;
+}
+
+function getPersonDisplay(id) {
+  const p = DATA.people[id];
+  if (!p) return null;
+  const isDeceased = p.deceased === true;
+  const deathYear = isDeceased ? p.deathYear : null;
+  const age = calculateAge(p.birthYear, deathYear);
+  return {
+    id: id,
+    stableId: p.stableId,
+    name: p.name || 'Unnamed',
+    gender: p.gender || 'unknown',
+    birthYear: p.birthYear,
+    age: age,
+    stage: calculateLifeStage(age),
+    role: p.role || '',
+    deceased: isDeceased,
+    deathYear: p.deathYear,
+    causeDeath: p.causeDeath,
+    birthComp: p.birthComp || '',
+    currComp: p.currComp || p.birthComp || '',
+    household: p.household || '',
+    notes: p.notes || '',
+    ranks: p.ranks || []
+  };
+}
+
+function rebuildStableIdIndex() {
+  DATA.stableIdIndex = {};
+  Object.entries(DATA.people).forEach(([id, person]) => {
+    if (person.stableId) DATA.stableIdIndex[person.stableId] = id;
+  });
+}
+
+// ====================== SAVE/LOAD ======================
+function saveData() {
+  DATA.lastSaved = new Date().toISOString();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+  const saveBtn = document.getElementById('save-btn');
+  if (saveBtn) {
+    saveBtn.style.opacity = '0.6';
+    setTimeout(() => { if (saveBtn) saveBtn.style.opacity = '1'; }, 500);
+  }
+}
+
+function saveAll() {
+  saveData();
+  showToast('All changes saved');
+}
+
+function loadData() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      DATA = { ...DATA, ...parsed };
+      if (!DATA.stableIdIndex) DATA.stableIdIndex = {};
+      rebuildStableIdIndex();
+    } catch(e) { console.error('Load error:', e); }
+  }
+  document.getElementById('current-year').value = DATA.currentYear;
+}
+
+// ====================== YEAR MANAGEMENT ======================
+function updateYear() {
+  const newYear = parseInt(document.getElementById('current-year').value);
+  if (newYear && newYear > 0) {
+    DATA.currentYear = newYear;
+    updateAllAges();
+    renderPersonList();
+    if (activeId) loadView(activeId);
+    showToast(`Year updated to ${newYear}`);
+  }
+}
+
+function updateAllAges() {
+  Object.keys(DATA.people).forEach(id => {
+    const p = DATA.people[id];
+    if (p.birthYear) {
+      const isDeceased = p.deceased === true;
+      const deathYear = isDeceased ? p.deathYear : null;
+      p.age = calculateAge(p.birthYear, deathYear);
+      p.stage = calculateLifeStage(p.age);
+    }
+  });
+}
+
+// ====================== PERSON LIST ======================
+function renderPersonList() {
+  const container = document.getElementById('person-list');
+  if (!container) return;
+  
+  const peopleList = Object.entries(DATA.people).map(([id, p]) => ({
+    id,
+    display: getPersonDisplay(id)
+  }));
+  
+  const searchTerm = document.getElementById('search-box')?.value.toLowerCase() || '';
+  const ageMin = parseInt(document.getElementById('filter-age-min')?.value) || null;
+  const ageMax = parseInt(document.getElementById('filter-age-max')?.value) || null;
+  const genderFilter = document.getElementById('filter-gender')?.value || '';
+  const stageFilter = document.getElementById('filter-stage')?.value || '';
+  const showDeceased = document.getElementById('filter-show-deceased')?.checked || false;
+  
+  const filtered = peopleList.filter(({ display }) => {
+    if (searchTerm && !display.name.toLowerCase().includes(searchTerm) && 
+        !(display.role || '').toLowerCase().includes(searchTerm)) return false;
+    if (ageMin !== null && (display.age || 0) < ageMin) return false;
+    if (ageMax !== null && (display.age || 999) > ageMax) return false;
+    if (genderFilter && display.gender !== genderFilter) return false;
+    if (stageFilter && display.stage !== stageFilter) return false;
+    if (!showDeceased && display.deceased) return false;
+    return true;
+  });
+  
+  const stages = ['elder', 'middle-aged', 'adult', 'young adult', 'adolescent', 'child', 'toddler', 'infant'];
+  const groups = {};
+  stages.forEach(s => groups[s] = []);
+  groups.deceased = [];
+  groups.notBorn = [];
+  
+  filtered.forEach(({ id, display }) => {
+    if (display.birthYear && display.birthYear > DATA.currentYear && !display.deceased) {
+      groups.notBorn.push({ id, display });
+    } else if (display.deceased) {
+      groups.deceased.push({ id, display });
+    } else if (display.stage && stages.includes(display.stage)) {
+      groups[display.stage].push({ id, display });
+    } else {
+      groups.adult.push({ id, display });
+    }
+  });
+  
+  Object.keys(groups).forEach(k => {
+    groups[k].sort((a, b) => (b.display.age || 0) - (a.display.age || 0));
+  });
+  
+  let html = '';
+  
+  stages.forEach(stage => {
+    if (groups[stage].length) {
+      const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
+      html += `<div class="list-group">
+        <div class="group-header" onclick="toggleGroup(this)">
+          <span>${stageName} (${groups[stage].length})</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="group-content">
+          ${groups[stage].map(({ id, display }) => renderPersonItem(id, display)).join('')}
+        </div>
       </div>`;
-    
-    document.querySelectorAll('.family-card .name').forEach(el => el.addEventListener('click', () => selectCharacter(el.dataset.id)));
-    document.querySelectorAll('.collapsible-section .section-header').forEach(h => {
-      const content = h.nextElementSibling;
-      const arrow = h.querySelector('.arrow');
-      h.addEventListener('click', () => { content.classList.toggle('expanded'); arrow?.classList.toggle('expanded'); });
-    });
+    }
+  });
+  
+  if (groups.deceased.length) {
+    html += `<div class="list-group">
+      <div class="group-header" onclick="toggleGroup(this)">
+        <span>Deceased (${groups.deceased.length})</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="group-content">
+        ${groups.deceased.map(({ id, display }) => renderPersonItem(id, display)).join('')}
+      </div>
+    </div>`;
   }
   
-  // ==================== EDIT TAB STUB ====================
-  function renderEditTab() { document.getElementById('panelContent').innerHTML = '<div class="empty-state">Edit tab - Full implementation available in previous version</div>'; }
-  function renderFamilyTab() { document.getElementById('panelContent').innerHTML = '<div class="empty-state">Family tab - Full implementation available in previous version</div>'; }
-  function renderLoveTab() { document.getElementById('panelContent').innerHTML = '<div class="empty-state">Love tab - Full implementation available in previous version</div>'; }
-  
-  function addNewPerson() {
-    const newChar = {
-      id: generateId(), name: 'New Character', surname: '', gender: 'unknown', attraction: 'both',
-      birthYear: currentYear - 25, isDeceased: false, deathYear: null, deathCause: '',
-      rankAssignments: [], birthplaceId: null, moves: [], appearance: {}, notes: '',
-      motherId: null, fatherId: null, relationships: [], friends: [], childrenIds: []
-    };
-    masterData.data.characters.push(newChar);
-    saveMasterData();
-    renderCharList();
-    selectCharacter(newChar.id);
+  if (groups.notBorn.length) {
+    html += `<div class="list-group">
+      <div class="group-header" onclick="toggleGroup(this)">
+        <span>Not Born Yet (${groups.notBorn.length})</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="group-content">
+        ${groups.notBorn.map(({ id, display }) => renderPersonItem(id, display, true)).join('')}
+      </div>
+    </div>`;
   }
   
-  function generateRandomPerson() {
-    const gender = ['male', 'female', 'unknown'][Math.floor(Math.random() * 3)];
-    return {
-      id: generateId(), name: gender === 'male' ? 'Aron' : gender === 'female' ? 'Elara' : 'Rowan', surname: 'Stormborn',
-      gender: gender, attraction: ['men', 'women', 'both', 'neither'][Math.floor(Math.random() * 4)],
-      birthYear: currentYear - Math.floor(Math.random() * 80) - 10, isDeceased: false, deathYear: null, deathCause: '',
-      rankAssignments: [], birthplaceId: null, moves: [], appearance: {}, notes: '',
-      motherId: null, fatherId: null, relationships: [], friends: [], childrenIds: []
-    };
+  if (!html) html = '<div class="empty-msg">No characters match</div>';
+  container.innerHTML = html;
+}
+
+function renderPersonItem(id, display, notBorn = false) {
+  const genderSym = { male: '♂', female: '♀', unknown: '·' }[display.gender] || '';
+  const deceasedMark = display.deceased ? '<span class="deceased-mark">†</span>' : '';
+  const selectedClass = activeId === id ? 'selected' : '';
+  
+  return `<div class="person-item ${selectedClass} ${display.deceased ? 'deceased' : ''}" onclick="selectPerson('${id}')">
+    <div class="person-name">
+      ${genderSym ? `<span class="gender-symbol">${genderSym}</span>` : ''}
+      ${escapeHtml(display.name)}${deceasedMark}
+    </div>
+    <div class="person-detail">
+      ${notBorn ? `Born ${display.birthYear}` : (display.age !== null ? `${display.age} yrs` : '')}
+      ${display.role ? ` • ${escapeHtml(display.role)}` : ''}
+    </div>
+  </div>`;
+}
+
+function toggleGroup(header) {
+  header.classList.toggle('collapsed');
+  const content = header.nextElementSibling;
+  if (content) content.classList.toggle('collapsed');
+}
+
+// ====================== FILTERS ======================
+function toggleFilters() {
+  const panel = document.getElementById('filters-panel');
+  const btn = document.querySelector('.filter-toggle-btn');
+  const arrow = btn?.querySelector('.arrow');
+  if (panel) {
+    const isCollapsed = panel.style.display === 'none';
+    panel.style.display = isCollapsed ? 'block' : 'none';
+    if (arrow) arrow.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+  }
+}
+
+function clearFilters() {
+  document.getElementById('search-box').value = '';
+  document.getElementById('filter-age-min').value = '';
+  document.getElementById('filter-age-max').value = '';
+  document.getElementById('filter-gender').value = '';
+  document.getElementById('filter-stage').value = '';
+  document.getElementById('filter-show-deceased').checked = false;
+  renderPersonList();
+}
+
+// ====================== SELECT PERSON ======================
+function selectPerson(id) {
+  if (!DATA.people[id]) {
+    const resolved = getPersonId(id);
+    if (resolved && DATA.people[resolved]) id = resolved;
+    else return;
   }
   
-  function exportData() {
-    const exportObj = { type: "master", version: "2.0", exportDate: new Date().toISOString(), data: masterData.data };
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' }));
-    a.download = `stillwaters_master_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
-    a.click();
-    showToast('Master data exported');
+  activeId = id;
+  loadView(activeId);
+  renderCurrentTab();
+  renderPersonList();
+  
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('mobile-visible');
   }
   
-  function importData() {
-    const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/json';
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const imported = JSON.parse(ev.target.result);
-          if (imported.type === "master" && imported.data) masterData = imported;
-          else if (imported.data && imported.data.characters) masterData = imported;
-          else if (imported.characters) masterData = { version: "2.0", data: { characters: imported.characters, places: [], ranks: [], roles: [], currentYear: 1250 } };
-          saveMasterData();
-          renderCharList();
-          showToast('Data imported');
-        } catch(err) { alert('Invalid JSON: ' + err.message); }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
+  document.getElementById('edit-empty').style.display = 'none';
+}
+
+// ====================== VIEW PANEL ======================
+function loadView(id) {
+  const display = getPersonDisplay(id);
+  if (!display) return;
+  
+  document.getElementById('view-empty').style.display = 'none';
+  document.getElementById('view-filled').style.display = 'block';
+  
+  document.getElementById('view-name').textContent = display.name || '—';
+  document.getElementById('view-stableId').textContent = display.stableId || '—';
+  document.getElementById('view-gender').textContent = display.gender || 'unknown';
+  document.getElementById('view-age').textContent = display.age !== null ? `${display.age} years` : '—';
+  document.getElementById('view-stage').textContent = display.stage || '—';
+  document.getElementById('view-role').textContent = display.role || '—';
+  document.getElementById('view-birthComp').textContent = display.birthComp || '—';
+  document.getElementById('view-currComp').textContent = display.currComp || '—';
+  document.getElementById('view-notes').textContent = display.notes || '';
+  
+  const ranksContainer = document.getElementById('view-ranks');
+  if (display.ranks && display.ranks.length) {
+    ranksContainer.innerHTML = display.ranks.map(r => 
+      `<span class="rank-chip">${getRankSymbol(r.value)} ${r.value}</span>`
+    ).join('');
+  } else {
+    ranksContainer.innerHTML = '';
+  }
+}
+
+function getRankSymbol(rank) {
+  const symbols = { 'Chief': '★', 'Elder': '▲', 'Master': '◆', 'Commoner': '·' };
+  return symbols[rank] || '·';
+}
+
+// ====================== EDIT TAB FUNCTIONS ======================
+function updateRanksDisplay() {
+  const container = document.getElementById('ranks-container');
+  const p = DATA.people[activeId];
+  if (!p || !p.ranks || !p.ranks.length) {
+    if (container) container.innerHTML = '<div style="color:var(--dim); font-style:italic;">No ranks assigned</div>';
+    return;
+  }
+  if (container) {
+    container.innerHTML = p.ranks.map(r => 
+      `<span class="rank-chip" onclick="removeRank('${r.value}')" style="cursor:pointer;">${getRankSymbol(r.value)} ${r.value} ✕</span>`
+    ).join('');
+  }
+}
+
+function addRank(rankValue) {
+  if (!activeId) {
+    showToast('Select a character first');
+    return;
+  }
+  const p = DATA.people[activeId];
+  if (!p.ranks) p.ranks = [];
+  if (!p.ranks.some(r => r.value === rankValue)) {
+    p.ranks.push({ value: rankValue, type: 'ritual' });
+    updateRanksDisplay();
+    saveData();
+    showToast(`Added ${rankValue} rank`);
+  } else {
+    showToast(`${rankValue} already assigned`);
+  }
+}
+
+function removeRank(rankValue) {
+  if (!activeId) return;
+  const p = DATA.people[activeId];
+  if (p.ranks) {
+    p.ranks = p.ranks.filter(r => r.value !== rankValue);
+    updateRanksDisplay();
+    saveData();
+    showToast(`Removed ${rankValue}`);
+  }
+}
+
+function updateAgeFromBirth() {
+  const birthYear = parseInt(document.getElementById('edit-birthYear')?.value);
+  const isDeceased = document.getElementById('edit-deceased')?.checked;
+  const deathYear = isDeceased ? parseInt(document.getElementById('edit-deathYear')?.value) : null;
+  const age = calculateAge(birthYear, deathYear);
+  const ageInput = document.getElementById('edit-age');
+  if (ageInput) ageInput.value = age || '';
+}
+
+function updateBirthFromAge() {
+  const age = parseInt(document.getElementById('edit-age')?.value);
+  const isDeceased = document.getElementById('edit-deceased')?.checked;
+  const deathYear = isDeceased ? parseInt(document.getElementById('edit-deathYear')?.value) : null;
+  const birthYear = isDeceased && deathYear ? deathYear - age : DATA.currentYear - age;
+  const birthInput = document.getElementById('edit-birthYear');
+  if (birthInput && !isNaN(birthYear) && birthYear > 0) {
+    birthInput.value = birthYear;
+  }
+}
+
+function toggleDeathFields() {
+  const isDeceased = document.getElementById('edit-deceased')?.checked;
+  const deathFields = document.getElementById('death-fields');
+  if (deathFields) deathFields.style.display = isDeceased ? 'block' : 'none';
+}
+
+function saveCurrentPerson() {
+  if (!activeId) return;
+  
+  const name = document.getElementById('edit-name')?.value.trim();
+  if (!name) {
+    showToast('Name is required');
+    return;
   }
   
-  function showToast(msg) {
-    let c = document.getElementById('toast-container');
-    if (!c) { c = document.createElement('div'); c.id = 'toast-container'; document.body.appendChild(c); }
-    const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; c.appendChild(t);
-    setTimeout(() => t.remove(), 2500);
+  const p = DATA.people[activeId];
+  p.name = name;
+  p.gender = document.getElementById('edit-gender')?.value || 'unknown';
+  p.attraction = document.getElementById('edit-attraction')?.value || 'both';
+  p.birthYear = parseInt(document.getElementById('edit-birthYear')?.value) || null;
+  p.age = parseInt(document.getElementById('edit-age')?.value) || null;
+  p.role = document.getElementById('edit-role')?.value || '';
+  p.deceased = document.getElementById('edit-deceased')?.checked || false;
+  p.deathYear = p.deceased ? (parseInt(document.getElementById('edit-deathYear')?.value) || null) : null;
+  p.causeDeath = document.getElementById('edit-causeDeath')?.value || '';
+  p.birthComp = document.getElementById('edit-birthComp')?.value || '';
+  p.currComp = document.getElementById('edit-currComp')?.value || p.birthComp;
+  p.household = document.getElementById('edit-household')?.value || '';
+  p.notes = document.getElementById('edit-notes')?.value || '';
+  
+  if (p.birthYear) {
+    const deathYear = p.deceased ? p.deathYear : null;
+    p.age = calculateAge(p.birthYear, deathYear);
+    p.stage = calculateLifeStage(p.age);
   }
   
-  function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m); }
+  saveData();
+  renderPersonList();
+  loadView(activeId);
+  showToast('Saved');
+}
+
+function deleteCurrentPerson() {
+  if (!activeId) return;
+  const name = DATA.people[activeId]?.name || 'this character';
+  if (!confirm(`Delete ${name} permanently?`)) return;
   
-  function updateLocationFilter() {
-    const s = document.getElementById('filterLocation');
-    s.innerHTML = '<option value="">All</option>' + masterData.data.places.filter(l => l.variableKey).map(l => `<option value="${l.displayName}">${escapeHtml(l.displayName)}</option>`).join('');
+  delete DATA.people[activeId];
+  delete DATA.relationships[activeId];
+  rebuildStableIdIndex();
+  
+  activeId = null;
+  saveData();
+  renderPersonList();
+  
+  document.getElementById('view-empty').style.display = 'block';
+  document.getElementById('view-filled').style.display = 'none';
+  document.getElementById('edit-empty').style.display = 'block';
+  
+  showToast('Character deleted');
+}
+
+// ====================== CREATE PERSON ======================
+function createPerson() {
+  const name = document.getElementById('new-name').value.trim();
+  if (!name) {
+    showToast('Name required');
+    return;
   }
   
-  function init() {
-    loadMasterData(); updateLocationFilter(); renderCharList();
-    document.getElementById('currentYear').addEventListener('change', () => { currentYear = parseInt(document.getElementById('currentYear').value); saveMasterData(); renderCharList(); if (selectedCharId) renderViewTab(); });
-    document.getElementById('clearFilters').addEventListener('click', () => { document.querySelectorAll('.filter-bar select').forEach(s => s.value = ''); renderCharList(); });
-    document.getElementById('addPersonBtn').addEventListener('click', addNewPerson);
-    document.getElementById('generatePersonBtn').addEventListener('click', () => { const p = generateRandomPerson(); masterData.data.characters.push(p); saveMasterData(); renderCharList(); selectCharacter(p.id); });
-    document.getElementById('importCharsBtn').addEventListener('click', importData);
-    document.getElementById('exportCharsBtn').addEventListener('click', exportData);
-    let fc = false;
-    document.getElementById('filterToggleBtn').addEventListener('click', () => { const cont = document.getElementById('filterContainer'); fc = !fc; cont.style.maxHeight = fc ? '0' : '300px'; document.getElementById('filterToggleBtn').textContent = fc ? '▶ Filters' : '▼ Filters'; });
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-      if (selectedCharId) {
-        const t = btn.dataset.tab;
-        if (t === 'view') renderViewTab();
-        else if (t === 'edit') renderEditTab();
-        else if (t === 'family') renderFamilyTab();
-        else if (t === 'love') renderLoveTab();
-        else if (t === 'friends') renderFriendsTab();
-        else if (t === 'overview') renderOverviewTab();
-      }
-    }));
-    document.getElementById('filterLifeStage').addEventListener('change', renderCharList);
-    document.getElementById('filterRelation').addEventListener('change', renderCharList);
-    document.getElementById('filterLocation').addEventListener('change', renderCharList);
-    window.addEventListener('storage', (e) => { if (e.key === 'stillwaters_master') { loadMasterData(); updateLocationFilter(); renderCharList(); if (selectedCharId) renderViewTab(); } });
-    if (masterData.data.characters.length === 0) document.getElementById('panelContent').innerHTML = `<div class="empty-state">👤 No characters<br><br><button id="quickAdd" class="btn primary">+ Add First</button><button id="quickGen" class="btn">🎲 Generate</button></div>`;
-    const qa = document.getElementById('quickAdd'); if (qa) qa.addEventListener('click', addNewPerson);
-    const qg = document.getElementById('quickGen'); if (qg) qg.addEventListener('click', () => { const p = generateRandomPerson(); masterData.data.characters.push(p); saveMasterData(); renderCharList(); selectCharacter(p.id); });
+  const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now().toString(36);
+  const stableId = generateStableId();
+  const birthYear = parseInt(document.getElementById('new-birthYear').value) || null;
+  const age = calculateAge(birthYear);
+  
+  DATA.people[id] = {
+    stableId: stableId,
+    name: name,
+    gender: document.getElementById('new-gender').value,
+    attraction: 'both',
+    birthYear: birthYear,
+    age: age,
+    stage: calculateLifeStage(age),
+    role: '',
+    deceased: false,
+    deathYear: null,
+    causeDeath: '',
+    birthComp: document.getElementById('new-birthComp').value || '',
+    currComp: document.getElementById('new-birthComp').value || '',
+    household: '',
+    notes: '',
+    ranks: []
+  };
+  
+  DATA.relationships[id] = {
+    ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {}
+  };
+  
+  rebuildStableIdIndex();
+  saveData();
+  renderPersonList();
+  closeNewPersonModal();
+  selectPerson(id);
+  showToast(`${name} created`);
+}
+
+function openNewPersonModal() {
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-gender').value = 'unknown';
+  document.getElementById('new-birthYear').value = '';
+  document.getElementById('new-birthComp').value = '';
+  document.getElementById('new-person-modal').style.display = 'flex';
+}
+
+function closeNewPersonModal() {
+  document.getElementById('new-person-modal').style.display = 'none';
+}
+
+// ====================== RANDOM GENERATION ======================
+function randomNameForCurrent() {
+  if (!activeId) {
+    showToast('Select a character first');
+    return;
+  }
+  const gender = document.getElementById('edit-gender')?.value;
+  const names = DEFAULT_NAMES[gender === 'male' ? 'male' : 'female'] || DEFAULT_NAMES.male;
+  const newName = names[Math.floor(Math.random() * names.length)];
+  const nameInput = document.getElementById('edit-name');
+  if (nameInput) nameInput.value = newName;
+  showToast(`Random name: ${newName}`);
+}
+
+function randomNameForNew() {
+  const gender = document.getElementById('new-gender').value;
+  const names = DEFAULT_NAMES[gender === 'male' ? 'male' : 'female'] || DEFAULT_NAMES.male;
+  const newName = names[Math.floor(Math.random() * names.length)];
+  document.getElementById('new-name').value = newName;
+}
+
+function generateRandomPerson() {
+  const gender = Math.random() > 0.5 ? 'male' : 'female';
+  const names = DEFAULT_NAMES[gender];
+  const name = names[Math.floor(Math.random() * names.length)];
+  const age = Math.floor(Math.random() * 70) + 10;
+  const birthYear = DATA.currentYear - age;
+  
+  const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now().toString(36);
+  const stableId = generateStableId();
+  
+  DATA.people[id] = {
+    stableId: stableId,
+    name: name,
+    gender: gender,
+    attraction: Math.random() > 0.7 ? 'both' : (gender === 'male' ? 'women' : 'men'),
+    birthYear: birthYear,
+    age: age,
+    stage: calculateLifeStage(age),
+    role: '',
+    deceased: false,
+    deathYear: null,
+    causeDeath: '',
+    birthComp: '',
+    currComp: '',
+    household: '',
+    notes: '',
+    ranks: []
+  };
+  
+  DATA.relationships[id] = {
+    ongoing: [], ended: [], widowed: [], friends: [], friendDetails: {}, details: {}
+  };
+  
+  rebuildStableIdIndex();
+  saveData();
+  renderPersonList();
+  selectPerson(id);
+  showToast(`Random character created: ${name}`);
+}
+
+// ====================== EXPORT/IMPORT ======================
+function exportJSON() {
+  const exportData = {
+    version: DATA.version,
+    exportDate: new Date().toISOString(),
+    currentYear: DATA.currentYear,
+    people: DATA.people,
+    relationships: DATA.relationships
+  };
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `stillwaters_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exported');
+}
+
+document.getElementById('import-file').onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (imported.people) Object.assign(DATA.people, imported.people);
+      if (imported.relationships) Object.assign(DATA.relationships, imported.relationships);
+      if (imported.currentYear) DATA.currentYear = imported.currentYear;
+      rebuildStableIdIndex();
+      updateAllAges();
+      saveData();
+      renderPersonList();
+      showToast(`Imported ${Object.keys(imported.people || {}).length} characters`);
+    } catch(err) {
+      showToast('Error importing: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+};
+
+// ====================== UI HELPERS ======================
+function toggleViewPanel() {
+  const panel = document.getElementById('view-panel');
+  const btn = document.getElementById('view-collapse-btn');
+  if (panel.style.maxHeight === '35%' || !panel.style.maxHeight) {
+    panel.style.maxHeight = '52px';
+    if (btn) btn.innerHTML = '▲';
+  } else {
+    panel.style.maxHeight = '35%';
+    if (btn) btn.innerHTML = '▼';
+  }
+}
+
+function toggleMobileSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-visible');
+}
+
+function toggleSection(header) {
+  header.classList.toggle('collapsed');
+  const content = header.nextElementSibling;
+  if (content) content.classList.toggle('collapsed');
+}
+
+// ====================== AUTO-SAVE ======================
+let autoSaveTimer = null;
+
+function startAutoSave() {
+  if (autoSaveTimer) clearInterval(autoSaveTimer);
+  autoSaveTimer = setInterval(() => {
+    const autosaveToggle = document.getElementById('autosave-toggle');
+    if (autosaveToggle && autosaveToggle.checked) {
+      saveData();
+    }
+  }, 30000);
+}
+
+// ====================== INITIALIZATION ======================
+function init() {
+  loadData();
+  initTabs();
+  
+  // Set initial filters panel state
+  const filtersPanel = document.getElementById('filters-panel');
+  if (filtersPanel) filtersPanel.style.display = 'block';
+  
+  renderPersonList();
+  startAutoSave();
+  
+  if (Object.keys(DATA.people).length === 0) {
+    document.getElementById('view-empty').style.display = 'block';
+    document.getElementById('edit-empty').style.display = 'block';
+  } else {
+    const firstId = Object.keys(DATA.people)[0];
+    if (firstId) selectPerson(firstId);
   }
   
-  init();
+  document.getElementById('view-panel').style.maxHeight = '35%';
+}
+
+window.addEventListener('load', init);
 </script>
 </body>
 </html>
