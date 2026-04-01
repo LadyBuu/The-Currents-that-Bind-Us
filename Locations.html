@@ -225,7 +225,6 @@
       border-radius: 4px;
     }
     
-    /* Management Cards */
     .management-section {
       background: var(--bg2);
       border: 1px solid var(--border);
@@ -300,6 +299,12 @@
       border: 1px solid var(--border);
       color: var(--text);
       border-radius: 4px;
+    }
+    
+    .error-message {
+      color: var(--danger);
+      font-size: 0.7rem;
+      margin-top: 4px;
     }
     
     @media (max-width: 768px) {
@@ -380,6 +385,47 @@
   
   function generateId() { return 'loc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
   
+  // ==================== HIERARCHY VALIDATION ====================
+  function getTypePriority(typeId) {
+    const type = getLocationTypes().find(t => t.id === typeId);
+    return type ? type.priority : 999;
+  }
+  
+  function isValidParent(childTypeId, parentId) {
+    if (!parentId) return true;
+    
+    const parent = getPlaceById(parentId);
+    if (!parent) return false;
+    
+    const childPriority = getTypePriority(childTypeId);
+    const parentPriority = getTypePriority(parent.typeId);
+    
+    // Child can only depend on places with LOWER priority number (higher in hierarchy)
+    // So a child (priority 4) can depend on parent (priority 1, 2, or 3)
+    return childPriority > parentPriority;
+  }
+  
+  function getValidParentOptions(childTypeId) {
+    const places = getPlaces();
+    const childPriority = getTypePriority(childTypeId);
+    
+    return places.filter(place => {
+      if (place.id === currentPlaceId) return false; // Can't be its own parent
+      const parentPriority = getTypePriority(place.typeId);
+      return childPriority > parentPriority;
+    });
+  }
+  
+  function getHierarchyLevelDisplay(priority) {
+    const levels = {
+      1: 'Country',
+      2: 'District', 
+      3: 'Town/Village',
+      4: 'Compound'
+    };
+    return levels[priority] || 'Other';
+  }
+  
   // ==================== LOAD FROM UNIFIED STORAGE ====================
   function loadMasterData() {
     const stored = localStorage.getItem('stillwaters_master');
@@ -403,7 +449,7 @@
         };
       } catch(e) { console.error('Error loading master data', e); }
     } else {
-      // Initialize with default data
+      // Initialize with default data with proper hierarchy
       masterData.data.locationTypes = [
         { id: generateId(), displayName: 'Country', priority: 1 },
         { id: generateId(), displayName: 'District', priority: 2 },
@@ -447,18 +493,35 @@
     const placeMap = new Map();
     places.forEach(p => placeMap.set(p.id, { ...p, children: [] }));
     const roots = [];
+    
     places.forEach(p => {
       if (p.parentId && placeMap.has(p.parentId)) {
-        placeMap.get(p.parentId).children.push(placeMap.get(p.id));
+        const parent = placeMap.get(p.parentId);
+        const childPriority = getTypePriority(p.typeId);
+        const parentPriority = getTypePriority(parent.typeId);
+        
+        // Only add if hierarchy is valid
+        if (childPriority > parentPriority) {
+          parent.children.push(placeMap.get(p.id));
+        } else {
+          // Invalid hierarchy - treat as root
+          roots.push(placeMap.get(p.id));
+        }
+      } else if (!p.parentId) {
+        roots.push(placeMap.get(p.id));
       } else {
+        // Parent doesn't exist - treat as root
         roots.push(placeMap.get(p.id));
       }
     });
+    
     const sortChildren = (node) => {
       node.children.sort((a, b) => a.displayName.localeCompare(b.displayName));
       node.children.forEach(sortChildren);
     };
     roots.forEach(sortChildren);
+    roots.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    
     return roots;
   }
   
@@ -479,6 +542,8 @@
     const star = node.isCapital ? '<span class="capital-star">★</span>' : '';
     const statusText = node.status || 'active';
     const shortId = node.id.slice(-6);
+    const type = getTypeById(node.typeId);
+    const levelName = type ? getHierarchyLevelDisplay(type.priority) : 'Unknown';
     
     return `
       <li class="tree-item" data-place-id="${node.id}">
@@ -486,6 +551,7 @@
           <span class="toggle-icon" data-toggle>${node.children.length ? '▼' : '○'}</span>
           ${star}
           <span class="place-name">${escapeHtml(node.displayName)}</span>
+          <span class="id-hint" title="Type: ${levelName}">[${levelName}]</span>
           <span class="id-hint" title="Permanent ID: ${node.id}">#${shortId}</span>
           <span class="status-badge" style="border-color:${statusColors[statusText]}; color:${statusColors[statusText]}">${statusText}</span>
         </div>
@@ -517,8 +583,36 @@
   // ==================== SELECT PLACE ====================
   function selectPlace(placeId) {
     currentPlaceId = placeId;
-    renderPlaceList();
+    
+    // Highlight selected
+    document.querySelectorAll('.tree-header').forEach(header => {
+      header.style.background = '';
+    });
+    const selectedHeader = document.querySelector(`.tree-header[data-place-id="${placeId}"]`);
+    if (selectedHeader) selectedHeader.style.background = 'var(--bg3)';
+    
+    // Expand parent chain
+    expandToPlace(placeId);
+    
     renderViewTab();
+  }
+  
+  function expandToPlace(placeId) {
+    const place = getPlaceById(placeId);
+    if (!place) return;
+    
+    // Find and expand parent
+    let current = place;
+    while (current.parentId) {
+      const parentContainer = document.querySelector(`.tree-children[data-children="${current.parentId}"]`);
+      if (parentContainer && parentContainer.classList.contains('collapsed')) {
+        parentContainer.classList.remove('collapsed');
+        const parentToggle = document.querySelector(`.tree-header[data-place-id="${current.parentId}"] .toggle-icon`);
+        if (parentToggle) parentToggle.textContent = '▼';
+      }
+      current = getPlaceById(current.parentId);
+      if (!current) break;
+    }
   }
   
   function renderViewTab() {
@@ -531,17 +625,19 @@
     const type = getTypeById(place.typeId);
     const parent = getPlaceById(place.parentId);
     const gov = getGovernmentById(place.governmentId);
+    const hierarchyValid = !place.parentId || isValidParent(place.typeId, place.parentId);
     
     const content = `
       <div class="view-section">
         <h2 style="margin-bottom:20px;">${escapeHtml(place.displayName)}</h2>
+        ${!hierarchyValid ? '<div class="warning-badge" style="background:rgba(139,64,64,0.2); border-color:var(--danger);">⚠️ Hierarchy Warning: This place is under an invalid parent (type priority must be higher). Edit to fix.</div>' : ''}
         <div class="warning-badge">
           Permanent ID: <code class="id-display">${place.id}</code><br>
           <small>Characters reference this ID. You can rename this place freely without breaking any links.</small>
         </div>
         <div class="info-grid">
-          <div class="info-label">Type</div><div class="info-value">${type ? type.displayName : 'Unknown'} (Priority ${type?.priority || '-'})</div>
-          <div class="info-label">Parent</div><div class="info-value">${parent ? parent.displayName : '— Root —'}</div>
+          <div class="info-label">Type</div><div class="info-value">${type ? type.displayName : 'Unknown'} (Priority ${type?.priority || '-'} - ${getHierarchyLevelDisplay(type?.priority || 4)})</div>
+          <div class="info-label">Parent</div><div class="info-value">${parent ? parent.displayName + ' (' + getHierarchyLevelDisplay(getTypePriority(parent.typeId)) + ')' : '— Root —'}</div>
           <div class="info-label">Status</div><div class="info-value">${place.status || 'active'}</div>
           <div class="info-label">Capital</div><div class="info-value">${place.isCapital ? '✓ Yes' : '✗ No'}</div>
           <div class="info-label">Variable Key</div><div class="info-value">${place.variableKey || '— Not assignable —'}</div>
@@ -564,15 +660,30 @@
     }
     
     const locationTypes = getLocationTypes();
-    const places = getPlaces();
     const governments = getGovernments();
     
-    const typeOptions = locationTypes.map(t => `<option value="${t.id}" ${place.typeId === t.id ? 'selected' : ''}>${escapeHtml(t.displayName)} (Prio ${t.priority})</option>`).join('');
-    const parentOptions = `<option value="">— None (Root) —</option>${places.filter(p => p.id !== place.id).map(p => `<option value="${p.id}" ${place.parentId === p.id ? 'selected' : ''}>${escapeHtml(p.displayName)}</option>`).join('')}`;
-    const govOptions = `<option value="">— None —</option>${governments.map(g => `<option value="${g.id}" ${place.governmentId === g.id ? 'selected' : ''}>${escapeHtml(g.displayName)}</option>`).join('')}`;
+    const typeOptions = locationTypes
+      .sort((a, b) => a.priority - b.priority)
+      .map(t => `<option value="${t.id}" ${place.typeId === t.id ? 'selected' : ''}>${escapeHtml(t.displayName)} (Priority ${t.priority} - ${getHierarchyLevelDisplay(t.priority)})</option>`)
+      .join('');
+    
+    // Get valid parent options based on current type
+    const validParents = getValidParentOptions(place.typeId);
+    const parentOptions = `<option value="">— None (Root) —</option>${
+      validParents.map(p => `<option value="${p.id}" ${place.parentId === p.id ? 'selected' : ''}>${escapeHtml(p.displayName)} (${getHierarchyLevelDisplay(getTypePriority(p.typeId))})</option>`)
+      .join('')
+    }`;
+    
+    const govOptions = `<option value="">— None —</option>${
+      governments.map(g => `<option value="${g.id}" ${place.governmentId === g.id ? 'selected' : ''}>${escapeHtml(g.displayName)}</option>`).join('')
+    }`;
+    
+    const currentTypePriority = getTypePriority(place.typeId);
+    const hierarchyValid = !place.parentId || isValidParent(place.typeId, place.parentId);
     
     const content = `
       <div class="edit-section">
+        ${!hierarchyValid ? '<div class="warning-badge" style="background:rgba(139,64,64,0.2); border-color:var(--danger);">⚠️ Current parent is invalid for this place type. Select a valid parent below.</div>' : ''}
         <div class="warning-badge">
           Permanent ID: <code class="id-display">${place.id}</code>
         </div>
@@ -582,16 +693,27 @@
             <input type="text" id="editDisplayName" value="${escapeHtml(place.displayName)}" required>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Type</label><select id="editTypeId">${typeOptions}</select></div>
-            <div class="form-group"><label>Parent Place</label><select id="editParentId">${parentOptions}</select></div>
+            <div class="form-group">
+              <label>Type</label>
+              <select id="editTypeId" onchange="updateParentDropdown()">${typeOptions}</select>
+              <div class="helper-text">Priority determines hierarchy: 1=Country, 2=District, 3=Town, 4=Compound</div>
+            </div>
+            <div class="form-group">
+              <label>Parent Place</label>
+              <select id="editParentId">${parentOptions}</select>
+              <div class="helper-text" id="parentWarning"></div>
+            </div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Status</label><select id="editStatus">
-              <option ${place.status === 'active' ? 'selected' : ''}>active</option>
-              <option ${place.status === 'disputed' ? 'selected' : ''}>disputed</option>
-              <option ${place.status === 'abandoned' ? 'selected' : ''}>abandoned</option>
-              <option ${place.status === 'occupied' ? 'selected' : ''}>occupied</option>
-            </select></div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="editStatus">
+                <option ${place.status === 'active' ? 'selected' : ''}>active</option>
+                <option ${place.status === 'disputed' ? 'selected' : ''}>disputed</option>
+                <option ${place.status === 'abandoned' ? 'selected' : ''}>abandoned</option>
+                <option ${place.status === 'occupied' ? 'selected' : ''}>occupied</option>
+              </select>
+            </div>
             <div class="form-group"><label><input type="checkbox" id="editIsCapital" ${place.isCapital ? 'checked' : ''}> Capital City</label></div>
           </div>
           <div class="form-group"><label>Variable Key</label><input type="text" id="editVariableKey" value="${place.variableKey || ''}"></div>
@@ -618,15 +740,52 @@
       savePlaceEdit(place.id);
     });
     document.getElementById('deletePlaceBtn').addEventListener('click', () => deletePlace(place.id));
+    
+    window.updateParentDropdown = () => updateParentDropdownForEdit(place.id);
+  }
+  
+  function updateParentDropdownForEdit(placeId) {
+    const typeSelect = document.getElementById('editTypeId');
+    const parentSelect = document.getElementById('editParentId');
+    const parentWarning = document.getElementById('parentWarning');
+    
+    if (!typeSelect || !parentSelect) return;
+    
+    const newTypeId = typeSelect.value;
+    const validParents = getValidParentOptions(newTypeId);
+    
+    const currentParentId = parentSelect.value;
+    parentSelect.innerHTML = `<option value="">— None (Root) —</option>${
+      validParents.map(p => `<option value="${p.id}" ${currentParentId === p.id ? 'selected' : ''}>${escapeHtml(p.displayName)} (${getHierarchyLevelDisplay(getTypePriority(p.typeId))})</option>`)
+      .join('')
+    }`;
+    
+    if (validParents.length === 0) {
+      parentWarning.innerHTML = '<span style="color:var(--warn);">No valid parents available for this type. This place will be a root location.</span>';
+    } else {
+      parentWarning.innerHTML = '';
+    }
   }
   
   function savePlaceEdit(placeId) {
     const place = getPlaceById(placeId);
     if (!place) return;
     
+    const newTypeId = document.getElementById('editTypeId').value;
+    const newParentId = document.getElementById('editParentId').value || null;
+    
+    // Validate hierarchy
+    if (newParentId && !isValidParent(newTypeId, newParentId)) {
+      const type = getTypeById(newTypeId);
+      const parent = getPlaceById(newParentId);
+      const parentType = getTypeById(parent?.typeId);
+      alert(`Cannot place ${type?.displayName} under ${parentType?.displayName}. ${type?.displayName}s can only be under: ${getHierarchyLevelDisplay(type?.priority - 1) || 'higher level locations'}`);
+      return;
+    }
+    
     place.displayName = document.getElementById('editDisplayName').value;
-    place.typeId = document.getElementById('editTypeId').value;
-    place.parentId = document.getElementById('editParentId').value || null;
+    place.typeId = newTypeId;
+    place.parentId = newParentId;
     place.status = document.getElementById('editStatus').value;
     place.isCapital = document.getElementById('editIsCapital').checked;
     place.variableKey = document.getElementById('editVariableKey').value || null;
@@ -643,9 +802,21 @@
   }
   
   function deletePlace(placeId) {
-    if (!confirm('Delete this place and all its sub-places?')) return;
+    const place = getPlaceById(placeId);
+    if (!place) return;
+    
+    const children = getPlaces().filter(p => p.parentId === placeId);
+    if (children.length) {
+      if (!confirm(`This place has ${children.length} child location(s). Deleting will also delete all child locations. Continue?`)) {
+        return;
+      }
+    }
+    
+    if (!confirm(`Delete "${place.displayName}" permanently?`)) return;
+    
     const places = getPlaces();
     const toDelete = [placeId];
+    
     const findChildren = (parentId) => {
       places.filter(p => p.parentId === parentId).forEach(child => {
         toDelete.push(child.id);
@@ -653,13 +824,14 @@
       });
     };
     findChildren(placeId);
+    
     setPlaces(places.filter(p => !toDelete.includes(p.id)));
     renderPlaceList();
     document.getElementById('panelContent').innerHTML = '<div class="empty-selection">Place deleted</div>';
     currentPlaceId = null;
   }
   
-  // ==================== MANAGE TYPES (NEW) ====================
+  // ==================== MANAGE TYPES ====================
   function renderManageTab() {
     const locationTypes = getLocationTypes();
     const governments = getGovernments();
@@ -668,7 +840,7 @@
       <div class="manage-section">
         <div class="management-section">
           <div class="management-header">
-            <h3>Location Types</h3>
+            <h3>Location Types (Priority determines hierarchy)</h3>
             <button id="addLocationTypeBtn" class="btn small primary">+ Add Type</button>
           </div>
           <div class="management-list" id="locationTypesList">
@@ -706,11 +878,11 @@
       <div class="management-item" data-type-id="${type.id}" data-type="location">
         <div class="management-item-info" id="view-mode-${type.id}">
           <div class="management-item-name">${escapeHtml(type.displayName)}</div>
-          <div class="management-item-details">Priority: ${type.priority} | ID: ${type.id.slice(-6)}</div>
+          <div class="management-item-details">Priority: ${type.priority} (${getHierarchyLevelDisplay(type.priority)}) | ID: ${type.id.slice(-6)}</div>
         </div>
         <div class="edit-mode" id="edit-mode-${type.id}" style="display:none;">
           <input type="text" id="edit-name-${type.id}" value="${escapeHtml(type.displayName)}" placeholder="Type name">
-          <input type="number" id="edit-priority-${type.id}" value="${type.priority}" placeholder="Priority" style="width:80px;">
+          <input type="number" id="edit-priority-${type.id}" value="${type.priority}" placeholder="Priority" style="width:80px;" min="1" max="10">
         </div>
         <div class="management-item-actions">
           <button class="btn small" data-action="edit" data-type-id="${type.id}" data-type="location">Edit</button>
@@ -735,7 +907,7 @@
         </div>
         <div class="edit-mode" id="edit-mode-${gov.id}" style="display:none;">
           <input type="text" id="edit-name-${gov.id}" value="${escapeHtml(gov.displayName)}" placeholder="Government name">
-          <input type="number" id="edit-priority-${gov.id}" value="${gov.priority}" placeholder="Priority" style="width:80px;">
+          <input type="number" id="edit-priority-${gov.id}" value="${gov.priority}" placeholder="Priority" style="width:80px;" min="1">
         </div>
         <div class="management-item-actions">
           <button class="btn small" data-action="edit" data-gov-id="${gov.id}" data-type="government">Edit</button>
@@ -748,20 +920,18 @@
   }
   
   function attachTypeEditHandlers() {
-    // Edit button handlers
     document.querySelectorAll('[data-action="edit"][data-type="location"]').forEach(btn => {
       btn.addEventListener('click', () => {
         const typeId = btn.getAttribute('data-type-id');
         document.getElementById(`view-mode-${typeId}`).style.display = 'none';
         document.getElementById(`edit-mode-${typeId}`).style.display = 'flex';
         btn.style.display = 'none';
-        btn.nextElementSibling.style.display = 'none'; // delete button
-        btn.nextElementSibling.nextElementSibling.style.display = 'inline-block'; // save button
-        btn.nextElementSibling.nextElementSibling.nextElementSibling.style.display = 'inline-block'; // cancel button
+        btn.nextElementSibling.style.display = 'none';
+        btn.nextElementSibling.nextElementSibling.style.display = 'inline-block';
+        btn.nextElementSibling.nextElementSibling.nextElementSibling.style.display = 'inline-block';
       });
     });
     
-    // Save button handlers
     document.querySelectorAll('[data-action="save"][data-type="location"]').forEach(btn => {
       btn.addEventListener('click', () => {
         const typeId = btn.getAttribute('data-type-id');
@@ -770,6 +940,11 @@
         
         if (!newName) {
           showToast('Name cannot be empty');
+          return;
+        }
+        
+        if (isNaN(newPriority) || newPriority < 1) {
+          showToast('Priority must be a positive number');
           return;
         }
         
@@ -785,26 +960,22 @@
       });
     });
     
-    // Cancel button handlers
     document.querySelectorAll('[data-action="cancel"][data-type="location"]').forEach(btn => {
       btn.addEventListener('click', () => {
         renderManageTab();
       });
     });
     
-    // Delete button handlers
     document.querySelectorAll('[data-action="delete"][data-type="location"]').forEach(btn => {
       btn.addEventListener('click', () => {
         const typeId = btn.getAttribute('data-type-id');
         const type = getLocationTypes().find(t => t.id === typeId);
         
-        // Check if any places use this type
         const placesUsingType = getPlaces().filter(p => p.typeId === typeId);
         if (placesUsingType.length) {
-          if (!confirm(`Warning: ${placesUsingType.length} place(s) use this type. Deleting it will remove the type reference from those places. Continue?`)) {
+          if (!confirm(`Warning: ${placesUsingType.length} place(s) use this type. Deleting will remove the type reference from those places. Continue?`)) {
             return;
           }
-          // Remove type reference from places
           placesUsingType.forEach(place => {
             place.typeId = null;
           });
@@ -822,20 +993,18 @@
   }
   
   function attachGovernmentEditHandlers() {
-    // Edit button handlers
     document.querySelectorAll('[data-action="edit"][data-type="government"]').forEach(btn => {
       btn.addEventListener('click', () => {
         const govId = btn.getAttribute('data-gov-id');
         document.getElementById(`view-mode-${govId}`).style.display = 'none';
         document.getElementById(`edit-mode-${govId}`).style.display = 'flex';
         btn.style.display = 'none';
-        btn.nextElementSibling.style.display = 'none'; // delete button
-        btn.nextElementSibling.nextElementSibling.style.display = 'inline-block'; // save button
-        btn.nextElementSibling.nextElementSibling.nextElementSibling.style.display = 'inline-block'; // cancel button
+        btn.nextElementSibling.style.display = 'none';
+        btn.nextElementSibling.nextElementSibling.style.display = 'inline-block';
+        btn.nextElementSibling.nextElementSibling.nextElementSibling.style.display = 'inline-block';
       });
     });
     
-    // Save button handlers
     document.querySelectorAll('[data-action="save"][data-type="government"]').forEach(btn => {
       btn.addEventListener('click', () => {
         const govId = btn.getAttribute('data-gov-id');
@@ -844,6 +1013,11 @@
         
         if (!newName) {
           showToast('Name cannot be empty');
+          return;
+        }
+        
+        if (isNaN(newPriority) || newPriority < 1) {
+          showToast('Priority must be a positive number');
           return;
         }
         
@@ -859,23 +1033,20 @@
       });
     });
     
-    // Cancel button handlers
     document.querySelectorAll('[data-action="cancel"][data-type="government"]').forEach(btn => {
       btn.addEventListener('click', () => {
         renderManageTab();
       });
     });
     
-    // Delete button handlers
     document.querySelectorAll('[data-action="delete"][data-type="government"]').forEach(btn => {
       btn.addEventListener('click', () => {
         const govId = btn.getAttribute('data-gov-id');
         const gov = getGovernments().find(g => g.id === govId);
         
-        // Check if any places use this government
         const placesUsingGov = getPlaces().filter(p => p.governmentId === govId);
         if (placesUsingGov.length) {
-          if (!confirm(`Warning: ${placesUsingGov.length} place(s) use this government. Deleting it will remove the government reference from those places. Continue?`)) {
+          if (!confirm(`Warning: ${placesUsingGov.length} place(s) use this government. Deleting will remove the government reference from those places. Continue?`)) {
             return;
           }
           placesUsingGov.forEach(place => {
@@ -897,18 +1068,22 @@
   function addLocationType() {
     const name = prompt('Enter location type name (e.g., Region, Province, Barony):');
     if (!name) return;
-    const priority = parseInt(prompt('Priority (1 = highest):', getLocationTypes().length + 1) || '10');
+    const priority = parseInt(prompt('Priority (1 = highest, lower number = higher in hierarchy):', getLocationTypes().length + 1) || '10');
+    if (isNaN(priority)) return;
+    
     const types = getLocationTypes();
     types.push({ id: generateId(), displayName: name, priority });
     setLocationTypes(types);
     renderManageTab();
-    showToast(`Added location type: ${name}`);
+    showToast(`Added location type: ${name} (Priority ${priority})`);
   }
   
   function addGovernmentType() {
-    const name = prompt('Enter government type name (e.g., Republic, Theocracy, Merchant League):');
+    const name = prompt('Enter government type name:');
     if (!name) return;
     const priority = parseInt(prompt('Priority (1 = highest):', getGovernments().length + 1) || '10');
+    if (isNaN(priority)) return;
+    
     const govs = getGovernments();
     govs.push({ id: generateId(), displayName: name, priority, leaderRankId: null });
     setGovernments(govs);
@@ -923,17 +1098,31 @@
     const types = getLocationTypes();
     if (!types.length) { alert('Please add a location type first.'); return; }
     
-    const typeOptions = types.map(t => `${t.displayName} (Prio ${t.priority})`).join(', ');
-    const typeName = prompt(`Select type:\n${typeOptions}`);
+    const typeList = types.sort((a, b) => a.priority - b.priority)
+      .map(t => `${t.displayName} (Priority ${t.priority} - ${getHierarchyLevelDisplay(t.priority)})`)
+      .join('\n');
+    
+    const typeName = prompt(`Select type:\n${typeList}`);
     const type = types.find(t => t.displayName.toLowerCase() === typeName?.toLowerCase());
     if (!type) { alert('Invalid type'); return; }
     
-    const places = getPlaces();
-    const parentOptions = places.map(p => p.displayName).join(', ');
-    const parentName = prompt(`Parent place (optional):\n${parentOptions || 'No existing places'}`);
-    const parent = places.find(p => p.displayName.toLowerCase() === parentName?.toLowerCase());
+    // Get valid parent options
+    const validParents = getValidParentOptions(type.id);
+    let parent = null;
     
-    const variableKey = prompt('Variable key:', name.toLowerCase().replace(/\s/g, '_'));
+    if (validParents.length) {
+      const parentList = validParents.map(p => p.displayName).join(', ');
+      const parentName = prompt(`Parent place (optional, can be left blank):\nValid parents: ${parentList || 'None'}`);
+      if (parentName) {
+        parent = validParents.find(p => p.displayName.toLowerCase() === parentName?.toLowerCase());
+        if (!parent && parentName) {
+          alert('Invalid parent selection. Place will be created as root.');
+          parent = null;
+        }
+      }
+    }
+    
+    const variableKey = prompt('Variable key (optional):', name.toLowerCase().replace(/\s/g, '_'));
     
     const newPlace = {
       id: generateId(),
@@ -954,6 +1143,7 @@
       cityNameStyle: null
     };
     
+    const places = getPlaces();
     places.push(newPlace);
     setPlaces(places);
     renderPlaceList();
@@ -1009,7 +1199,6 @@
           }
           
           if (newMasterData) {
-            // Merge data
             if (newMasterData.data.places) {
               const currentPlaces = masterData.data.places;
               newMasterData.data.places.forEach(importedPlace => {
