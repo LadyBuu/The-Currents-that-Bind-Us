@@ -167,7 +167,6 @@
     
     .name-tag button:hover {
       color: var(--danger);
-      background: none;
     }
     
     .upload-area {
@@ -240,6 +239,40 @@
       font-family: monospace;
     }
     
+    .btn {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      background: var(--bg4);
+      border-color: var(--accent);
+    }
+    
+    .btn.primary {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    .btn.danger {
+      background: rgba(139, 64, 64, 0.2);
+      border-color: var(--danger);
+      color: var(--danger-lt);
+    }
+    
+    .btn.small {
+      padding: 3px 8px;
+      font-size: 0.6rem;
+    }
+    
     @media (max-width: 768px) {
       .names-app {
         flex-direction: column;
@@ -260,16 +293,16 @@
 <div class="topbar">
   <div class="title">📜 NAMES MANAGER</div>
   <div style="flex:1"></div>
-  <button id="loadMasterDataBtn" class="tb-btn">📂 Load Master JSON</button>
+  <button id="loadMasterDataBtn" class="tb-btn primary">📂 Load Master JSON</button>
   <button id="importNamesBtn" class="tb-btn">📥 Import Names Only</button>
-  <button id="exportNamesBtn" class="tb-btn primary">💾 Export Names</button>
+  <button id="exportNamesBtn" class="tb-btn primary">💾 Export Master JSON</button>
 </div>
 
 <div class="names-app">
   <div class="sidebar">
     <div class="sidebar-header">
       <h3>🌍 COUNTRIES</h3>
-      <button id="refreshCountriesBtn" class="btn small primary">⟳ Refresh</button>
+      <button id="refreshCountriesBtn" class="btn small">⟳ Refresh</button>
     </div>
     <div class="country-list" id="countryList"></div>
     <div class="debug-info" id="debugInfo">
@@ -287,8 +320,7 @@
 </div>
 
 <script>
-  // ==================== UNIFIED DATA STRUCTURE ====================
-  // This matches the exact structure expected by the master JSON
+  // ==================== MASTER DATA STRUCTURE (matches your JSON exactly) ====================
   let masterData = {
     type: "master",
     version: "2.0",
@@ -313,6 +345,7 @@
   function saveMasterData() {
     masterData.exportDate = new Date().toISOString();
     localStorage.setItem('stillwaters_master', JSON.stringify(masterData));
+    console.log('Master data saved to localStorage');
   }
   
   function loadFromLocalStorage() {
@@ -320,7 +353,7 @@
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        // Handle both old and new format
+        // Handle various formats
         if (parsed.type === "master" && parsed.data) {
           masterData = parsed;
         } else if (parsed.data && parsed.data.places) {
@@ -339,11 +372,12 @@
           };
         }
         
-        // Ensure nameLists exists
+        // Ensure required structures exist
         if (!masterData.data.nameLists) masterData.data.nameLists = {};
         if (!masterData.data.cityNameParts) {
           masterData.data.cityNameParts = { prefixes: [], roots: [], suffixes: [] };
         }
+        console.log('Loaded from localStorage:', masterData.data.nameLists);
       } catch(e) { console.error('Error loading master data', e); }
     }
     
@@ -352,7 +386,7 @@
       masterData.data.cityNameParts = {
         prefixes: ['Ash', 'Black', 'Blue', 'Bright', 'Cold', 'Dark', 'Deep', 'Fair', 'Gold', 'Green', 'High', 'Iron', 'Kings', 'Long', 'Mist', 'North', 'Red', 'Silver', 'South', 'Star', 'Storm', 'Sun', 'West', 'White', 'Wind'],
         roots: ['bridge', 'brook', 'burg', 'chester', 'cross', 'dale', 'field', 'ford', 'gate', 'ham', 'haven', 'hill', 'holm', 'hurst', 'mere', 'mill', 'mouth', 'pool', 'port', 'stead', 'ton', 'vale', 'wall', 'wick', 'worth'],
-        suffixes: ['ia', 'land', 'shire', 'gard', 'heim', 'grad', 'polis', 'burg', 'city', 'town', 'shire', 'fell', 'moor', 'wood', 'bury', 'caster', 'cester', 'by', 'thorpe', 'stoke']
+        suffixes: ['ia', 'land', 'shire', 'gard', 'heim', 'grad', 'polis', 'burg', 'city', 'town', 'fell', 'moor', 'wood', 'bury', 'caster', 'cester', 'by', 'thorpe', 'stoke']
       };
       saveMasterData();
     }
@@ -360,19 +394,24 @@
   
   // ==================== LOAD MASTER JSON FILE ====================
   function loadMasterFromFile() {
+    console.log('loadMasterFromFile called');
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/json';
     input.onchange = (e) => {
       const file = e.target.files[0];
+      if (!file) return;
+      console.log('File selected:', file.name);
       const reader = new FileReader();
       reader.onload = (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
+          console.log('Imported JSON structure:', Object.keys(imported));
           
-          // Handle the exact master JSON format
+          // Handle the exact master JSON format from your file
           if (imported.type === "master" && imported.data) {
             masterData = imported;
+            console.log('Loaded as master format');
           } else if (imported.data && imported.data.places) {
             masterData = {
               type: "master",
@@ -380,6 +419,7 @@
               exportDate: imported.exportDate || new Date().toISOString(),
               data: imported.data
             };
+            console.log('Loaded as data wrapper format');
           } else if (imported.places) {
             masterData = {
               type: "master",
@@ -387,6 +427,9 @@
               exportDate: new Date().toISOString(),
               data: imported
             };
+            console.log('Loaded as raw data format');
+          } else {
+            throw new Error('Unrecognized JSON format');
           }
           
           // Ensure nameLists exists
@@ -397,12 +440,14 @@
           
           saveMasterData();
           refreshCountries();
-          showToast(`Loaded ${countries.length} countries from JSON`);
+          showToast(`Loaded ${countries.length} countries from "${file.name}"`);
           updateDebugInfo();
         } catch(err) { 
+          console.error('Parse error:', err);
           alert('Invalid JSON: ' + err.message); 
         }
       };
+      reader.onerror = () => { alert('Error reading file'); };
       reader.readAsText(file);
     };
     input.click();
@@ -414,15 +459,15 @@
       const placesCount = masterData.data.places?.length || 0;
       const locationTypesCount = masterData.data.locationTypes?.length || 0;
       const countryType = masterData.data.locationTypes?.find(t => t.displayName === 'Country');
-      const countriesByType = countryType ? masterData.data.places?.filter(p => p.typeId === countryType.id).length : 0;
+      const nameListsCount = Object.keys(masterData.data.nameLists || {}).length;
       
       debugEl.innerHTML = `
         📍 Places: ${placesCount}<br>
         🏷️ Location Types: ${locationTypesCount}<br>
         🏛️ Country Type: ${countryType?.displayName || 'Not found'}<br>
-        🌍 Countries detected: ${countries.length}<br>
-        📌 Countries by type: ${countriesByType}<br>
-        ${placesCount === 0 ? '<span style="color:#c88040;">⚠️ Click "Load Master JSON" to load your world data</span>' : ''}
+        🌍 Countries: ${countries.length}<br>
+        📋 Name Lists: ${nameListsCount} countries have names<br>
+        ${placesCount === 0 ? '<span style="color:#c88040;">⚠️ Load a Master JSON file to begin</span>' : ''}
       `;
     }
   }
@@ -440,6 +485,7 @@
         displayName: p.displayName 
       }));
     } else {
+      // Fallback: places with no parent
       countries = places.filter(p => !p.parentId).map(p => ({ 
         id: p.id, 
         displayName: p.displayName 
@@ -448,20 +494,21 @@
     
     countries.sort((a, b) => a.displayName.localeCompare(b.displayName));
     
+    console.log('Countries refreshed:', countries.length);
     updateDebugInfo();
     renderCountryList();
   }
   
   function renderCountryList() {
     const container = document.getElementById('countryList');
-    const nameLists = masterData.data.nameLists;
+    const nameLists = masterData.data.nameLists || {};
     
     if (!countries.length) {
       container.innerHTML = `
-        <div class="empty-state" style="padding:20px;">
+        <div class="empty-state">
           🌍 No countries found.<br><br>
-          <button id="loadMasterBtn" class="btn primary" style="margin-top:8px;">📂 Load Master JSON</button><br>
-          <small style="display:block; margin-top:12px;">Load your stillwaters_master_*.json file to see countries.</small>
+          <button id="loadMasterBtn" class="btn primary">📂 Load Master JSON</button><br>
+          <small style="display:block; margin-top:12px;">Load your stillwaters_master_*.json file</small>
         </div>
       `;
       const loadBtn = document.getElementById('loadMasterBtn');
@@ -483,17 +530,17 @@
               <button class="btn small edit-names-btn" data-country-id="${country.id}">✏️ Edit Names</button>
             </div>
             <div style="font-size:0.7rem; color:var(--dim);">
-              <div>👨 Male: ${lists.male?.length || 0} names</div>
-              <div>👩 Female: ${lists.female?.length || 0} names</div>
-              <div>👪 Surnames: ${lists.surnames?.length || 0} names</div>
-              ${totalNames === 0 ? '<div style="margin-top:8px; color:#c88040;">⚠️ No name lists yet. Click Edit to add.</div>' : ''}
+              <div>👨 Male: ${lists.male?.length || 0}</div>
+              <div>👩 Female: ${lists.female?.length || 0}</div>
+              <div>👪 Surnames: ${lists.surnames?.length || 0}</div>
+              ${totalNames === 0 ? '<div style="margin-top:8px; color:#c88040;">⚠️ No names yet. Click Edit to add.</div>' : ''}
             </div>
           </div>
         </div>
       `;
     }).join('');
     
-    // Attach event listeners
+    // Expand/collapse handlers
     document.querySelectorAll('.country-header').forEach(header => {
       header.removeEventListener('click', header._clickHandler);
       header._clickHandler = (e) => {
@@ -509,6 +556,7 @@
       header.addEventListener('click', header._clickHandler);
     });
     
+    // Edit buttons
     document.querySelectorAll('.edit-names-btn').forEach(btn => {
       btn.removeEventListener('click', btn._editHandler);
       btn._editHandler = (e) => {
@@ -516,10 +564,11 @@
         const countryId = btn.getAttribute('data-country-id');
         selectedCountryId = countryId;
         renderCharacterNamesTab();
+        // Switch to character tab
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         const charTab = document.querySelector('.tab-btn[data-tab="character"]');
         if (charTab) charTab.classList.add('active');
-        renderCountryList();
+        renderCountryList(); // refresh checkmark
       };
       btn.addEventListener('click', btn._editHandler);
     });
@@ -530,75 +579,41 @@
     if (!selectedCountryId) {
       document.getElementById('panelContent').innerHTML = `
         <div class="empty-state">
-          🌍 Select a country from the left sidebar to manage its names.<br>
-          Each country can have its own cultural naming conventions.
+          🌍 Select a country from the left sidebar to manage its names.
         </div>
       `;
       return;
     }
     
     const country = countries.find(c => c.id === selectedCountryId);
-    
     if (!masterData.data.nameLists[selectedCountryId]) {
       masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
     }
-    
     const lists = masterData.data.nameLists[selectedCountryId];
     
     const content = `
       <div style="max-width: 900px; margin: 0 auto;">
-        <h2 style="margin-bottom: 20px; font-family:'Cinzel',serif;">${escapeHtml(country?.displayName || 'Selected Country')} — Name Lists</h2>
+        <h2 style="margin-bottom: 20px;">${escapeHtml(country?.displayName || 'Country')} — Name Lists</h2>
         
         <div class="name-section">
           <div class="section-title">👨 Male Given Names</div>
           <div class="name-grid" id="maleNamesList">
-            ${(lists.male || []).map((name, idx) => `<span class="name-tag" data-name-index="${idx}">${escapeHtml(name)} <button class="delete-name-btn" data-name="${escapeHtml(name)}" data-type="male">✖</button></span>`).join('')}
+            ${(lists.male || []).map(name => `<span class="name-tag">${escapeHtml(name)} <button class="delete-name" data-name="${escapeHtml(name)}" data-type="male">✖</button></span>`).join('')}
           </div>
-          <div class="upload-area" data-type="male">
-            📂 Upload male names (one per line)<br>
-            <small>Click or drag file</small>
-            <input type="file" accept=".txt" style="display:none;" data-type="male">
-          </div>
-          <div class="helper-text">Each line = one name. Names will be added to the list.</div>
+          <div class="upload-area" data-type="male">📂 Upload male names (one per line)<input type="file" accept=".txt" style="display:none;"></div>
         </div>
         
         <div class="name-section">
           <div class="section-title">👩 Female Given Names</div>
           <div class="name-grid" id="femaleNamesList">
-            ${(lists.female || []).map((name, idx) => `<span class="name-tag" data-name-index="${idx}">${escapeHtml(name)} <button class="delete-name-btn" data-name="${escapeHtml(name)}" data-type="female">✖</button></span>`).join('')}
+            ${(lists.female || []).map(name => `<span class="name-tag">${escapeHtml(name)} <button class="delete-name" data-name="${escapeHtml(name)}" data-type="female">✖</button></span>`).join('')}
           </div>
-          <div class="upload-area" data-type="female">
-            📂 Upload female names (one per line)
-            <input type="file" accept=".txt" style="display:none;" data-type="female">
-          </div>
+          <div class="upload-area" data-type="female">📂 Upload female names (one per line)<input type="file" accept=".txt" style="display:none;"></div>
         </div>
         
         <div class="name-section">
-          <div class="section-title">👪 Surnames / Family Names</div>
+          <div class="section-title">👪 Surnames</div>
           <div class="name-grid" id="surnamesList">
-            ${(lists.surnames || []).map((name, idx) => `<span class="name-tag" data-name-index="${idx}">${escapeHtml(name)} <button class="delete-name-btn" data-name="${escapeHtml(name)}" data-type="surnames">✖</button></span>`).join('')}
+            ${(lists.surnames || []).map(name => `<span class="name-tag">${escapeHtml(name)} <button class="delete-name" data-name="${escapeHtml(name)}" data-type="surnames">✖</button></span>`).join('')}
           </div>
-          <div class="upload-area" data-type="surnames">
-            📂 Upload surnames (one per line)
-            <input type="file" accept=".txt" style="display:none;" data-type="surnames">
-          </div>
-        </div>
-        
-        <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
-          <button id="addManualNameBtn" class="btn">➕ Add Single Name</button>
-          <button id="clearAllNamesBtn" class="btn danger">⚠️ Clear All Names for This Country</button>
-        </div>
-      </div>
-    `;
-    
-    document.getElementById('panelContent').innerHTML = content;
-    
-    // Attach delete handlers
-    ['male', 'female', 'surnames'].forEach(type => {
-      const container = document.getElementById(`${type}NamesList`);
-      if (container) {
-        container.querySelectorAll('.delete-name-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const name = btn.getAttribute('data-name');
- 
+          <div class="upload-area" data-type="surnames">📂 Upload surnames (one per line)<input ty
