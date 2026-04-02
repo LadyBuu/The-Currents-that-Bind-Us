@@ -188,31 +188,11 @@
       flex: 1;
     }
     
-    .city-preview {
-      background: var(--bg3);
-      padding: 12px;
-      border-radius: 8px;
-      margin-top: 16px;
-      font-size: 1.1rem;
-      text-align: center;
-    }
-    
     .generated-list {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       margin-top: 12px;
-    }
-    
-    textarea {
-      width: 100%;
-      min-height: 100px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px;
-      font-family: monospace;
-      font-size: 0.75rem;
     }
     
     .helper-text {
@@ -227,6 +207,14 @@
       text-align: center;
       padding: 60px 20px;
       color: var(--dim);
+    }
+    
+    .debug-info {
+      font-size: 0.6rem;
+      color: var(--dim);
+      padding: 8px;
+      border-top: 1px solid var(--border);
+      background: var(--bg3);
     }
     
     @media (max-width: 768px) {
@@ -286,9 +274,10 @@
   <div class="sidebar">
     <div class="sidebar-header">
       <h3>🌍 COUNTRIES</h3>
-      <button id="refreshCountriesBtn" class="btn small primary">⟳ Refresh from Locations</button>
+      <button id="refreshCountriesBtn" class="btn small primary">⟳ Refresh</button>
     </div>
     <div class="country-list" id="countryList"></div>
+    <div class="debug-info" id="debugInfo"></div>
   </div>
   
   <div class="main-panel">
@@ -368,13 +357,16 @@
   
   // ==================== COUNTRY FUNCTIONS ====================
   function refreshCountries() {
-    const places = masterData.data.places;
-    const locationTypes = masterData.data.locationTypes;
+    const places = masterData.data.places || [];
+    const locationTypes = masterData.data.locationTypes || [];
     
-    // Find country type ID - case insensitive
-    const countryType = locationTypes.find(t => 
-      t.displayName && t.displayName.toLowerCase() === 'country'
-    );
+    console.log('Location Types:', locationTypes);
+    console.log('All Places:', places);
+    
+    // Find country type ID - look for displayName exactly "Country" (case sensitive from your JSON)
+    const countryType = locationTypes.find(t => t.displayName === 'Country');
+    
+    console.log('Country Type found:', countryType);
     
     if (countryType) {
       // Filter places that are countries
@@ -394,6 +386,14 @@
     countries.sort((a, b) => a.displayName.localeCompare(b.displayName));
     
     console.log('Countries found:', countries.length, countries);
+    
+    // Update debug info
+    const debugEl = document.getElementById('debugInfo');
+    if (debugEl) {
+      debugEl.innerHTML = `📍 Found ${countries.length} countries<br>🏷️ Location Types: ${locationTypes.length}<br>📌 Places: ${places.length}`;
+    }
+    
+    renderCountryList();
   }
   
   function renderCountryList() {
@@ -422,7 +422,7 @@
               <div>👨 Male: ${lists.male?.length || 0} names</div>
               <div>👩 Female: ${lists.female?.length || 0} names</div>
               <div>👪 Surnames: ${lists.surnames?.length || 0} names</div>
-              ${totalNames === 0 ? '<div style="margin-top:8px; color:var(--warn);">⚠️ No name lists yet. Click Edit to add.</div>' : ''}
+              ${totalNames === 0 ? '<div style="margin-top:8px; color:#c88040;">⚠️ No name lists yet. Click Edit to add.</div>' : ''}
             </div>
           </div>
         </div>
@@ -928,7 +928,6 @@
           
           saveMasterData();
           refreshCountries();
-          renderCountryList();
           showToast(`Imported and merged name data`);
         } catch(err) { 
           alert('Invalid JSON: ' + err.message); 
@@ -962,8 +961,6 @@
   // ==================== INIT ====================
   function init() {
     loadMasterData();
-    renderCountryList();
-    renderCharacterNamesTab();
     
     const importBtn = document.getElementById('importNamesBtn');
     if (importBtn) importBtn.addEventListener('click', importData);
@@ -975,7 +972,6 @@
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
         refreshCountries();
-        renderCountryList();
         showToast('Countries refreshed from Locations');
       });
     }
@@ -992,9 +988,6 @@
     window.addEventListener('storage', (e) => {
       if (e.key === 'stillwaters_master') {
         loadMasterData();
-        refreshCountries();
-        renderCountryList();
-        if (selectedCountryId) renderCharacterNamesTab();
       }
     });
   }
