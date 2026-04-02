@@ -179,7 +179,7 @@
     .rank-btn { padding: 4px 12px; background: var(--bg); border: 1px solid var(--border2); border-radius: 20px; font-size: 0.7rem; cursor: pointer; }
     .rank-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
     .assigned-rank { background: var(--bg3); padding: 8px; border-radius: 4px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    
+
     .action-buttons { display: flex; gap: 8px; margin-top: 16px; }
     .empty-state { text-align: center; padding: 40px 20px; color: var(--dim); }
     .warning-badge { background: rgba(200,112,64,0.2); border: 1px solid var(--warn); border-radius: 4px; padding: 8px 12px; font-size: 0.7rem; margin-bottom: 16px; }
@@ -485,8 +485,8 @@
   }
   
   function getLifeStage(age) {
-    if (age < 13) return 'child';
-    if (age < 18) return 'youth';
+    if (age < 12) return 'child';
+    if (age < 20) return 'youth';
     if (age < 60) return 'adult';
     return 'elder';
   }
@@ -665,14 +665,22 @@ function renderEditTab() {
   document.getElementById('panelContent').innerHTML = `
     <div class="edit-tab">
       <form id="editForm">
-        <div class="collapsible-section"><div class="section-header">Identity <span class="arrow">▶</span></div><div class="section-content">
-          <div class="form-row"><div class="form-group"><label>First Name</label><input id="firstName" value="${escapeHtml(c.name)}"></div>
-          <div class="form-group"><label>Surname</label><input id="surname" value="${escapeHtml(c.surname || '')}"></div></div>
-          <div class="form-row"><div class="form-group"><label>Gender</label><select id="gender"><option value="male" ${c.gender === 'male' ? 'selected' : ''}>Male</option><option value="female" ${c.gender === 'female' ? 'selected' : ''}>Female</option><option value="unknown" ${c.gender === 'unknown' ? 'selected' : ''}>Unknown</option></select></div>
-          <div class="form-group"><label>Attraction</label><select id="attraction"><option value="both" ${c.attraction === 'both' ? 'selected' : ''}>Both</option><option value="men" ${c.attraction === 'men' ? 'selected' : ''}>Men</option><option value="women" ${c.attraction === 'women' ? 'selected' : ''}>Women</option><option value="neither" ${c.attraction === 'neither' ? 'selected' : ''}>Neither</option></select></div></div>
-          <div class="form-row"><div class="form-group"><label>Birth Year</label><input type="number" id="birthYear" value="${c.birthYear || ''}"></div>
-          <div class="form-group"><label>Role</label><input id="role" value="${escapeHtml(c.role || '')}"></div></div>
-        </div></div>
+<div class="collapsible-section"><div class="section-header">Identity <span class="arrow">▶</span></div><div class="section-content">
+  <div class="form-row">
+    <div class="form-group">
+      <label>First Name <button type="button" id="randomFirstNameBtn" class="btn small" style="margin-left:8px; padding:2px 6px;">🎲 Random</button></label>
+      <input id="firstName" value="${escapeHtml(c.name)}">
+    </div>
+    <div class="form-group">
+      <label>Surname <button type="button" id="randomSurnameBtn" class="btn small" style="margin-left:8px; padding:2px 6px;">🎲 Random</button></label>
+      <input id="surname" value="${escapeHtml(c.surname || '')}">
+    </div>
+  </div>
+  <div class="form-row"><div class="form-group"><label>Gender</label><select id="gender"><option value="male" ${c.gender === 'male' ? 'selected' : ''}>Male</option><option value="female" ${c.gender === 'female' ? 'selected' : ''}>Female</option><option value="unknown" ${c.gender === 'unknown' ? 'selected' : ''}>Unknown</option></select></div>
+  <div class="form-group"><label>Attraction</label><select id="attraction"><option value="both" ${c.attraction === 'both' ? 'selected' : ''}>Both</option><option value="men" ${c.attraction === 'men' ? 'selected' : ''}>Men</option><option value="women" ${c.attraction === 'women' ? 'selected' : ''}>Women</option><option value="neither" ${c.attraction === 'neither' ? 'selected' : ''}>Neither</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label>Birth Year</label><input type="number" id="birthYear" value="${c.birthYear || ''}"></div>
+  <div class="form-group"><label>Role</label><input id="role" value="${escapeHtml(c.role || '')}"></div></div>
+</div></div>
         
         <div class="collapsible-section"><div class="section-header">Life & Death <span class="arrow">▶</span></div><div class="section-content">
           <label style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
@@ -762,7 +770,89 @@ function renderEditTab() {
       birthplaceDropdown.style.display = 'none';
     }
   });
+
+// Random name helper function
+function getRandomNameFromCountryList(gender, countryId) {
+  const nameList = masterData.data.nameLists[countryId];
+  if (!nameList) return null;
   
+  if (gender === 'male' && nameList.male && nameList.male.length) {
+    return nameList.male[Math.floor(Math.random() * nameList.male.length)];
+  } else if (gender === 'female' && nameList.female && nameList.female.length) {
+    return nameList.female[Math.floor(Math.random() * nameList.female.length)];
+  } else if (gender === 'unknown') {
+    const allNames = [...(nameList.male || []), ...(nameList.female || [])];
+    if (allNames.length) return allNames[Math.floor(Math.random() * allNames.length)];
+  }
+  return null;
+}
+
+function getRandomSurnameFromCountryList(countryId) {
+  const nameList = masterData.data.nameLists[countryId];
+  if (nameList && nameList.surnames && nameList.surnames.length) {
+    return nameList.surnames[Math.floor(Math.random() * nameList.surnames.length)];
+  }
+  return '';
+}
+
+// Get character's country from birthplace
+function getCharacterCountry(char) {
+  if (char.birthplaceId) {
+    let place = masterData.data.places.find(p => p.id === char.birthplaceId);
+    while (place) {
+      const type = masterData.data.locationTypes.find(t => t.id === place.typeId);
+      if (type?.displayName === 'Country') return place.id;
+      place = masterData.data.places.find(p => p.id === place.parentId);
+    }
+  }
+  // Fallback: get first available country
+  const countries = masterData.data.places.filter(p => {
+    const type = masterData.data.locationTypes.find(t => t.id === p.typeId);
+    return type?.displayName === 'Country';
+  });
+  return countries.length ? countries[0].id : null;
+}
+
+// Random First Name button
+const randomFirstNameBtn = document.getElementById('randomFirstNameBtn');
+if (randomFirstNameBtn) {
+  randomFirstNameBtn.addEventListener('click', () => {
+    const countryId = getCharacterCountry(c);
+    if (countryId) {
+      const genderSelect = document.getElementById('gender');
+      const currentGender = genderSelect?.value || c.gender;
+      const randomName = getRandomNameFromCountryList(currentGender, countryId);
+      if (randomName) {
+        document.getElementById('firstName').value = randomName;
+        showToast(`Random name: ${randomName}`);
+      } else {
+        showToast('No names available for this country');
+      }
+    } else {
+      showToast('No country associated with birthplace');
+    }
+  });
+}
+
+// Random Surname button
+const randomSurnameBtn = document.getElementById('randomSurnameBtn');
+if (randomSurnameBtn) {
+  randomSurnameBtn.addEventListener('click', () => {
+    const countryId = getCharacterCountry(c);
+    if (countryId) {
+      const randomSurname = getRandomSurnameFromCountryList(countryId);
+      if (randomSurname) {
+        document.getElementById('surname').value = randomSurname;
+        showToast(`Random surname: ${randomSurname}`);
+      } else {
+        showToast('No surnames available for this country');
+      }
+    } else {
+      showToast('No country associated with birthplace');
+    }
+  });
+}
+	
   // Render ranks list
   const ranksContainer = document.getElementById('ranksList');
   const rankAssignments = c.rankAssignments || [];
