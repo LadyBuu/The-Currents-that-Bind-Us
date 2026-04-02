@@ -219,6 +219,8 @@
       font-size: 0.65rem;
       color: var(--tmut);
       margin-top: 4px;
+      margin-left: 16px;
+      margin-bottom: 16px;
     }
     
     .empty-state {
@@ -236,6 +238,38 @@
         width: 100%;
         max-height: 300px;
       }
+    }
+
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .toast {
+      background: var(--bg2);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 8px 16px;
+      color: var(--accent);
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      animation: slideIn 0.3s forwards, fadeOut 0.3s 1.7s forwards;
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(100%); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(100%); }
     }
   </style>
 </head>
@@ -311,9 +345,10 @@
           }
         };
       } catch(e) { console.error('Error loading master data', e); }
-    } else {
-      // Initialize with default name lists
-      masterData.data.nameLists = {};
+    }
+    
+    // Initialize default city name parts if empty
+    if (!masterData.data.cityNameParts.prefixes || masterData.data.cityNameParts.prefixes.length === 0) {
       masterData.data.cityNameParts = {
         prefixes: ['Ash', 'Black', 'Blue', 'Bright', 'Cold', 'Dark', 'Deep', 'Fair', 'Gold', 'Green', 'High', 'Iron', 'Kings', 'Long', 'Mist', 'North', 'Red', 'Silver', 'South', 'Star', 'Storm', 'Sun', 'West', 'White', 'Wind'],
         roots: ['bridge', 'brook', 'burg', 'chester', 'cross', 'dale', 'field', 'ford', 'gate', 'ham', 'haven', 'hill', 'holm', 'hurst', 'mere', 'mill', 'mouth', 'pool', 'port', 'stead', 'ton', 'vale', 'wall', 'wick', 'worth'],
@@ -336,15 +371,29 @@
     const places = masterData.data.places;
     const locationTypes = masterData.data.locationTypes;
     
-    // Find country type ID
-    const countryType = locationTypes.find(t => t.displayName?.toLowerCase() === 'country');
+    // Find country type ID - case insensitive
+    const countryType = locationTypes.find(t => 
+      t.displayName && t.displayName.toLowerCase() === 'country'
+    );
     
     if (countryType) {
-      countries = places.filter(p => p.typeId === countryType.id).map(p => ({ id: p.id, displayName: p.displayName }));
+      // Filter places that are countries
+      countries = places.filter(p => p.typeId === countryType.id).map(p => ({ 
+        id: p.id, 
+        displayName: p.displayName 
+      }));
     } else {
       // Fallback: treat places with no parent as countries
-      countries = places.filter(p => !p.parentId).map(p => ({ id: p.id, displayName: p.displayName }));
+      countries = places.filter(p => !p.parentId).map(p => ({ 
+        id: p.id, 
+        displayName: p.displayName 
+      }));
     }
+    
+    // Sort alphabetically
+    countries.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    
+    console.log('Countries found:', countries.length, countries);
   }
   
   function renderCountryList() {
@@ -358,6 +407,7 @@
     
     container.innerHTML = countries.map(country => {
       const lists = nameLists[country.id] || { male: [], female: [], surnames: [] };
+      const totalNames = (lists.male?.length || 0) + (lists.female?.length || 0) + (lists.surnames?.length || 0);
       return `
         <div class="country-card" data-country-id="${country.id}">
           <div class="country-header" data-country-id="${country.id}">
@@ -366,12 +416,13 @@
           </div>
           <div class="country-content" data-country-id="${country.id}">
             <div style="margin-bottom:12px;">
-              <button class="btn small" data-action="edit-names" data-country-id="${country.id}">✏️ Edit Names</button>
+              <button class="btn small edit-names-btn" data-country-id="${country.id}">✏️ Edit Names</button>
             </div>
             <div style="font-size:0.7rem; color:var(--dim);">
-              <div>👨 Male: ${lists.male.length} names</div>
-              <div>👩 Female: ${lists.female.length} names</div>
-              <div>👪 Surnames: ${lists.surnames.length} names</div>
+              <div>👨 Male: ${lists.male?.length || 0} names</div>
+              <div>👩 Female: ${lists.female?.length || 0} names</div>
+              <div>👪 Surnames: ${lists.surnames?.length || 0} names</div>
+              ${totalNames === 0 ? '<div style="margin-top:8px; color:var(--warn);">⚠️ No name lists yet. Click Edit to add.</div>' : ''}
             </div>
           </div>
         </div>
@@ -380,25 +431,34 @@
     
     // Attach event listeners
     document.querySelectorAll('.country-header').forEach(header => {
-      header.addEventListener('click', (e) => {
+      header.removeEventListener('click', header._clickHandler);
+      header._clickHandler = (e) => {
         e.stopPropagation();
         const countryId = header.getAttribute('data-country-id');
         const content = document.querySelector(`.country-content[data-country-id="${countryId}"]`);
-        content.classList.toggle('expanded');
-        const arrow = header.querySelector('span:last-child');
-        if (arrow) arrow.textContent = content.classList.contains('expanded') ? '▲' : '▼';
-      });
+        if (content) {
+          content.classList.toggle('expanded');
+          const arrow = header.querySelector('span:last-child');
+          if (arrow) arrow.textContent = content.classList.contains('expanded') ? '▲' : '▼';
+        }
+      };
+      header.addEventListener('click', header._clickHandler);
     });
     
-    document.querySelectorAll('[data-action="edit-names"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.edit-names-btn').forEach(btn => {
+      btn.removeEventListener('click', btn._editHandler);
+      btn._editHandler = (e) => {
         e.stopPropagation();
         const countryId = btn.getAttribute('data-country-id');
         selectedCountryId = countryId;
         renderCharacterNamesTab();
-        document.querySelector('.tab-btn[data-tab="character"]').click();
-        renderCountryList();
-      });
+        // Switch to character names tab and highlight it
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const charTab = document.querySelector('.tab-btn[data-tab="character"]');
+        if (charTab) charTab.classList.add('active');
+        renderCountryList(); // Refresh to show checkmark
+      };
+      btn.addEventListener('click', btn._editHandler);
     });
   }
   
@@ -415,8 +475,13 @@
     }
     
     const country = countries.find(c => c.id === selectedCountryId);
-    const nameLists = masterData.data.nameLists;
-    const lists = nameLists[selectedCountryId] || { male: [], female: [], surnames: [] };
+    
+    // Ensure nameLists structure exists for this country
+    if (!masterData.data.nameLists[selectedCountryId]) {
+      masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
+    }
+    
+    const lists = masterData.data.nameLists[selectedCountryId];
     
     const content = `
       <div style="max-width: 900px; margin: 0 auto;">
@@ -425,7 +490,7 @@
         <div class="name-section">
           <div class="section-title">👨 Male Given Names</div>
           <div class="name-grid" id="maleNamesList">
-            ${lists.male.map(name => `<span class="name-tag">${escapeHtml(name)} <button data-name="${escapeHtml(name)}" data-type="male">✖</button></span>`).join('')}
+            ${(lists.male || []).map(name => `<span class="name-tag">${escapeHtml(name)} <button data-name="${escapeHtml(name)}" data-type="male">✖</button></span>`).join('')}
           </div>
           <div class="upload-area" data-type="male">
             📂 Upload male names (one per line)<br>
@@ -438,7 +503,7 @@
         <div class="name-section">
           <div class="section-title">👩 Female Given Names</div>
           <div class="name-grid" id="femaleNamesList">
-            ${lists.female.map(name => `<span class="name-tag">${escapeHtml(name)} <button data-name="${escapeHtml(name)}" data-type="female">✖</button></span>`).join('')}
+            ${(lists.female || []).map(name => `<span class="name-tag">${escapeHtml(name)} <button data-name="${escapeHtml(name)}" data-type="female">✖</button></span>`).join('')}
           </div>
           <div class="upload-area" data-type="female">
             📂 Upload female names (one per line)
@@ -449,7 +514,7 @@
         <div class="name-section">
           <div class="section-title">👪 Surnames / Family Names</div>
           <div class="name-grid" id="surnamesList">
-            ${lists.surnames.map(name => `<span class="name-tag">${escapeHtml(name)} <button data-name="${escapeHtml(name)}" data-type="surnames">✖</button></span>`).join('')}
+            ${(lists.surnames || []).map(name => `<span class="name-tag">${escapeHtml(name)} <button data-name="${escapeHtml(name)}" data-type="surnames">✖</button></span>`).join('')}
           </div>
           <div class="upload-area" data-type="surnames">
             📂 Upload surnames (one per line)
@@ -468,20 +533,20 @@
     
     // Attach delete handlers
     ['male', 'female', 'surnames'].forEach(type => {
-      document.querySelectorAll(`#${type}NamesList button`).forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const name = btn.getAttribute('data-name');
-          if (confirm(`Remove "${name}"?`)) {
-            if (!masterData.data.nameLists[selectedCountryId]) {
-              masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
+      const container = document.getElementById(`${type}NamesList`);
+      if (container) {
+        container.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const name = btn.getAttribute('data-name');
+            if (confirm(`Remove "${name}"?`)) {
+              masterData.data.nameLists[selectedCountryId][type] = (masterData.data.nameLists[selectedCountryId][type] || []).filter(n => n !== name);
+              saveMasterData();
+              renderCharacterNamesTab();
             }
-            masterData.data.nameLists[selectedCountryId][type] = masterData.data.nameLists[selectedCountryId][type].filter(n => n !== name);
-            saveMasterData();
-            renderCharacterNamesTab();
-          }
+          });
         });
-      });
+      }
     });
     
     // Upload handlers
@@ -505,28 +570,34 @@
       });
     });
     
-    document.getElementById('addManualNameBtn').addEventListener('click', () => {
-      const name = prompt('Enter name to add:');
-      if (name && name.trim()) {
-        const type = prompt('Type: male, female, or surnames?', 'male');
-        if (type && ['male', 'female', 'surnames'].includes(type.toLowerCase())) {
-          if (!masterData.data.nameLists[selectedCountryId]) {
-            masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
-          }
-          masterData.data.nameLists[selectedCountryId][type.toLowerCase()].push(name.trim());
+    const addBtn = document.getElementById('addManualNameBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        const name = prompt('Enter name to add:');
+        if (name && name.trim()) {
+          const type = prompt('Type: male, female, or surnames?', 'male');
+          if (type && ['male', 'female', 'surnames'].includes(type.toLowerCase())) {
+            if (!masterData.data.nameLists[selectedCountryId][type.toLowerCase()]) {
+              masterData.data.nameLists[selectedCountryId][type.toLowerCase()] = [];
+            }
+            masterData.data.nameLists[selectedCountryId][type.toLowerCase()].push(name.trim());
+            saveMasterData();
+            renderCharacterNamesTab();
+          } else alert('Invalid type. Use male, female, or surnames.');
+        }
+      });
+    }
+    
+    const clearBtn = document.getElementById('clearAllNamesBtn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        if (confirm(`Clear ALL names for ${country?.displayName}? This cannot be undone.`)) {
+          masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
           saveMasterData();
           renderCharacterNamesTab();
-        } else alert('Invalid type. Use male, female, or surnames.');
-      }
-    });
-    
-    document.getElementById('clearAllNamesBtn').addEventListener('click', () => {
-      if (confirm(`Clear ALL names for ${country?.displayName}? This cannot be undone.`)) {
-        masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
-        saveMasterData();
-        renderCharacterNamesTab();
-      }
-    });
+        }
+      });
+    }
   }
   
   function processNameFile(file, type) {
@@ -537,9 +608,13 @@
       if (!masterData.data.nameLists[selectedCountryId]) {
         masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
       }
+      if (!masterData.data.nameLists[selectedCountryId][type]) {
+        masterData.data.nameLists[selectedCountryId][type] = [];
+      }
       names.forEach(name => {
-        if (!masterData.data.nameLists[selectedCountryId][type].includes(name.trim())) {
-          masterData.data.nameLists[selectedCountryId][type].push(name.trim());
+        const trimmed = name.trim();
+        if (!masterData.data.nameLists[selectedCountryId][type].includes(trimmed)) {
+          masterData.data.nameLists[selectedCountryId][type].push(trimmed);
         }
       });
       saveMasterData();
@@ -560,7 +635,7 @@
         <div class="city-builder">
           <div class="section-title">📖 Prefixes (e.g., Ash, Green, Silver)</div>
           <div class="name-grid" id="prefixesList">
-            ${cityNameParts.prefixes.map(p => `<span class="name-tag">${escapeHtml(p)} <button data-part="prefixes" data-value="${escapeHtml(p)}">✖</button></span>`).join('')}
+            ${(cityNameParts.prefixes || []).map(p => `<span class="name-tag">${escapeHtml(p)} <button data-part="prefixes" data-value="${escapeHtml(p)}">✖</button></span>`).join('')}
           </div>
           <div class="upload-area" data-city-part="prefixes">
             📂 Upload prefixes (one per line)
@@ -571,7 +646,7 @@
         <div class="city-builder">
           <div class="section-title">🌿 Roots (e.g., bridge, field, port)</div>
           <div class="name-grid" id="rootsList">
-            ${cityNameParts.roots.map(r => `<span class="name-tag">${escapeHtml(r)} <button data-part="roots" data-value="${escapeHtml(r)}">✖</button></span>`).join('')}
+            ${(cityNameParts.roots || []).map(r => `<span class="name-tag">${escapeHtml(r)} <button data-part="roots" data-value="${escapeHtml(r)}">✖</button></span>`).join('')}
           </div>
           <div class="upload-area" data-city-part="roots">
             📂 Upload roots (one per line)
@@ -582,7 +657,7 @@
         <div class="city-builder">
           <div class="section-title">✨ Suffixes (e.g., ia, land, shire)</div>
           <div class="name-grid" id="suffixesList">
-            ${cityNameParts.suffixes.map(s => `<span class="name-tag">${escapeHtml(s)} <button data-part="suffixes" data-value="${escapeHtml(s)}">✖</button></span>`).join('')}
+            ${(cityNameParts.suffixes || []).map(s => `<span class="name-tag">${escapeHtml(s)} <button data-part="suffixes" data-value="${escapeHtml(s)}">✖</button></span>`).join('')}
           </div>
           <div class="upload-area" data-city-part="suffixes">
             📂 Upload suffixes (one per line)
@@ -625,7 +700,7 @@
         btn.addEventListener('click', (e) => {
           const value = btn.getAttribute('data-value');
           if (confirm(`Remove "${value}"?`)) {
-            masterData.data.cityNameParts[part] = masterData.data.cityNameParts[part].filter(v => v !== value);
+            masterData.data.cityNameParts[part] = (masterData.data.cityNameParts[part] || []).filter(v => v !== value);
             saveMasterData();
             renderCityNamesTab();
           }
@@ -639,10 +714,13 @@
       const fileInput = area.querySelector('input');
       
       area.addEventListener('click', () => fileInput.click());
+      area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.borderColor = 'var(--accent)'; });
+      area.addEventListener('dragleave', () => area.style.borderColor = 'var(--border2)');
       area.addEventListener('drop', (e) => {
         e.preventDefault();
         const file = e.dataTransfer.files[0];
         if (file) processCityPartFile(file, part);
+        area.style.borderColor = 'var(--border2)';
       });
       
       fileInput.addEventListener('change', (e) => {
@@ -652,43 +730,65 @@
     });
     
     // Manual add handlers
-    document.getElementById('addPrefixBtn')?.addEventListener('click', () => {
-      const val = document.getElementById('newPrefix').value.trim();
-      if (val && !masterData.data.cityNameParts.prefixes.includes(val)) {
-        masterData.data.cityNameParts.prefixes.push(val);
-        saveMasterData();
-        renderCityNamesTab();
-      }
-    });
-    document.getElementById('addRootBtn')?.addEventListener('click', () => {
-      const val = document.getElementById('newRoot').value.trim();
-      if (val && !masterData.data.cityNameParts.roots.includes(val)) {
-        masterData.data.cityNameParts.roots.push(val);
-        saveMasterData();
-        renderCityNamesTab();
-      }
-    });
-    document.getElementById('addSuffixBtn')?.addEventListener('click', () => {
-      const val = document.getElementById('newSuffix').value.trim();
-      if (val && !masterData.data.cityNameParts.suffixes.includes(val)) {
-        masterData.data.cityNameParts.suffixes.push(val);
-        saveMasterData();
-        renderCityNamesTab();
-      }
-    });
+    const addPrefixBtn = document.getElementById('addPrefixBtn');
+    if (addPrefixBtn) {
+      addPrefixBtn.addEventListener('click', () => {
+        const val = document.getElementById('newPrefix').value.trim();
+        if (val && !(masterData.data.cityNameParts.prefixes || []).includes(val)) {
+          if (!masterData.data.cityNameParts.prefixes) masterData.data.cityNameParts.prefixes = [];
+          masterData.data.cityNameParts.prefixes.push(val);
+          saveMasterData();
+          renderCityNamesTab();
+          document.getElementById('newPrefix').value = '';
+        }
+      });
+    }
+    
+    const addRootBtn = document.getElementById('addRootBtn');
+    if (addRootBtn) {
+      addRootBtn.addEventListener('click', () => {
+        const val = document.getElementById('newRoot').value.trim();
+        if (val && !(masterData.data.cityNameParts.roots || []).includes(val)) {
+          if (!masterData.data.cityNameParts.roots) masterData.data.cityNameParts.roots = [];
+          masterData.data.cityNameParts.roots.push(val);
+          saveMasterData();
+          renderCityNamesTab();
+          document.getElementById('newRoot').value = '';
+        }
+      });
+    }
+    
+    const addSuffixBtn = document.getElementById('addSuffixBtn');
+    if (addSuffixBtn) {
+      addSuffixBtn.addEventListener('click', () => {
+        const val = document.getElementById('newSuffix').value.trim();
+        if (val && !(masterData.data.cityNameParts.suffixes || []).includes(val)) {
+          if (!masterData.data.cityNameParts.suffixes) masterData.data.cityNameParts.suffixes = [];
+          masterData.data.cityNameParts.suffixes.push(val);
+          saveMasterData();
+          renderCityNamesTab();
+          document.getElementById('newSuffix').value = '';
+        }
+      });
+    }
     
     // Generate names
-    document.getElementById('generateNamesBtn')?.addEventListener('click', () => generateCityNames(10));
-    document.getElementById('generateSingleBtn')?.addEventListener('click', () => generateCityNames(1));
+    const generateBtn = document.getElementById('generateNamesBtn');
+    if (generateBtn) generateBtn.addEventListener('click', () => generateCityNames(10));
+    
+    const generateSingleBtn = document.getElementById('generateSingleBtn');
+    if (generateSingleBtn) generateSingleBtn.addEventListener('click', () => generateCityNames(1));
   }
   
   function processCityPartFile(file, part) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const names = e.target.result.split(/\r?\n/).filter(n => n.trim().length > 0);
+      if (!masterData.data.cityNameParts[part]) masterData.data.cityNameParts[part] = [];
       names.forEach(name => {
-        if (!masterData.data.cityNameParts[part].includes(name.trim())) {
-          masterData.data.cityNameParts[part].push(name.trim());
+        const trimmed = name.trim();
+        if (!masterData.data.cityNameParts[part].includes(trimmed)) {
+          masterData.data.cityNameParts[part].push(trimmed);
         }
       });
       saveMasterData();
@@ -700,7 +800,7 @@
   
   function generateCityNames(count) {
     const cityNameParts = masterData.data.cityNameParts;
-    if (!cityNameParts.prefixes.length || !cityNameParts.roots.length) {
+    if (!cityNameParts.prefixes?.length || !cityNameParts.roots?.length) {
       showToast('Need at least one prefix and one root to generate names!');
       return;
     }
@@ -711,7 +811,7 @@
       const root = cityNameParts.roots[Math.floor(Math.random() * cityNameParts.roots.length)];
       let name = prefix + root;
       
-      if (cityNameParts.suffixes.length && Math.random() > 0.6) {
+      if (cityNameParts.suffixes?.length && Math.random() > 0.6) {
         const suffix = cityNameParts.suffixes[Math.floor(Math.random() * cityNameParts.suffixes.length)];
         name += suffix;
       }
@@ -721,10 +821,10 @@
     }
     
     const container = document.getElementById('generatedCities');
-    container.innerHTML = names.map(n => `<span class="name-tag">${escapeHtml(n)}</span>`).join('');
+    if (container) container.innerHTML = names.map(n => `<span class="name-tag">${escapeHtml(n)}</span>`).join('');
   }
   
-  // ==================== IMPORT/EXPORT (UNIFIED) ====================
+  // ==================== IMPORT/EXPORT ====================
   function exportData() {
     const exportObj = {
       type: "names",
@@ -758,23 +858,17 @@
           let newNameLists = null;
           let newCityParts = null;
           
-          // Case 1: New unified format with type field
           if (imported.type === 'names' && imported.data) {
             newNameLists = imported.data.nameLists;
             newCityParts = imported.data.cityNameParts;
-          }
-          // Case 2: Legacy format with direct nameLists
-          else if (imported.nameLists) {
+          } else if (imported.nameLists) {
             newNameLists = imported.nameLists;
             newCityParts = imported.cityNameParts;
-          }
-          // Case 3: Master data format
-          else if (imported.data && imported.data.nameLists) {
+          } else if (imported.data && imported.data.nameLists) {
             newNameLists = imported.data.nameLists;
             newCityParts = imported.data.cityNameParts;
           }
           
-          // MERGE name lists
           if (newNameLists) {
             Object.keys(newNameLists).forEach(countryId => {
               if (!masterData.data.nameLists[countryId]) {
@@ -805,9 +899,9 @@
             });
           }
           
-          // MERGE city name parts
           if (newCityParts) {
             if (newCityParts.prefixes) {
+              if (!masterData.data.cityNameParts.prefixes) masterData.data.cityNameParts.prefixes = [];
               newCityParts.prefixes.forEach(p => {
                 if (!masterData.data.cityNameParts.prefixes.includes(p)) {
                   masterData.data.cityNameParts.prefixes.push(p);
@@ -815,6 +909,7 @@
               });
             }
             if (newCityParts.roots) {
+              if (!masterData.data.cityNameParts.roots) masterData.data.cityNameParts.roots = [];
               newCityParts.roots.forEach(r => {
                 if (!masterData.data.cityNameParts.roots.includes(r)) {
                   masterData.data.cityNameParts.roots.push(r);
@@ -822,6 +917,7 @@
               });
             }
             if (newCityParts.suffixes) {
+              if (!masterData.data.cityNameParts.suffixes) masterData.data.cityNameParts.suffixes = [];
               newCityParts.suffixes.forEach(s => {
                 if (!masterData.data.cityNameParts.suffixes.includes(s)) {
                   masterData.data.cityNameParts.suffixes.push(s);
@@ -848,6 +944,7 @@
     if (!container) {
       container = document.createElement('div');
       container.id = 'toast-container';
+      container.className = 'toast-container';
       document.body.appendChild(container);
     }
     const toast = document.createElement('div');
@@ -868,13 +965,20 @@
     renderCountryList();
     renderCharacterNamesTab();
     
-    document.getElementById('importNamesBtn').addEventListener('click', importData);
-    document.getElementById('exportNamesBtn').addEventListener('click', exportData);
-    document.getElementById('refreshCountriesBtn').addEventListener('click', () => {
-      refreshCountries();
-      renderCountryList();
-      showToast('Countries refreshed from Locations');
-    });
+    const importBtn = document.getElementById('importNamesBtn');
+    if (importBtn) importBtn.addEventListener('click', importData);
+    
+    const exportBtn = document.getElementById('exportNamesBtn');
+    if (exportBtn) exportBtn.addEventListener('click', exportData);
+    
+    const refreshBtn = document.getElementById('refreshCountriesBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        refreshCountries();
+        renderCountryList();
+        showToast('Countries refreshed from Locations');
+      });
+    }
     
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
