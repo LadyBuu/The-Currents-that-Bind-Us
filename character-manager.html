@@ -2334,26 +2334,53 @@ function generateNewborn(parentId) {
   
 function generateRandomPerson() {
   const gender = ['male', 'female', 'unknown'][Math.floor(Math.random() * 3)];
-  const maleNames = ['Kai', 'Mako', 'Tane', 'Rangi', 'Koa', 'Keanu', 'Ari', 'Leo', 'Nico', 'Ikaia', 'Sione', 'Tama', 'Vaea'];
-  const femaleNames = ['Leilani', 'Moana', 'Nani', 'Tui', 'Hina', 'Lani', 'Malia', 'Rai', 'Tara', 'Vai', 'Manaia', 'Aroha', 'Eponi'];
-  const name = gender === 'male' ? maleNames[Math.floor(Math.random() * maleNames.length)] : gender === 'female' ? femaleNames[Math.floor(Math.random() * femaleNames.length)] : 'Rowan';
-  const ranks = masterData.data.ranks;
-  const randomRank = ranks.length ? ranks[Math.floor(Math.random() * ranks.length)] : null;
+  
+  // Get all countries (places with typeId that is a Country)
+  const countries = masterData.data.places.filter(p => {
+    const type = masterData.data.locationTypes.find(t => t.id === p.typeId);
+    return type?.displayName === 'Country';
+  });
+  
+  let name = 'Rowan';
+  let surname = '';
+  
+  // If there are countries, pick a random one and get its name list
+  if (countries.length > 0) {
+    const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+    const nameList = masterData.data.nameLists[randomCountry.id] || { male: [], female: [], surnames: [] };
+    
+    if (gender === 'male' && nameList.male && nameList.male.length > 0) {
+      name = nameList.male[Math.floor(Math.random() * nameList.male.length)];
+    } else if (gender === 'female' && nameList.female && nameList.female.length > 0) {
+      name = nameList.female[Math.floor(Math.random() * nameList.female.length)];
+    } else if (gender === 'unknown') {
+      const allNames = [...(nameList.male || []), ...(nameList.female || [])];
+      if (allNames.length > 0) {
+        name = allNames[Math.floor(Math.random() * allNames.length)];
+      }
+    }
+    
+    // Random surname if available
+    if (nameList.surnames && nameList.surnames.length > 0 && Math.random() > 0.3) {
+      surname = nameList.surnames[Math.floor(Math.random() * nameList.surnames.length)];
+    }
+  }
+  
   const randomAge = Math.floor(Math.random() * 70) + 10;
   const randomBirthYear = currentYear - randomAge;
   
   const newChar = {
     id: generateId(), 
     name: name, 
-    surname: '', 
+    surname: surname, 
     gender: gender, 
     attraction: ['men', 'women', 'both', 'neither'][Math.floor(Math.random() * 4)],
     birthYear: randomBirthYear, 
     isDeceased: false, 
     deathYear: null, 
     deathCause: '',
-    rankAssignments: randomRank ? [{ rankId: randomRank.id, number: null }] : [], 
-    activeRankId: randomRank?.id || null, 
+    rankAssignments: [],  // Empty - NO RANKS
+    activeRankId: null,   // NO active rank
     activeRankNumber: null,
     birthplaceId: null, 
     moves: [], 
@@ -2374,7 +2401,7 @@ function generateRandomPerson() {
   saveMasterData();
   renderCharList();
   selectCharacter(newChar.id);
-  showToast(`🎲 Random character created: ${name}`);
+  showToast(`🎲 Random character created: ${name}${surname ? ' ' + surname : ''}`);
   return newChar;
 }
   function exportData() {
