@@ -2240,116 +2240,147 @@ function confirmImportNameLists() {
     reader.readAsText(file);
 }
 
-// ====================== RANDOM PERSON GENERATION ======================
-/**
- * Generates a completely random character with all attributes
- * Creates a new person with random gender, age, appearance, and background
- */
 function generateRandomPerson() {
-    // ====================== BASIC ATTRIBUTES ======================
-    // Random gender (50/50 chance)
-    const gender = Math.random() > 0.5 ? 'male' : 'female';
+  const gender = ['male', 'female', 'unknown'][Math.floor(Math.random() * 3)];
+  
+  // Get all countries (places with typeId that is a Country)
+  const countries = masterData.data.places.filter(p => {
+    const type = masterData.data.locationTypes.find(t => t.id === p.typeId);
+    return type?.displayName === 'Country';
+  });
+  
+  let name = 'Rowan';
+  let surname = '';
+  
+  // If there are countries, pick a random one and get its name list
+  if (countries.length > 0) {
+    const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+    const nameList = masterData.data.nameLists[randomCountry.id] || { male: [], female: [], surnames: [] };
     
-    // Random age between 1 and 80
-    const age = Math.floor(Math.random() * 80) + 1;
-    const birthYear = DATA.currentYear - age;
-    
-    // Random attraction preference
-    const attraction = ['both', 'men', 'women', 'neither'][Math.floor(Math.random() * 4)];
-    
-    // ====================== LOCATION & NAME ======================
-    // Get all available compounds and pick one randomly
-    const compounds = getHierarchicalCompounds();
-    let birthComp = '';
-    if (compounds.length > 0) {
-        birthComp = compounds[Math.floor(Math.random() * compounds.length)].compKey;
+    if (gender === 'male' && nameList.male && nameList.male.length > 0) {
+      name = nameList.male[Math.floor(Math.random() * nameList.male.length)];
+    } else if (gender === 'female' && nameList.female && nameList.female.length > 0) {
+      name = nameList.female[Math.floor(Math.random() * nameList.female.length)];
+    } else if (gender === 'unknown') {
+      const allNames = [...(nameList.male || []), ...(nameList.female || [])];
+      if (allNames.length > 0) {
+        name = allNames[Math.floor(Math.random() * allNames.length)];
+      }
     }
     
-    // Get country name and generate appropriate random name
-    const country = getCountryNameForCompound(birthComp);
-    const name = getRandomName(gender, country);
+    // Random surname if available
+    if (nameList.surnames && nameList.surnames.length > 0 && Math.random() > 0.3) {
+      surname = nameList.surnames[Math.floor(Math.random() * nameList.surnames.length)];
+    }
+  }
+  
+  const randomAge = Math.floor(Math.random() * 70) + 10;
+  const randomBirthYear = currentYear - randomAge;
+  
+  const newChar = {
+    id: generateId(), 
+    name: name, 
+    surname: surname, 
+    gender: gender, 
+    attraction: ['men', 'women', 'both', 'neither'][Math.floor(Math.random() * 4)],
+    birthYear: randomBirthYear, 
+    isDeceased: false, 
+    deathYear: null, 
+    deathCause: '',
+    rankAssignments: [],  // Empty - NO RANKS
+    activeRankId: null,   // NO active rank
+    activeRankNumber: null,
+    birthplaceId: null, 
+    moves: [], 
+    role: '', 
+    household: '', 
+    notes: '',
+    motherId: null, 
+    fatherId: null, 
+    relationships: [], 
+    friends: [],
+    professions: [],
+    isMaster: false,
+    masterProfessionId: null,
+    apprentices: []
+  };
+  
+  masterData.data.characters.push(newChar);
+  saveMasterData();
+  renderCharList();
+  selectCharacter(newChar.id);
+function generateRandomPerson() {
+  const gender = ['male', 'female', 'unknown'][Math.floor(Math.random() * 3)];
+  
+  // Get all countries (places with typeId that is a Country)
+  const countries = masterData.data.places.filter(p => {
+    const type = masterData.data.locationTypes.find(t => t.id === p.typeId);
+    return type?.displayName === 'Country';
+  });
+  
+  let name = 'Rowan';
+  let surname = '';
+  
+  // If there are countries, pick a random one and get its name list
+  if (countries.length > 0) {
+    const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+    const nameList = masterData.data.nameLists[randomCountry.id] || { male: [], female: [], surnames: [] };
     
-    // ====================== PROFESSION/ROLE ======================
-    const role = ROLES[Math.floor(Math.random() * ROLES.length)];
+    if (gender === 'male' && nameList.male && nameList.male.length > 0) {
+      name = nameList.male[Math.floor(Math.random() * nameList.male.length)];
+    } else if (gender === 'female' && nameList.female && nameList.female.length > 0) {
+      name = nameList.female[Math.floor(Math.random() * nameList.female.length)];
+    } else if (gender === 'unknown') {
+      const allNames = [...(nameList.male || []), ...(nameList.female || [])];
+      if (allNames.length > 0) {
+        name = allNames[Math.floor(Math.random() * allNames.length)];
+      }
+    }
     
-    // ====================== APPEARANCE ======================
-    // Random eye color
-    const eyeColor = [
-        'brown', 'dark brown', 'hazel', 'amber', 
-        'green', 'blue', 'gray', 'black'
-    ][Math.floor(Math.random() * 8)];
-    
-    // Random hair color
-    const hairColor = [
-        'black', 'dark brown', 'brown', 'auburn', 
-        'chestnut', 'gray', 'white', 'silver'
-    ][Math.floor(Math.random() * 8)];
-    
-    // Random skin color
-    const skinColor = [
-        'light tan', 'tan', 'warm tan', 'olive', 
-        'golden brown', 'dark brown', 'deep brown'
-    ][Math.floor(Math.random() * 7)];
-    
-    // ====================== ID GENERATION ======================
-    // Create unique ID from name + timestamp
-    const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now().toString(36);
-    const sid = generateStableId();
-    
-    // ====================== CREATE PERSON OBJECT ======================
-    DATA.people[id] = {
-        stableId: sid,
-        name: name,
-        displayName: name,
-        gender: gender,
-        attraction: attraction,
-        birthYear: birthYear,
-        age: age,
-        stage: calculateLifeStage(age),
-        role: role,
-        deceased: false,
-        deathYear: null,
-        causeDeath: '',
-        birthComp: birthComp,
-        currComp: birthComp,
-        movedYear: null,
-        household: '',
-        notes: '',
-        eyeColor: eyeColor,
-        hairColor: hairColor,
-        skinColor: skinColor,
-        tattoos: '',
-        appNotes: '',
-        ranks: [],
-        professions: [],
-        apprentices: [],
-        masterFor: [],
-        metadata: { availableForMatching: true },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-    
-    // ====================== INITIALIZE RELATIONSHIPS ======================
-    DATA.relationships[id] = {
-        ongoing: [],
-        ended: [],
-        widowed: [],
-        friends: [],
-        friendDetails: {},
-        details: {}
-    };
-    
-    // ====================== FINALIZE AND UPDATE UI ======================
-    rebuildStableIdIndex();
-    saveData();
-    updateLocationDropdowns();
-    renderPersonList();
-    selectPerson(id);
-    
-    // Show success message
-    showToast(`Random person created: ${name} (${gender === 'male' ? '♂' : '♀'}, age ${age})`);
+    // Random surname if available
+    if (nameList.surnames && nameList.surnames.length > 0 && Math.random() > 0.3) {
+      surname = nameList.surnames[Math.floor(Math.random() * nameList.surnames.length)];
+    }
+  }
+  
+  const randomAge = Math.floor(Math.random() * 70) + 10;
+  const randomBirthYear = currentYear - randomAge;
+  
+  const newChar = {
+    id: generateId(), 
+    name: name, 
+    surname: surname, 
+    gender: gender, 
+    attraction: ['men', 'women', 'both', 'neither'][Math.floor(Math.random() * 4)],
+    birthYear: randomBirthYear, 
+    isDeceased: false, 
+    deathYear: null, 
+    deathCause: '',
+    rankAssignments: [],  // Empty - NO RANKS
+    activeRankId: null,   // NO active rank
+    activeRankNumber: null,
+    birthplaceId: null, 
+    moves: [], 
+    role: '', 
+    household: '', 
+    notes: '',
+    motherId: null, 
+    fatherId: null, 
+    relationships: [], 
+    friends: [],
+    professions: [],
+    isMaster: false,
+    masterProfessionId: null,
+    apprentices: []
+  };
+  
+  masterData.data.characters.push(newChar);
+  saveMasterData();
+  renderCharList();
+  selectCharacter(newChar.id);
+  showToast(`🎲 Random character created: ${name}${surname ? ' ' + surname : ''}`);
+  return newChar;
 }
-
 // ====================== UTILITY FUNCTIONS ======================
 
 /**
