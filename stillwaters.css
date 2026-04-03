@@ -1827,3 +1827,27 @@ footer {
     padding: 12px;
   }
 }
+
+/* ============================================
+   INDEX PAGE SCROLLBAR FIX
+   ============================================ */
+body {
+  overflow-y: auto;
+}
+
+.tools-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 28px;
+}
+
+.hero {
+  flex-shrink: 0;
+}
+
+footer {
+  flex-shrink: 0;
+}
