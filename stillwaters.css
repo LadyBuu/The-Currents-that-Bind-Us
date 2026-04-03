@@ -1,5 +1,5 @@
 /* stillwaters.css - Shared Styles for All Still Waters Tools */
-/* Version 4.2 - Fixed Locations Manager Buttons */
+/* Version 4.3 - Fixed Character Manager Mobile Issues */
 
 /* ============================================
    ROOT VARIABLES
@@ -255,13 +255,39 @@ label {
   flex-shrink: 0;
 }
 
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-header span:first-child {
+  font-size: 0.6rem;
+  font-family: 'Cinzel', serif;
+  color: var(--accent);
+}
+
+#filterCollapseIcon {
+  font-size: 0.65rem;
+  transition: transform 0.3s;
+}
+
 .filter-bar {
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   overflow: hidden;
-  transition: max-height 0.3s ease;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.filter-bar.collapsed {
+  max-height: 0;
+  padding: 0 12px;
 }
 
 .filter-row-inline {
@@ -279,11 +305,20 @@ label {
 }
 
 .filter-row-inline label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-size: 0.6rem;
   margin-bottom: 0;
+  cursor: pointer;
+}
+
+.filter-row-inline input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .char-list {
@@ -1767,63 +1802,80 @@ footer {
 }
 
 /* ============================================
-   MOBILE RESPONSIVE
+   CHARACTER MANAGER MOBILE FIXES
    ============================================ */
+
+/* Fix topbar wrapping on mobile */
 @media (max-width: 768px) {
-  .sidebar, .roles-sidebar, .locations-app .sidebar {
-    width: 100%;
-    max-height: 300px;
-  }
-  
-  .char-app, .locations-app, .names-app, .family-app, .roles-app {
-    flex-direction: column;
-  }
-  
-  .tools-grid {
-    grid-template-columns: 1fr;
-    padding: 28px 18px;
-  }
-  
-  .hero h1 {
-    font-size: 1.4rem;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .rank-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .search-roles input {
-    width: 150px;
-  }
-  
-  .rank-container {
-    padding: 12px;
-    margin: 10px auto;
-  }
-  
-  .management-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .management-item-actions {
-    width: 100%;
+  .topbar {
+    flex-wrap: wrap;
     justify-content: flex-start;
+    gap: 6px;
+    padding: 8px;
   }
   
-  .edit-mode {
+  .topbar .title {
     width: 100%;
+    text-align: center;
+    margin-bottom: 6px;
   }
   
-  .manage-section {
+  .topbar .tb-btn,
+  .topbar button {
+    flex-shrink: 0;
+    font-size: 0.55rem;
+    padding: 4px 8px;
+  }
+  
+  .char-app .sidebar {
+    width: 100%;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  /* Filter collapsible */
+  .filter-bar {
+    max-height: 0;
+    padding: 0 12px;
+    overflow: hidden;
+  }
+  
+  .filter-bar.expanded {
+    max-height: 400px;
+    padding: 12px;
+    overflow-y: auto;
+  }
+  
+  .filter-row-inline {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .filter-row-inline select,
+  .filter-row-inline .clear-btn {
+    flex: 1;
+    min-width: 80px;
+  }
+  
+  /* Main panel adjustments */
+  .char-app .main-panel {
+    flex: 1;
+    min-height: 0;
+  }
+  
+  .panel-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 0.6rem;
+  }
+  
+  .panel-content {
     padding: 12px;
   }
 }
