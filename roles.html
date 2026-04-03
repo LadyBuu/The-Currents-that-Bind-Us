@@ -45,51 +45,86 @@
 </div>
 
 <script>
-  // Data
-  let roles = [];
+  // ==================== MASTER DATA STRUCTURE ====================
+  let masterData = {
+    version: "2.0",
+    lastUpdated: new Date().toISOString(),
+    data: {
+      characters: [],
+      places: [],
+      ranks: [],
+      roles: [],
+      locationTypes: [],
+      governments: [],
+      nameLists: {},
+      cityNameParts: { prefixes: [], roots: [], suffixes: [] },
+      currentYear: 1250
+    }
+  };
+  
   let selectedRoleId = null;
   let searchTerm = '';
   
-  function generateId() {
-    return 'role_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-  }
+  function generateId() { return 'role_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
   
-  function loadData() {
+  // ==================== LOAD FULL MASTER DATA ====================
+  function loadMasterData() {
     const stored = localStorage.getItem('stillwaters_master');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        if (parsed.data?.roles) roles = parsed.data.roles;
-        else if (parsed.roles) roles = parsed.roles;
-      } catch(e) { console.error(e); }
+        masterData = {
+          version: parsed.version || "2.0",
+          lastUpdated: parsed.lastUpdated || new Date().toISOString(),
+          data: {
+            characters: parsed.data?.characters || [],
+            places: parsed.data?.places || [],
+            ranks: parsed.data?.ranks || [],
+            roles: parsed.data?.roles || [],
+            locationTypes: parsed.data?.locationTypes || [],
+            governments: parsed.data?.governments || [],
+            nameLists: parsed.data?.nameLists || {},
+            cityNameParts: parsed.data?.cityNameParts || { prefixes: [], roots: [], suffixes: [] },
+            currentYear: parsed.data?.currentYear || 1250
+          }
+        };
+      } catch(e) { console.error('Error loading master data', e); }
     }
     
-    if (!roles.length) {
-      roles = [
-        { id: generateId(), name: "Farmer", specializations: ["Wheat", "Barley", "Corn", "Rice"], notes: "Cultivates crops and manages agricultural lands." },
-        { id: generateId(), name: "Fisher", specializations: ["Deep Sea", "River", "Net Making"], notes: "Harvests the waters for food and trade." },
-        { id: generateId(), name: "Physician", specializations: ["Herbalism", "Surgery", "Midwifery"], notes: "Provides medical care and healing services." },
-        { id: generateId(), name: "Very Long Role Name That Should Wrap Properly And Not Get Cut Off", specializations: ["Test"], notes: "Testing long names." }
+    // Initialize default roles if none exist
+    if (!masterData.data.roles.length) {
+      masterData.data.roles = [
+        { id: generateId(), name: "Farmer", specializations: ["Taro", "Yams", "Coconut", "Sugarcane", "Breadfruit"], notes: "Cultivates crops and manages agricultural lands." },
+        { id: generateId(), name: "Fisher", specializations: ["Deep-Sea", "Reef", "Net Making", "Shellfish"], notes: "Harvests the waters for food and trade." },
+        { id: generateId(), name: "Physician", specializations: ["Herbalism", "Midwifery", "Bone Setting"], notes: "Provides medical care and healing services." }
       ];
-      saveData();
+      saveMasterData();
     }
   }
   
-  function saveData() {
-    localStorage.setItem('stillwaters_master', JSON.stringify({ version: "2.0", data: { roles: roles } }));
+  function saveMasterData() {
+    masterData.lastUpdated = new Date().toISOString();
+    localStorage.setItem('stillwaters_master', JSON.stringify(masterData));
   }
   
+  function getRoles() { return masterData.data.roles; }
+  function setRoles(roles) { masterData.data.roles = roles; saveMasterData(); }
+  
+  // ==================== RENDER ROLES GRID ====================
   function renderRolesGrid() {
     const container = document.getElementById('rolesGrid');
-    let filtered = roles;
-    if (searchTerm) filtered = roles.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    let roles = getRoles();
     
-    if (filtered.length === 0) {
+    if (searchTerm) {
+      roles = roles.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+    
+    if (roles.length === 0) {
       container.innerHTML = '<div style="padding: 40px; text-align: center; color: #8aabb8;">No roles found</div>';
       return;
     }
     
-    container.innerHTML = filtered.map(role => `
+    container.innerHTML = roles.map(role => `
       <div onclick="selectRole('${role.id}')" style="
         background: ${selectedRoleId === role.id ? '#1a2d48' : '#0d1119'};
         border: 1px solid ${selectedRoleId === role.id ? '#6a9ecf' : '#1e2738'};
@@ -131,7 +166,7 @@
     selectedRoleId = id;
     renderRolesGrid();
     
-    const role = roles.find(r => r.id === id);
+    const role = getRoles().find(r => r.id === id);
     if (!role) return;
     
     document.getElementById('detailPanel').innerHTML = `
@@ -201,12 +236,13 @@
     const newSpec = input.value.trim();
     if (!newSpec) return;
     
+    const roles = getRoles();
     const role = roles.find(r => r.id === roleId);
     if (role) {
       if (!role.specializations) role.specializations = [];
       if (!role.specializations.includes(newSpec)) {
         role.specializations.push(newSpec);
-        saveData();
+        setRoles(roles);
         selectRole(roleId);
         renderRolesGrid();
         showToast(`Added "${newSpec}"`);
@@ -218,10 +254,11 @@
   }
   
   function removeSpecialization(roleId, index) {
+    const roles = getRoles();
     const role = roles.find(r => r.id === roleId);
     if (role && role.specializations && role.specializations[index]) {
       role.specializations.splice(index, 1);
-      saveData();
+      setRoles(roles);
       selectRole(roleId);
       renderRolesGrid();
       showToast('Removed');
@@ -229,6 +266,7 @@
   }
   
   function saveRole(roleId) {
+    const roles = getRoles();
     const role = roles.find(r => r.id === roleId);
     if (!role) return;
     
@@ -240,7 +278,7 @@
     
     role.name = newName;
     role.notes = document.getElementById('roleNotes').value;
-    saveData();
+    setRoles(roles);
     renderRolesGrid();
     selectRole(roleId);
     showToast(`Saved "${role.name}"`);
@@ -248,9 +286,9 @@
   
   function deleteRole(roleId) {
     if (!confirm('Delete this role permanently?')) return;
-    roles = roles.filter(r => r.id !== roleId);
+    const roles = getRoles().filter(r => r.id !== roleId);
+    setRoles(roles);
     selectedRoleId = null;
-    saveData();
     renderRolesGrid();
     document.getElementById('detailPanel').innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #8aabb8;">Role deleted. Select another role from the left.</div>';
     showToast('Role deleted');
@@ -260,6 +298,7 @@
     const name = prompt('Enter role name:');
     if (!name || !name.trim()) return;
     
+    const roles = getRoles();
     const newRole = {
       id: generateId(),
       name: name.trim(),
@@ -267,22 +306,43 @@
       notes: ''
     };
     roles.push(newRole);
-    saveData();
+    setRoles(roles);
     renderRolesGrid();
     selectRole(newRole.id);
     showToast(`Created "${name.trim()}"`);
   }
   
+  // ==================== FIXED EXPORT - PRESERVES ALL DATA ====================
   function exportData() {
-    const exportObj = { type: "master", version: "2.0", data: { roles: roles } };
-    const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+    // Create a complete export with ALL data from masterData
+    const exportObj = {
+      type: "master",
+      version: masterData.version,
+      exportDate: new Date().toISOString(),
+      data: {
+        characters: masterData.data.characters,
+        places: masterData.data.places,
+        ranks: masterData.data.ranks,
+        roles: masterData.data.roles,
+        locationTypes: masterData.data.locationTypes,
+        governments: masterData.data.governments,
+        nameLists: masterData.data.nameLists,
+        cityNameParts: masterData.data.cityNameParts,
+        currentYear: masterData.data.currentYear
+      }
+    };
+    
+    const dataStr = JSON.stringify(exportObj, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `stillwaters_roles_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+    a.download = `stillwaters_master_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
     a.click();
-    showToast('Exported');
+    URL.revokeObjectURL(a.href);
+    showToast('Full master data exported (characters, places, ranks, roles, etc.)');
   }
   
+  // ==================== FIXED IMPORT - MERGES WITHOUT WIPING ====================
   function importData() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -293,13 +353,125 @@
       reader.onload = (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
-          if (imported.data?.roles) roles = imported.data.roles;
-          else if (imported.roles) roles = imported.roles;
-          else if (Array.isArray(imported)) roles = imported;
-          saveData();
+          
+          // Handle different import formats
+          let importedData = null;
+          
+          if (imported.type === "master" && imported.data) {
+            importedData = imported.data;
+          } else if (imported.data) {
+            importedData = imported.data;
+          } else {
+            importedData = imported;
+          }
+          
+          // MERGE roles (don't replace, add new ones, update existing)
+          if (importedData.roles && Array.isArray(importedData.roles)) {
+            const currentRoles = masterData.data.roles;
+            
+            importedData.roles.forEach(importedRole => {
+              const existingIndex = currentRoles.findIndex(r => r.id === importedRole.id);
+              if (existingIndex !== -1) {
+                // Update existing role (preserve ID, merge data)
+                currentRoles[existingIndex] = { ...currentRoles[existingIndex], ...importedRole };
+              } else {
+                // Add new role
+                if (!importedRole.id) importedRole.id = generateId();
+                if (!importedRole.specializations) importedRole.specializations = [];
+                if (!importedRole.notes) importedRole.notes = '';
+                currentRoles.push(importedRole);
+              }
+            });
+            
+            masterData.data.roles = currentRoles;
+          }
+          
+          // MERGE characters (add new ones, don't wipe existing)
+          if (importedData.characters && Array.isArray(importedData.characters)) {
+            const currentChars = masterData.data.characters;
+            importedData.characters.forEach(importedChar => {
+              const existingIndex = currentChars.findIndex(c => c.id === importedChar.id);
+              if (existingIndex === -1) {
+                currentChars.push(importedChar);
+              }
+            });
+          }
+          
+          // MERGE places
+          if (importedData.places && Array.isArray(importedData.places)) {
+            const currentPlaces = masterData.data.places;
+            importedData.places.forEach(importedPlace => {
+              const existingIndex = currentPlaces.findIndex(p => p.id === importedPlace.id);
+              if (existingIndex === -1) {
+                currentPlaces.push(importedPlace);
+              }
+            });
+          }
+          
+          // MERGE ranks
+          if (importedData.ranks && Array.isArray(importedData.ranks)) {
+            const currentRanks = masterData.data.ranks;
+            importedData.ranks.forEach(importedRank => {
+              const existingIndex = currentRanks.findIndex(r => r.id === importedRank.id);
+              if (existingIndex === -1) {
+                currentRanks.push(importedRank);
+              }
+            });
+          }
+          
+          // MERGE locationTypes
+          if (importedData.locationTypes && Array.isArray(importedData.locationTypes)) {
+            const currentTypes = masterData.data.locationTypes;
+            importedData.locationTypes.forEach(importedType => {
+              const existingIndex = currentTypes.findIndex(t => t.id === importedType.id);
+              if (existingIndex === -1) {
+                currentTypes.push(importedType);
+              }
+            });
+          }
+          
+          // MERGE governments
+          if (importedData.governments && Array.isArray(importedData.governments)) {
+            const currentGovs = masterData.data.governments;
+            importedData.governments.forEach(importedGov => {
+              const existingIndex = currentGovs.findIndex(g => g.id === importedGov.id);
+              if (existingIndex === -1) {
+                currentGovs.push(importedGov);
+              }
+            });
+          }
+          
+          // MERGE nameLists
+          if (importedData.nameLists && typeof importedData.nameLists === 'object') {
+            Object.keys(importedData.nameLists).forEach(countryId => {
+              if (!masterData.data.nameLists[countryId]) {
+                masterData.data.nameLists[countryId] = { male: [], female: [], surnames: [] };
+              }
+              const src = importedData.nameLists[countryId];
+              if (src.male) src.male.forEach(n => { if (!masterData.data.nameLists[countryId].male.includes(n)) masterData.data.nameLists[countryId].male.push(n); });
+              if (src.female) src.female.forEach(n => { if (!masterData.data.nameLists[countryId].female.includes(n)) masterData.data.nameLists[countryId].female.push(n); });
+              if (src.surnames) src.surnames.forEach(n => { if (!masterData.data.nameLists[countryId].surnames.includes(n)) masterData.data.nameLists[countryId].surnames.push(n); });
+            });
+          }
+          
+          // Update current year if present
+          if (importedData.currentYear) {
+            masterData.data.currentYear = importedData.currentYear;
+          }
+          
+          // Save everything
+          saveMasterData();
+          
+          // Refresh display
           renderRolesGrid();
-          showToast(`Imported ${roles.length} roles`);
-        } catch(err) { alert('Invalid JSON'); }
+          if (selectedRoleId) {
+            const roleExists = masterData.data.roles.some(r => r.id === selectedRoleId);
+            if (roleExists) selectRole(selectedRoleId);
+            else selectedRoleId = null;
+          }
+          
+          showToast(`Imported successfully! ${importedData.roles?.length || 0} roles, ${importedData.characters?.length || 0} characters, etc. (merged, not replaced)`);
+        } catch(err) { alert('Invalid JSON: ' + err.message); }
       };
       reader.readAsText(file);
     };
@@ -337,7 +509,8 @@
   
   window.selectRole = selectRole;
   
-  loadData();
+  // ==================== INIT ====================
+  loadMasterData();
   renderRolesGrid();
   
   document.getElementById('addRoleBtn').onclick = addNewRole;
