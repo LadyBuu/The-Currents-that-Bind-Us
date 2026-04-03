@@ -360,7 +360,7 @@
   <button id="importCharsBtn" class="tb-btn">Import</button>
   <button id="exportCharsBtn" class="tb-btn primary">Export</button>
   <button id="addPersonBtn" class="tb-btn primary">+ Add Person</button>
-  <button id="generatePersonBtn" class="tb-btn">🎲 Generate</button>
+  <button id="generatePersonBtn" class="tb-btn">⚄ Generate</button>
 </div>
 
 <div class="char-app">
@@ -1747,7 +1747,7 @@
     saveMasterData();
     renderCharList();
     selectCharacter(newChar.id);
-    showToast(`🎲 Random character created: ${name}`);
+    showToast(`⚄ Random character created: ${name}`);
     return newChar;
   }
   
@@ -1863,7 +1863,7 @@
     
     if (masterData.data.characters.length === 0) {
       const panelContent = document.getElementById('panelContent');
-      if (panelContent) { panelContent.innerHTML = `<div class="empty-state">👤 No characters<br><br><button id="quickAdd" class="btn primary">+ Add First</button><button id="quickGen" class="btn">🎲 Generate</button></div>`; document.getElementById('quickAdd')?.addEventListener('click', addNewPerson); document.getElementById('quickGen')?.addEventListener('click', () => { const p = generateRandomPerson(); saveMasterData(); renderCharList(); selectCharacter(p.id); }); }
+      if (panelContent) { panelContent.innerHTML = `<div class="empty-state">👤 No characters<br><br><button id="quickAdd" class="btn primary">+ Add First</button><button id="quickGen" class="btn">⚄ Generate</button></div>`; document.getElementById('quickAdd')?.addEventListener('click', addNewPerson); document.getElementById('quickGen')?.addEventListener('click', () => { const p = generateRandomPerson(); saveMasterData(); renderCharList(); selectCharacter(p.id); }); }
     }
   }
   
