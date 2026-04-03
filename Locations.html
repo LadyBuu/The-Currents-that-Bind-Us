@@ -400,8 +400,6 @@
     const childPriority = getTypePriority(childTypeId);
     const parentPriority = getTypePriority(parent.typeId);
     
-    // Child can only depend on places with LOWER priority number (higher in hierarchy)
-    // So a child (priority 4) can depend on parent (priority 1, 2, or 3)
     return childPriority > parentPriority;
   }
   
@@ -410,7 +408,7 @@
     const childPriority = getTypePriority(childTypeId);
     
     return places.filter(place => {
-      if (place.id === currentPlaceId) return false; // Can't be its own parent
+      if (place.id === currentPlaceId) return false;
       const parentPriority = getTypePriority(place.typeId);
       return childPriority > parentPriority;
     });
@@ -500,17 +498,14 @@
         const childPriority = getTypePriority(p.typeId);
         const parentPriority = getTypePriority(parent.typeId);
         
-        // Only add if hierarchy is valid
         if (childPriority > parentPriority) {
           parent.children.push(placeMap.get(p.id));
         } else {
-          // Invalid hierarchy - treat as root
           roots.push(placeMap.get(p.id));
         }
       } else if (!p.parentId) {
         roots.push(placeMap.get(p.id));
       } else {
-        // Parent doesn't exist - treat as root
         roots.push(placeMap.get(p.id));
       }
     });
@@ -584,16 +579,13 @@
   function selectPlace(placeId) {
     currentPlaceId = placeId;
     
-    // Highlight selected
     document.querySelectorAll('.tree-header').forEach(header => {
       header.style.background = '';
     });
     const selectedHeader = document.querySelector(`.tree-header[data-place-id="${placeId}"]`);
     if (selectedHeader) selectedHeader.style.background = 'var(--bg3)';
     
-    // Expand parent chain
     expandToPlace(placeId);
-    
     renderViewTab();
   }
   
@@ -601,7 +593,6 @@
     const place = getPlaceById(placeId);
     if (!place) return;
     
-    // Find and expand parent
     let current = place;
     while (current.parentId) {
       const parentContainer = document.querySelector(`.tree-children[data-children="${current.parentId}"]`);
@@ -667,7 +658,6 @@
       .map(t => `<option value="${t.id}" ${place.typeId === t.id ? 'selected' : ''}>${escapeHtml(t.displayName)} (Priority ${t.priority} - ${getHierarchyLevelDisplay(t.priority)})</option>`)
       .join('');
     
-    // Get valid parent options based on current type
     const validParents = getValidParentOptions(place.typeId);
     const parentOptions = `<option value="">— None (Root) —</option>${
       validParents.map(p => `<option value="${p.id}" ${place.parentId === p.id ? 'selected' : ''}>${escapeHtml(p.displayName)} (${getHierarchyLevelDisplay(getTypePriority(p.typeId))})</option>`)
@@ -678,7 +668,6 @@
       governments.map(g => `<option value="${g.id}" ${place.governmentId === g.id ? 'selected' : ''}>${escapeHtml(g.displayName)}</option>`).join('')
     }`;
     
-    const currentTypePriority = getTypePriority(place.typeId);
     const hierarchyValid = !place.parentId || isValidParent(place.typeId, place.parentId);
     
     const content = `
@@ -774,7 +763,6 @@
     const newTypeId = document.getElementById('editTypeId').value;
     const newParentId = document.getElementById('editParentId').value || null;
     
-    // Validate hierarchy
     if (newParentId && !isValidParent(newTypeId, newParentId)) {
       const type = getTypeById(newTypeId);
       const parent = getPlaceById(newParentId);
@@ -1106,7 +1094,6 @@
     const type = types.find(t => t.displayName.toLowerCase() === typeName?.toLowerCase());
     if (!type) { alert('Invalid type'); return; }
     
-    // Get valid parent options
     const validParents = getValidParentOptions(type.id);
     let parent = null;
     
@@ -1151,13 +1138,24 @@
     showToast(`Added place: ${name}`);
   }
   
-  // ==================== IMPORT/EXPORT ====================
+  // ==================== FIXED IMPORT/EXPORT - PRESERVES NAME LISTS ====================
   function exportData() {
+    // Create export object that preserves ALL data including nameLists and cityNameParts
     const exportObj = {
       type: "master",
       version: "2.0",
       exportDate: new Date().toISOString(),
-      data: masterData.data
+      data: {
+        characters: masterData.data.characters || [],
+        locationTypes: masterData.data.locationTypes || [],
+        governments: masterData.data.governments || [],
+        places: masterData.data.places || [],
+        ranks: masterData.data.ranks || [],
+        roles: masterData.data.roles || [],
+        nameLists: masterData.data.nameLists || {},
+        cityNameParts: masterData.data.cityNameParts || { prefixes: [], roots: [], suffixes: [] },
+        currentYear: masterData.data.currentYear || 1250
+      }
     };
     const dataStr = JSON.stringify(exportObj, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
@@ -1166,7 +1164,7 @@
     a.download = `stillwaters_master_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast('Master data exported');
+    showToast('Master data exported (including name lists)');
   }
   
   function importData() {
@@ -1179,57 +1177,69 @@
       reader.onload = (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
-          let newMasterData = null;
+          
+          // Preserve existing nameLists and cityNameParts before overwriting
+          const existingNameLists = masterData.data.nameLists;
+          const existingCityParts = masterData.data.cityNameParts;
           
           if (imported.type === "master" && imported.data) {
-            newMasterData = imported;
-          } else if (imported.data && (imported.data.places || imported.data.locationTypes)) {
-            newMasterData = imported;
-          } else if (imported.places || imported.locationTypes) {
-            newMasterData = {
-              type: "master",
-              version: "2.0",
-              data: {
-                ...masterData.data,
-                places: imported.places || masterData.data.places,
-                locationTypes: imported.locationTypes || masterData.data.locationTypes,
-                governments: imported.governments || masterData.data.governments
-              }
-            };
-          }
-          
-          if (newMasterData) {
-            if (newMasterData.data.places) {
-              const currentPlaces = masterData.data.places;
-              newMasterData.data.places.forEach(importedPlace => {
-                const existing = currentPlaces.find(p => p.id === importedPlace.id);
-                if (existing) Object.assign(existing, importedPlace);
-                else currentPlaces.push(importedPlace);
+            // Merge imported data with existing, preserving name lists
+            masterData.data.characters = imported.data.characters || masterData.data.characters;
+            masterData.data.locationTypes = imported.data.locationTypes || masterData.data.locationTypes;
+            masterData.data.governments = imported.data.governments || masterData.data.governments;
+            masterData.data.places = imported.data.places || masterData.data.places;
+            masterData.data.ranks = imported.data.ranks || masterData.data.ranks;
+            masterData.data.roles = imported.data.roles || masterData.data.roles;
+            masterData.data.currentYear = imported.data.currentYear || masterData.data.currentYear;
+            
+            // CRITICAL: Preserve nameLists and cityNameParts (don't overwrite with empty)
+            if (imported.data.nameLists && Object.keys(imported.data.nameLists).length > 0) {
+              // Merge imported name lists with existing
+              Object.keys(imported.data.nameLists).forEach(countryId => {
+                if (!masterData.data.nameLists[countryId]) {
+                  masterData.data.nameLists[countryId] = { male: [], female: [], surnames: [] };
+                }
+                const src = imported.data.nameLists[countryId];
+                if (src.male) src.male.forEach(n => { if (!masterData.data.nameLists[countryId].male.includes(n)) masterData.data.nameLists[countryId].male.push(n); });
+                if (src.female) src.female.forEach(n => { if (!masterData.data.nameLists[countryId].female.includes(n)) masterData.data.nameLists[countryId].female.push(n); });
+                if (src.surnames) src.surnames.forEach(n => { if (!masterData.data.nameLists[countryId].surnames.includes(n)) masterData.data.nameLists[countryId].surnames.push(n); });
               });
-            }
-            if (newMasterData.data.locationTypes) {
-              const currentTypes = masterData.data.locationTypes;
-              newMasterData.data.locationTypes.forEach(importedType => {
-                const existing = currentTypes.find(t => t.id === importedType.id);
-                if (existing) Object.assign(existing, importedType);
-                else currentTypes.push(importedType);
-              });
-            }
-            if (newMasterData.data.governments) {
-              const currentGovs = masterData.data.governments;
-              newMasterData.data.governments.forEach(importedGov => {
-                const existing = currentGovs.find(g => g.id === importedGov.id);
-                if (existing) Object.assign(existing, importedGov);
-                else currentGovs.push(importedGov);
-              });
+            } else {
+              // If imported has no nameLists, keep existing
+              masterData.data.nameLists = existingNameLists;
             }
             
-            saveMasterData();
-            renderPlaceList();
-            showToast('Data imported and merged successfully');
+            if (imported.data.cityNameParts && (imported.data.cityNameParts.prefixes?.length || imported.data.cityNameParts.roots?.length)) {
+              // Merge city name parts
+              ['prefixes', 'roots', 'suffixes'].forEach(part => {
+                if (imported.data.cityNameParts[part]) {
+                  if (!masterData.data.cityNameParts[part]) masterData.data.cityNameParts[part] = [];
+                  imported.data.cityNameParts[part].forEach(v => {
+                    if (!masterData.data.cityNameParts[part].includes(v)) {
+                      masterData.data.cityNameParts[part].push(v);
+                    }
+                  });
+                }
+              });
+            } else {
+              masterData.data.cityNameParts = existingCityParts;
+            }
+          } else if (imported.places || imported.locationTypes) {
+            // Handle raw format
+            masterData.data.places = imported.places || masterData.data.places;
+            masterData.data.locationTypes = imported.locationTypes || masterData.data.locationTypes;
+            masterData.data.governments = imported.governments || masterData.data.governments;
+            // Preserve name data
+            masterData.data.nameLists = existingNameLists;
+            masterData.data.cityNameParts = existingCityParts;
           } else {
             alert('Unable to parse file format');
+            return;
           }
+          
+          saveMasterData();
+          renderPlaceList();
+          showToast('Data imported successfully (name lists preserved)');
         } catch(err) { alert('Invalid JSON: ' + err.message); }
       };
       reader.readAsText(file);
