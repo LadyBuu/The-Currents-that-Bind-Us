@@ -176,28 +176,28 @@
     { 
       name: "Character Manager", 
       desc: "Create and edit characters, manage relationships, life events, professions, friendships, and intimate bonds. Deep profile editor for all denizens.", 
-      icon: "👥", 
+      icon: "♥", 
       file: "character-manager.html", 
       tags: ["editor", "relationships", "biography", "portraits"] 
     },
     { 
       name: "Locations", 
       desc: "Hierarchical geography: countries, districts, towns, compounds, and households. Manage settlements, landmarks, and administrative zones.", 
-      icon: "🗺️", 
+      icon: "🗺", 
       file: "Locations.html", 
       tags: ["map", "compounds", "households", "territory"] 
     },
     { 
       name: "Roles", 
       desc: "Daily & ritual roles, specializations, associated stations, apprenticeship paths, and guild assignments. Define ceremonial duties and vocational tracks.", 
-      icon: "⚒️", 
+      icon: "♞", 
       file: "roles.html", 
       tags: ["vocations", "crafts", "specializations", "apprentices"] 
     },
     { 
       name: "Ranks", 
       desc: "Hierarchy of power: Chiefs, Sacred Sons, Elders, Consorts, Masters, and Commoners. Rank color codes, privileges, and succession tracking.", 
-      icon: "🏅", 
+      icon: "★", 
       file: "Ranks.html", 
       tags: ["hierarchy", "privilege", "succession", "social standing"],
       accent: true
@@ -205,7 +205,7 @@
     { 
       name: "Names Manager", 
       desc: "Upload and manage name lists for characters and cities. Assign name lists to countries for cultural naming conventions. Generate random names for characters and places.", 
-      icon: "📜", 
+      icon: "☪", 
       file: "names-manager.html", 
       tags: ["names", "surnames", "city names", "generator", "culture"],
       accent: true
@@ -213,7 +213,7 @@
     { 
       name: "Diagnostics", 
       desc: "Inconsistency scanner: age anomalies, orphan detection, timeline conflicts, rank mismatches, broken relationships, location orphans, and fix suggestions.", 
-      icon: "🔍", 
+      icon: "⊗", 
       file: "inconsistencies.html", 
       tags: ["validator", "data quality", "errors", "cleanup", "fixer"],
       warning: true
@@ -221,14 +221,14 @@
     { 
       name: "Census", 
       desc: "Population analytics, age pyramids, compound demographics, mortality trends, gender distribution, and interactive charts for the whole realm.", 
-      icon: "📊", 
+      icon: "▲", 
       file: "Census.html", 
       tags: ["statistics", "demographics", "charts", "population"] 
     },
     { 
       name: "Family Tree", 
       desc: "Ancestral lineages, descendants web, relationship finder, historical bloodlines, and multi-generation viewer. Discover how blood binds the world.", 
-      icon: "🌳", 
+      icon: "✽", 
       file: "Tree.html", 
       tags: ["genealogy", "ancestors", "descendants", "heritage"] 
     }
@@ -247,20 +247,20 @@
     // Optional badges for special categories
     let extraBadges = '';
     if (tool.accent) {
-      extraBadges += '<span class="badge accent">✨ Featured</span>';
+      extraBadges += '<span class="badge accent">✦ Featured</span>';
     }
     if (tool.warning) {
-      extraBadges += '<span class="badge warning">⚠️ Integrity scan</span>';
+      extraBadges += '<span class="badge warning">⚠︎ Integrity scan</span>';
     }
     if (tool.name === "Roles") {
-      extraBadges += '<span class="badge">⚒️ Professions</span>';
+      extraBadges += '<span class="badge">♞ Professions</span>';
     }
     if (tool.name === "Ranks") {
-      extraBadges += '<span class="badge accent">👑 Hierarchy</span>';
+      extraBadges += '<span class="badge accent">♔ Hierarchy</span>';
     }
     if (tool.name === "Names Manager") {
-      extraBadges += '<span class="badge accent">📖 Cultural naming</span>';
-      extraBadges += '<span class="badge">🎲 Random generator</span>';
+      extraBadges += '<span class="badge accent">✏ Cultural naming</span>';
+      extraBadges += '<span class="badge">⚄ Random generator</span>';
     }
     
     card.innerHTML = `
