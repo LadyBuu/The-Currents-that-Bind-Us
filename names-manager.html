@@ -616,4 +616,365 @@
           <div class="name-grid" id="surnamesList">
             ${(lists.surnames || []).map(name => `<span class="name-tag">${escapeHtml(name)} <button class="delete-name" data-name="${escapeHtml(name)}" data-type="surnames">✖</button></span>`).join('')}
           </div>
-          <div class="upload-area" data-type="surnames">📂 Upload surnames (one per line)<input ty
+          <div class="upload-area" data-type="surnames">📂 Upload surnames (one per line)<input type="file" accept=".txt" style="display:none;"></div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+          <button id="addManualNameBtn" class="btn">➕ Add Single Name</button>
+          <button id="clearAllNamesBtn" class="btn danger">⚠️ Clear All Names</button>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('panelContent').innerHTML = content;
+    
+    // Delete handlers
+    document.querySelectorAll('.delete-name').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const name = btn.getAttribute('data-name');
+        const type = btn.getAttribute('data-type');
+        if (confirm(`Remove "${name}"?`)) {
+          masterData.data.nameLists[selectedCountryId][type] = 
+            (masterData.data.nameLists[selectedCountryId][type] || []).filter(n => n !== name);
+          saveMasterData();
+          renderCharacterNamesTab();
+          showToast(`Removed "${name}"`);
+        }
+      });
+    });
+    
+    // Upload handlers
+    document.querySelectorAll('.upload-area').forEach(area => {
+      const type = area.getAttribute('data-type');
+      const fileInput = area.querySelector('input');
+      
+      area.addEventListener('click', () => fileInput.click());
+      area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.borderColor = 'var(--accent)'; });
+      area.addEventListener('dragleave', () => area.style.borderColor = 'var(--border2)');
+      area.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) processNameFile(file, type);
+        area.style.borderColor = 'var(--border2)';
+      });
+      
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) processNameFile(fileInput.files[0], type);
+        fileInput.value = '';
+      });
+    });
+    
+    document.getElementById('addManualNameBtn')?.addEventListener('click', () => {
+      const name = prompt('Enter name:');
+      if (name && name.trim()) {
+        const type = prompt('Type: male, female, surnames?', 'male');
+        if (type && ['male', 'female', 'surnames'].includes(type.toLowerCase())) {
+          const t = type.toLowerCase();
+          if (!masterData.data.nameLists[selectedCountryId][t]) masterData.data.nameLists[selectedCountryId][t] = [];
+          if (!masterData.data.nameLists[selectedCountryId][t].includes(name.trim())) {
+            masterData.data.nameLists[selectedCountryId][t].push(name.trim());
+            saveMasterData();
+            renderCharacterNamesTab();
+            showToast(`Added "${name.trim()}"`);
+          } else showToast('Name already exists');
+        }
+      }
+    });
+    
+    document.getElementById('clearAllNamesBtn')?.addEventListener('click', () => {
+      if (confirm('Clear ALL names for this country?')) {
+        masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
+        saveMasterData();
+        renderCharacterNamesTab();
+        showToast('All names cleared');
+      }
+    });
+  }
+  
+  function processNameFile(file, type) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const names = e.target.result.split(/\r?\n/).filter(n => n.trim().length > 0);
+      if (!masterData.data.nameLists[selectedCountryId]) {
+        masterData.data.nameLists[selectedCountryId] = { male: [], female: [], surnames: [] };
+      }
+      if (!masterData.data.nameLists[selectedCountryId][type]) {
+        masterData.data.nameLists[selectedCountryId][type] = [];
+      }
+      let added = 0;
+      names.forEach(name => {
+        const trimmed = name.trim();
+        if (!masterData.data.nameLists[selectedCountryId][type].includes(trimmed)) {
+          masterData.data.nameLists[selectedCountryId][type].push(trimmed);
+          added++;
+        }
+      });
+      saveMasterData();
+      renderCharacterNamesTab();
+      showToast(`Added ${added} names to ${type}`);
+    };
+    reader.readAsText(file);
+  }
+  
+  // ==================== CITY NAMES TAB ====================
+  function renderCityNamesTab() {
+    const parts = masterData.data.cityNameParts;
+    
+    const content = `
+      <div style="max-width: 900px; margin: 0 auto;">
+        <h2 style="margin-bottom: 20px;">🏙️ City Name Generator</h2>
+        
+        <div class="city-builder">
+          <div class="section-title">📖 Prefixes</div>
+          <div class="name-grid" id="prefixesList">${(parts.prefixes || []).map(p => `<span class="name-tag">${escapeHtml(p)} <button class="delete-part" data-part="prefixes" data-value="${escapeHtml(p)}">✖</button></span>`).join('')}</div>
+          <div class="upload-area" data-city-part="prefixes">📂 Upload prefixes<input type="file" accept=".txt" style="display:none;"></div>
+        </div>
+        
+        <div class="city-builder">
+          <div class="section-title">🌿 Roots</div>
+          <div class="name-grid" id="rootsList">${(parts.roots || []).map(r => `<span class="name-tag">${escapeHtml(r)} <button class="delete-part" data-part="roots" data-value="${escapeHtml(r)}">✖</button></span>`).join('')}</div>
+          <div class="upload-area" data-city-part="roots">📂 Upload roots<input type="file" accept=".txt" style="display:none;"></div>
+        </div>
+        
+        <div class="city-builder">
+          <div class="section-title">✨ Suffixes</div>
+          <div class="name-grid" id="suffixesList">${(parts.suffixes || []).map(s => `<span class="name-tag">${escapeHtml(s)} <button class="delete-part" data-part="suffixes" data-value="${escapeHtml(s)}">✖</button></span>`).join('')}</div>
+          <div class="upload-area" data-city-part="suffixes">📂 Upload suffixes<input type="file" accept=".txt" style="display:none;"></div>
+        </div>
+        
+        <div class="city-builder">
+          <div class="section-title">🎲 Generate</div>
+          <div class="city-part">
+            <button id="generateNamesBtn" class="btn primary">Generate 10 Names</button>
+            <button id="generateSingleBtn" class="btn">Generate One</button>
+          </div>
+          <div id="generatedCities" class="generated-list"></div>
+        </div>
+        
+        <div class="city-builder">
+          <div class="section-title">✏️ Manual Addition</div>
+          <div><input type="text" id="newPrefix" placeholder="New prefix"><button id="addPrefixBtn" class="btn small">Add Prefix</button></div>
+          <div><input type="text" id="newRoot" placeholder="New root"><button id="addRootBtn" class="btn small">Add Root</button></div>
+          <div><input type="text" id="newSuffix" placeholder="New suffix"><button id="addSuffixBtn" class="btn small">Add Suffix</button></div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('panelContent').innerHTML = content;
+    
+    // Delete handlers
+    document.querySelectorAll('.delete-part').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const part = btn.getAttribute('data-part');
+        const value = btn.getAttribute('data-value');
+        if (confirm(`Remove "${value}"?`)) {
+          masterData.data.cityNameParts[part] = (masterData.data.cityNameParts[part] || []).filter(v => v !== value);
+          saveMasterData();
+          renderCityNamesTab();
+        }
+      });
+    });
+    
+    // Upload handlers
+    document.querySelectorAll('.upload-area[data-city-part]').forEach(area => {
+      const part = area.getAttribute('data-city-part');
+      const input = area.querySelector('input');
+      area.addEventListener('click', () => input.click());
+      area.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) processCityFile(file, part);
+      });
+      input.addEventListener('change', () => {
+        if (input.files[0]) processCityFile(input.files[0], part);
+        input.value = '';
+      });
+    });
+    
+    document.getElementById('addPrefixBtn')?.addEventListener('click', () => addCityPart('prefixes', 'newPrefix'));
+    document.getElementById('addRootBtn')?.addEventListener('click', () => addCityPart('roots', 'newRoot'));
+    document.getElementById('addSuffixBtn')?.addEventListener('click', () => addCityPart('suffixes', 'newSuffix'));
+    document.getElementById('generateNamesBtn')?.addEventListener('click', () => generateCities(10));
+    document.getElementById('generateSingleBtn')?.addEventListener('click', () => generateCities(1));
+  }
+  
+  function addCityPart(part, inputId) {
+    const val = document.getElementById(inputId)?.value.trim();
+    if (val && !(masterData.data.cityNameParts[part] || []).includes(val)) {
+      if (!masterData.data.cityNameParts[part]) masterData.data.cityNameParts[part] = [];
+      masterData.data.cityNameParts[part].push(val);
+      saveMasterData();
+      renderCityNamesTab();
+      document.getElementById(inputId).value = '';
+      showToast(`Added "${val}"`);
+    }
+  }
+  
+  function processCityFile(file, part) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const items = e.target.result.split(/\r?\n/).filter(l => l.trim());
+      if (!masterData.data.cityNameParts[part]) masterData.data.cityNameParts[part] = [];
+      items.forEach(it => {
+        const trimmed = it.trim();
+        if (!masterData.data.cityNameParts[part].includes(trimmed)) {
+          masterData.data.cityNameParts[part].push(trimmed);
+        }
+      });
+      saveMasterData();
+      renderCityNamesTab();
+      showToast(`Added ${items.length} ${part}`);
+    };
+    reader.readAsText(file);
+  }
+  
+  function generateCities(count) {
+    const parts = masterData.data.cityNameParts;
+    if (!parts.prefixes?.length || !parts.roots?.length) {
+      showToast('Need prefixes and roots');
+      return;
+    }
+    const names = [];
+    for (let i = 0; i < count; i++) {
+      let name = parts.prefixes[Math.floor(Math.random() * parts.prefixes.length)] + 
+                 parts.roots[Math.floor(Math.random() * parts.roots.length)];
+      if (parts.suffixes?.length && Math.random() > 0.6) {
+        name += parts.suffixes[Math.floor(Math.random() * parts.suffixes.length)];
+      }
+      names.push(name.charAt(0).toUpperCase() + name.slice(1));
+    }
+    const container = document.getElementById('generatedCities');
+    if (container) container.innerHTML = names.map(n => `<span class="name-tag">${escapeHtml(n)}</span>`).join('');
+  }
+  
+  // ==================== EXPORT (matches master JSON format) ====================
+  function exportMasterJSON() {
+    const exportObj = {
+      type: "master",
+      version: "2.0",
+      exportDate: new Date().toISOString(),
+      data: {
+        characters: masterData.data.characters || [],
+        locationTypes: masterData.data.locationTypes || [],
+        governments: masterData.data.governments || [],
+        places: masterData.data.places || [],
+        ranks: masterData.data.ranks || [],
+        roles: masterData.data.roles || [],
+        nameLists: masterData.data.nameLists,
+        cityNameParts: masterData.data.cityNameParts,
+        currentYear: masterData.data.currentYear || 1250
+      }
+    };
+    
+    const dataStr = JSON.stringify(exportObj, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `stillwaters_master_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Master JSON exported');
+  }
+  
+  // ==================== IMPORT NAMES ONLY ====================
+  function importNamesOnly() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          let newNameLists = null;
+          let newCityParts = null;
+          
+          if (imported.type === "master" && imported.data) {
+            newNameLists = imported.data.nameLists;
+            newCityParts = imported.data.cityNameParts;
+          } else if (imported.nameLists) {
+            newNameLists = imported.nameLists;
+            newCityParts = imported.cityNameParts;
+          } else if (imported.data && imported.data.nameLists) {
+            newNameLists = imported.data.nameLists;
+            newCityParts = imported.data.cityNameParts;
+          }
+          
+          if (newNameLists) {
+            Object.keys(newNameLists).forEach(cid => {
+              if (!masterData.data.nameLists[cid]) masterData.data.nameLists[cid] = { male: [], female: [], surnames: [] };
+              const src = newNameLists[cid];
+              if (src.male) src.male.forEach(n => { if (!masterData.data.nameLists[cid].male.includes(n)) masterData.data.nameLists[cid].male.push(n); });
+              if (src.female) src.female.forEach(n => { if (!masterData.data.nameLists[cid].female.includes(n)) masterData.data.nameLists[cid].female.push(n); });
+              if (src.surnames) src.surnames.forEach(n => { if (!masterData.data.nameLists[cid].surnames.includes(n)) masterData.data.nameLists[cid].surnames.push(n); });
+            });
+          }
+          
+          if (newCityParts) {
+            ['prefixes', 'roots', 'suffixes'].forEach(part => {
+              if (newCityParts[part]) {
+                if (!masterData.data.cityNameParts[part]) masterData.data.cityNameParts[part] = [];
+                newCityParts[part].forEach(v => { if (!masterData.data.cityNameParts[part].includes(v)) masterData.data.cityNameParts[part].push(v); });
+              }
+            });
+          }
+          
+          saveMasterData();
+          refreshCountries();
+          if (selectedCountryId) renderCharacterNamesTab();
+          showToast('Names imported and merged');
+        } catch(err) { alert('Invalid JSON: ' + err.message); }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+  
+  function showToast(msg) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+  }
+  
+  // ==================== INIT ====================
+  function init() {
+    loadFromLocalStorage();
+    refreshCountries();
+    
+    document.getElementById('loadMasterDataBtn').addEventListener('click', loadMasterFromFile);
+    document.getElementById('importNamesBtn').addEventListener('click', importNamesOnly);
+    document.getElementById('exportNamesBtn').addEventListener('click', exportMasterJSON);
+    document.getElementById('refreshCountriesBtn').addEventListener('click', () => {
+      refreshCountries();
+      showToast('Countries refreshed');
+    });
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (btn.getAttribute('data-tab') === 'character') renderCharacterNamesTab();
+        else renderCityNamesTab();
+      });
+    });
+  }
+  
+  init();
+</script>
+</body>
+</html>
