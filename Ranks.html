@@ -390,5 +390,70 @@
             });
           }
           
-          // Merge governments
-          if (importedGovernments && 
+  // Merge governments
+  if (importedGovernments && Array.isArray(importedGovernments) && importedGovernments.length) {
+    const currentGovs = masterData.data.governments;
+    importedGovernments.forEach(importedGov => {
+      const existingIndex = currentGovs.findIndex(g => g.id === importedGov.id);
+      if (existingIndex !== -1) {
+        currentGovs[existingIndex] = { ...currentGovs[existingIndex], ...importedGov };
+      } else {
+        if (!importedGov.id) importedGov.id = 'gov_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+        currentGovs.push(importedGov);
+      }
+    });
+  }
+  
+  saveMasterData();
+  renderRanks();
+  showToast(`Imported ${changes || 0} ranks`);
+  
+        } catch(err) { 
+          alert('Invalid JSON: ' + err.message); 
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+  
+  function showToast(msg) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+  }
+  
+  // ==================== INIT ====================
+  function init() {
+    loadMasterData();
+    renderRanks();
+    
+    document.getElementById('addRankBtn').addEventListener('click', addRank);
+    document.getElementById('importBtn').addEventListener('click', importData);
+    document.getElementById('exportBtn').addEventListener('click', exportData);
+    
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'stillwaters_master') {
+        loadMasterData();
+        renderRanks();
+      }
+    });
+  }
+  
+  init();
+</script>
+</body>
+</html>
