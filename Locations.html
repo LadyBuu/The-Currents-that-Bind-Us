@@ -97,9 +97,10 @@
   function getHierarchyLevelDisplay(priority) {
     const levels = {
       1: 'Country',
-      2: 'District', 
-      3: 'Town/Village',
-      4: 'Compound'
+      2: 'District/Duchy/Region', 
+      3: 'Town/County',
+      4: 'Village/Barony'
+	  5: 'Compound/Residence'
     };
     return levels[priority] || 'Other';
   }
@@ -759,44 +760,164 @@
     showToast(`Added government: ${name}`);
   }
   
-  function addPlace() {
-    const name = prompt('Place name:');
-    if (!name) return;
+function addPlace() {
+  // Create modal
+  const modal = document.createElement('div');
+  modal.className = 'modal active';
+  modal.style.display = 'flex';
+  
+  // Get data for dropdowns
+  const locationTypes = getLocationTypes().sort((a, b) => a.priority - b.priority);
+  const places = getPlaces();
+  
+  // Build type options
+  const typeOptions = locationTypes.map(type => 
+    `<option value="${type.id}" data-priority="${type.priority}">${escapeHtml(type.displayName)} (Priority ${type.priority} - ${getHierarchyLevelDisplay(type.priority)})</option>`
+  ).join('');
+  
+  // Initial parent options (empty until type is selected)
+  let parentOptions = '<option value="">— None (Root) —</option>';
+  
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 500px;">
+      <h3>➕ Add New Place</h3>
+      <form id="addPlaceForm">
+        <div class="form-group">
+          <label>Place Name *</label>
+          <input type="text" id="newPlaceName" required placeholder="e.g., Port Royal, Mountain Pass, Sacred Grove">
+        </div>
+        
+        <div class="form-group">
+          <label>Location Type *</label>
+          <select id="newPlaceType" required>
+            <option value="">— Select a type —</option>
+            ${typeOptions}
+          </select>
+          <div class="helper-text" style="font-size:0.55rem; color:var(--dim); margin-top:4px;">
+            Priority determines hierarchy: 1=Country, 2=District, 3=Town/Village, 4=Compound
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Parent Place (optional)</label>
+          <select id="newPlaceParent">
+            ${parentOptions}
+          </select>
+          <div id="parentWarning" class="helper-text" style="font-size:0.55rem; color:var(--warn); margin-top:4px;"></div>
+        </div>
+        
+        <div class="form-group">
+          <label>Variable Key (optional)</label>
+          <input type="text" id="newPlaceVariable" placeholder="e.g., port_royal, mountain_pass">
+          <div class="helper-text" style="font-size:0.55rem; color:var(--dim); margin-top:4px;">
+            Used for scripting/mapping. Leave blank to auto-generate.
+          </div>
+        </div>
+        
+        <div class="modal-buttons" style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+          <button type="button" id="cancelPlaceBtn" class="btn">Cancel</button>
+          <button type="submit" class="btn primary">💾 Save Place</button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  const typeSelect = modal.querySelector('#newPlaceType');
+  const parentSelect = modal.querySelector('#newPlaceParent');
+  const parentWarning = modal.querySelector('#parentWarning');
+  const nameInput = modal.querySelector('#newPlaceName');
+  const variableInput = modal.querySelector('#newPlaceVariable');
+  const form = modal.querySelector('#addPlaceForm');
+  
+  // Function to update parent dropdown based on selected type
+  function updateParentDropdown() {
+    const selectedTypeId = typeSelect.value;
+    if (!selectedTypeId) {
+      parentSelect.innerHTML = '<option value="">— None (Root) —</option>';
+      parentWarning.innerHTML = '';
+      parentSelect.disabled = true;
+      return;
+    }
     
-    const types = getLocationTypes();
-    if (!types.length) { alert('Please add a location type first.'); return; }
+    parentSelect.disabled = false;
     
-    const typeList = types.sort((a, b) => a.priority - b.priority)
-      .map(t => `${t.displayName} (Priority ${t.priority} - ${getHierarchyLevelDisplay(t.priority)})`)
-      .join('\n');
+    const selectedType = locationTypes.find(t => t.id === selectedTypeId);
+    const selectedPriority = selectedType?.priority || 999;
     
-    const typeName = prompt(`Select type:\n${typeList}`);
-    const type = types.find(t => t.displayName.toLowerCase() === typeName?.toLowerCase());
-    if (!type) { alert('Invalid type'); return; }
+    // Find valid parents: places with lower priority (higher in hierarchy)
+    // e.g., priority 1 (Country) can have no parent
+    // priority 2 (District) can have parent with priority 1
+    // priority 3 (Town) can have parent with priority 1 or 2
+    // priority 4 (Compound) can have parent with priority 1, 2, or 3
+    const validParents = places.filter(place => {
+      const placeType = locationTypes.find(t => t.id === place.typeId);
+      const placePriority = placeType?.priority || 999;
+      return placePriority < selectedPriority;
+    });
     
-    const validParents = getValidParentOptions(type.id);
-    let parent = null;
+    if (validParents.length === 0) {
+      parentSelect.innerHTML = '<option value="">— None (Root) —</option>';
+      parentWarning.innerHTML = '⚠️ No valid parent locations available for this type. This will be a root location.';
+    } else {
+      parentWarning.innerHTML = '';
+      parentSelect.innerHTML = '<option value="">— None (Root) —</option>' + 
+        validParents.map(p => {
+          const parentType = locationTypes.find(t => t.id === p.typeId);
+          const levelName = parentType ? getHierarchyLevelDisplay(parentType.priority) : 'Unknown';
+          return `<option value="${p.id}">${escapeHtml(p.displayName)} (${levelName})</option>`;
+        }).join('');
+    }
+  }
+  
+  // Update parent dropdown when type changes
+  typeSelect.addEventListener('change', updateParentDropdown);
+  
+  // Form submission
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
     
-    if (validParents.length) {
-      const parentList = validParents.map(p => p.displayName).join(', ');
-      const parentName = prompt(`Parent place (optional, can be left blank):\nValid parents: ${parentList || 'None'}`);
-      if (parentName) {
-        parent = validParents.find(p => p.displayName.toLowerCase() === parentName?.toLowerCase());
-        if (!parent && parentName) {
-          alert('Invalid parent selection. Place will be created as root.');
-          parent = null;
+    const name = nameInput.value.trim();
+    if (!name) {
+      showToast('Place name is required');
+      return;
+    }
+    
+    const typeId = typeSelect.value;
+    if (!typeId) {
+      showToast('Please select a location type');
+      return;
+    }
+    
+    const parentId = parentSelect.value || null;
+    const variableKey = variableInput.value.trim() || null;
+    
+    // Validate hierarchy
+    const selectedType = locationTypes.find(t => t.id === typeId);
+    if (parentId) {
+      const parent = places.find(p => p.id === parentId);
+      const parentType = locationTypes.find(t => t.id === parent?.typeId);
+      if (parent && selectedType && parentType) {
+        if (selectedType.priority <= parentType.priority) {
+          showToast(`Cannot place ${selectedType.displayName} under ${parentType.displayName}. ${selectedType.displayName}s can only be under higher-level locations (lower priority number).`);
+          return;
         }
       }
     }
     
-    const variableKey = prompt('Variable key (optional):', name.toLowerCase().replace(/\s/g, '_'));
+    // Generate variable key if not provided
+    let finalVariableKey = variableKey;
+    if (!finalVariableKey) {
+      finalVariableKey = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    }
     
     const newPlace = {
       id: generateId(),
       displayName: name,
-      typeId: type.id,
-      parentId: parent?.id || null,
-      variableKey: variableKey || null,
+      typeId: typeId,
+      parentId: parentId,
+      variableKey: finalVariableKey,
       status: 'active',
       isCapital: false,
       leaderId: null,
@@ -810,13 +931,29 @@
       cityNameStyle: null
     };
     
-    const places = getPlaces();
-    places.push(newPlace);
-    setPlaces(places);
+    const placesArray = getPlaces();
+    placesArray.push(newPlace);
+    setPlaces(placesArray);
+    
     renderPlaceList();
     selectPlace(newPlace.id);
+    modal.remove();
     showToast(`Added place: ${name}`);
-  }
+  });
+  
+  // Cancel button
+  modal.querySelector('#cancelPlaceBtn').addEventListener('click', () => {
+    modal.remove();
+  });
+  
+  // Close modal when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+  
+  // Initial update (type is empty initially)
+  parentSelect.disabled = true;
+}
   
   // ==================== FIXED IMPORT/EXPORT - PRESERVES NAME LISTS ====================
   function exportData() {
