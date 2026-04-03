@@ -1,5 +1,5 @@
 /* stillwaters.css - Shared Styles for All Still Waters Tools */
-/* Version 4.0 - Fixed Layouts */
+/* Version 4.1 - Fixed Scrollbars & Locations Manager */
 
 /* ============================================
    ROOT VARIABLES
@@ -191,6 +191,28 @@ label {
 }
 @keyframes fadeOut {
   to { opacity: 0; transform: translateX(100%); }
+}
+
+/* ============================================
+   SCROLLBARS - FIXED FOR ALL
+   ============================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 
 /* ============================================
@@ -574,6 +596,38 @@ label {
   overflow: hidden;
 }
 
+.locations-app .sidebar {
+  width: 320px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.locations-app .sidebar-header {
+  padding: 12px 16px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.locations-app .sidebar-header h3 {
+  font-size: 0.7rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.locations-app .sidebar-actions {
+  display: flex;
+  gap: 6px;
+}
+
 .place-list {
   flex: 1;
   overflow-y: auto;
@@ -596,6 +650,7 @@ label {
   padding: 6px 8px;
   cursor: pointer;
   border-radius: 6px;
+  flex-wrap: wrap;
 }
 
 .tree-header:hover {
@@ -606,11 +661,32 @@ label {
   width: 18px;
   font-size: 0.7rem;
   color: var(--dim);
+  cursor: pointer;
+}
+
+.tree-header .capital-star {
+  color: gold;
+  font-size: 0.8rem;
 }
 
 .tree-header .place-name {
   flex: 1;
   font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.tree-header .id-hint {
+  font-size: 0.5rem;
+  color: var(--tmut);
+  font-family: monospace;
+}
+
+.tree-header .status-badge {
+  font-size: 0.5rem;
+  padding: 2px 6px;
+  border-radius: 12px;
+  border: 1px solid;
+  background: rgba(0,0,0,0.3);
 }
 
 .tree-children {
@@ -619,6 +695,301 @@ label {
 
 .tree-children.collapsed {
   display: none;
+}
+
+/* Locations Manager - Main Panel */
+.locations-app .main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Manage Types Container */
+.manage-section {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 20px;
+}
+
+.management-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.management-header {
+  padding: 16px 20px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.management-header h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin: 0;
+}
+
+.management-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* Management Item Card */
+.management-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.management-item:hover {
+  border-color: var(--accent);
+  background: var(--bg3);
+}
+
+.management-item-info {
+  flex: 2;
+  min-width: 200px;
+}
+
+.management-item-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.management-item-details {
+  font-size: 0.6rem;
+  color: var(--dim);
+  font-family: monospace;
+}
+
+/* Edit Mode */
+.edit-mode {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 2;
+  min-width: 250px;
+}
+
+.edit-mode input {
+  padding: 6px 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: 'Crimson Pro', serif;
+}
+
+.edit-mode input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Action Buttons */
+.management-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.management-item-actions .btn {
+  padding: 4px 12px;
+  font-size: 0.6rem;
+}
+
+.management-item-actions .btn.success {
+  background: rgba(74, 144, 96, 0.15);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.management-item-actions .btn.success:hover {
+  background: rgba(74, 144, 96, 0.3);
+}
+
+/* Helper Text */
+.helper-text {
+  font-size: 0.55rem;
+  color: var(--dim);
+  margin-top: 4px;
+}
+
+/* ============================================
+   RANK MANAGER - WITH SCROLLBAR
+   ============================================ */
+.rank-container {
+  max-width: 1400px;
+  margin: 20px auto;
+  padding: 0 20px 40px;
+  height: calc(100vh - 44px - 40px);
+  overflow-y: auto;
+}
+
+.rank-container .toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 20px;
+}
+
+.rank-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.rank-card:hover {
+  border-color: var(--accent);
+}
+
+.rank-header {
+  padding: 16px 20px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rank-name-field {
+  flex: 2;
+  min-width: 160px;
+}
+
+.rank-name-field input {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  padding: 8px 12px;
+  width: 100%;
+  border-radius: 6px;
+  color: var(--text);
+}
+
+.rank-priority {
+  width: 100px;
+}
+
+.rank-priority input {
+  text-align: center;
+}
+
+.rank-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+  cursor: pointer;
+}
+
+.symbol-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.symbol-dropdown {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  padding: 6px 10px;
+  font-size: 1.2rem;
+  font-family: monospace;
+  border-radius: 6px;
+  color: var(--accent);
+  cursor: pointer;
+  width: auto;
+}
+
+.symbol-preview {
+  font-size: 1.4rem;
+  background: var(--bg);
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  min-width: 60px;
+  text-align: center;
+}
+
+.location-assignment {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.location-assignment select {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--text);
+}
+
+.info-note {
+  font-size: 0.6rem;
+  color: var(--tmut);
+  font-style: italic;
 }
 
 /* ============================================
@@ -814,50 +1185,6 @@ label {
 }
 
 /* ============================================
-   RANK MANAGER
-   ============================================ */
-.rank-container {
-  max-width: 1400px;
-  margin: 20px auto;
-  padding: 0 20px 40px;
-}
-
-.rank-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 20px;
-}
-
-.rank-card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-}
-
-.rank-card:hover {
-  border-color: var(--accent);
-}
-
-.rank-header {
-  padding: 16px 20px;
-  background: var(--bg3);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.rank-body {
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-/* ============================================
    CENSUS
    ============================================ */
 .census-app {
@@ -1016,7 +1343,7 @@ label {
 }
 
 /* ============================================
-   FAMILY TREE - Fixed Character List
+   FAMILY TREE
    ============================================ */
 .family-app {
   display: flex;
@@ -1024,7 +1351,6 @@ label {
   overflow: hidden;
 }
 
-/* Left Sidebar - Character List */
 .family-app .sidebar {
   width: 300px;
   background: var(--bg2);
@@ -1067,15 +1393,8 @@ label {
   border-radius: 6px;
   color: var(--text);
   font-size: 0.7rem;
-  font-family: 'Crimson Pro', serif;
 }
 
-.family-app .search-box input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-/* Character List Items */
 .family-app .character-list {
   flex: 1;
   overflow-y: auto;
@@ -1095,13 +1414,11 @@ label {
 .family-app .char-list-item:hover {
   border-color: var(--accent);
   background: var(--bg3);
-  transform: translateX(2px);
 }
 
 .family-app .char-list-item.selected {
   border-color: var(--accent);
   background: var(--accent-dim);
-  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .family-app .char-list-name {
@@ -1110,7 +1427,6 @@ label {
   font-weight: 600;
   color: var(--accent);
   margin-bottom: 4px;
-  word-break: break-word;
 }
 
 .family-app .char-list-details {
@@ -1119,10 +1435,8 @@ label {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: center;
 }
 
-/* Main Panel */
 .family-app .main-panel {
   flex: 1;
   display: flex;
@@ -1148,7 +1462,6 @@ label {
   margin: 0;
 }
 
-/* Family Tree Display */
 .family-app .panel-content {
   flex: 1;
   overflow-y: auto;
@@ -1177,7 +1490,6 @@ label {
   margin-bottom: 20px;
 }
 
-/* Family Cards */
 .family-app .family-card {
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -1192,7 +1504,6 @@ label {
 .family-app .family-card:hover {
   border-color: var(--accent);
   background: var(--bg3);
-  transform: translateY(-2px);
 }
 
 .family-app .family-card.central {
@@ -1211,7 +1522,6 @@ label {
   font-weight: 600;
   color: var(--accent);
   margin-bottom: 8px;
-  word-break: break-word;
 }
 
 .family-app .family-card .card-details {
@@ -1221,12 +1531,6 @@ label {
   flex-direction: column;
   gap: 4px;
   margin-top: 8px;
-}
-
-.family-app .family-card .card-details div {
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .family-app .relation-badge {
@@ -1241,88 +1545,6 @@ label {
   width: 100%;
 }
 
-/* Relationship Modal */
-.family-app .modal-content .char-selector {
-  margin-bottom: 16px;
-}
-
-.family-app .modal-content .char-selector label {
-  display: block;
-  font-size: 0.65rem;
-  font-family: 'Cinzel', serif;
-  color: var(--accent);
-  margin-bottom: 6px;
-}
-
-.family-app .modal-content .char-selector select {
-  width: 100%;
-  padding: 8px 10px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 6px;
-  font-size: 0.8rem;
-}
-
-.family-app .relationship-path {
-  background: var(--bg);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
-}
-
-.family-app .relationship-type {
-  color: var(--accent);
-  font-weight: bold;
-  font-family: 'Cinzel', serif;
-  font-size: 0.7rem;
-  margin-bottom: 6px;
-}
-
-.family-app .path {
-  font-size: 0.7rem;
-  color: var(--dim);
-  word-break: break-word;
-}
-
-/* Empty State */
-.family-app .empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--dim);
-  font-family: 'Cinzel', serif;
-  font-size: 0.55rem;
-  text-align: center;
-  padding: 40px;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .family-app {
-    flex-direction: column;
-  }
-  
-  .family-app .sidebar {
-    width: 100%;
-    max-height: 300px;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-  
-  .family-app .tree-row {
-    justify-content: center;
-  }
-  
-  .family-app .family-card {
-    width: 100%;
-    max-width: 280px;
-  }
-}
 /* ============================================
    NAMES MANAGER
    ============================================ */
@@ -1540,7 +1762,7 @@ footer {
    MOBILE RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
-  .sidebar, .roles-sidebar {
+  .sidebar, .roles-sidebar, .locations-app .sidebar {
     width: 100%;
     max-height: 300px;
   }
@@ -1573,23 +1795,63 @@ footer {
   .search-roles input {
     width: 150px;
   }
+  
+  .rank-container {
+    padding: 12px;
+    margin: 10px auto;
+  }
+  
+  .management-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .management-item-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .edit-mode {
+    width: 100%;
+  }
+  
+  .manage-section {
+    padding: 12px;
+  }
+  
+  /* ============================================
+   LOCATIONS MANAGER BUTTON FIX
+   ============================================ */
+.locations-app .sidebar-actions .btn,
+.locations-app .sidebar-actions button {
+  position: relative;
+  z-index: 100;
+  pointer-events: auto;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+/* Ensure buttons in sidebar are clickable */
+.locations-app .sidebar-header {
+  position: relative;
+  z-index: 10;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--bg);
+/* Fix for tree header buttons not interfering */
+.tree-header .btn,
+.tree-header button {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--border2);
-  border-radius: 2px;
+/* Make sure buttons are above tree items */
+.place-list {
+  position: relative;
+  z-index: 1;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
+.locations-app .sidebar button {
+  cursor: pointer;
+  pointer-events: auto;
 }
+}
+
