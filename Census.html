@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Still Waters — Census & Analytics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="stillwaters.css">
+ 
+</head>
+<body>
+
+<div class="topbar">
+  <div class="title">▲ CENSUS & ANALYTICS</div>
+  <div style="flex:1"></div>
+  <button id="refreshBtn" class="tb-btn">⟳ Refresh</button>
+  <button id="exportCensusBtn" class="tb-btn primary">Export Census</button>
+</div>
+
+<div class="census-app">
+  <div class="stats-bar" id="statsBar"></div>
+  
+  <div class="main-content">
+    <div class="filters-sidebar">
+      <div class="filters-header">
+        <h3>FILTERS</h3>
+        
+        <div class="filter-group">
+          <label>Search Name</label>
+          <input type="text" id="searchName" placeholder="Type to search...">
+        </div>
+        
+        <div class="filter-group">
+          <label>⚥ Gender</label>
+          <select id="filterGender">
+            <option value="">All</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="unknown">Unknown</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>Life Stage</label>
+          <select id="filterLifeStage">
+            <option value="">All</option>
+            <option value="child">Child (0-12)</option>
+            <option value="youth">Youth (13-17)</option>
+            <option value="adult">Adult (18-59)</option>
+            <option value="elder">Elder (60+)</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>Location</label>
+          <select id="filterLocation">
+            <option value="">All</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>Rank</label>
+          <select id="filterRank">
+            <option value="">All</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>Role</label>
+          <select id="filterRole">
+            <option value="">All</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>Relationship Status</label>
+          <select id="filterRelationship">
+            <option value="">All</option>
+            <option value="single">Single</option>
+            <option value="partnered">Partnered</option>
+            <option value="widowed">Widowed</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>Status</label>
+          <select id="filterStatus">
+            <option value="">All</option>
+            <option value="living">Living</option>
+            <option value="deceased">Deceased</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>Age Range</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="number" id="minAge" placeholder="Min" style="width:50%;">
+            <input type="number" id="maxAge" placeholder="Max" style="width:50%;">
+          </div>
+        </div>
+        
+        <div class="filter-actions">
+          <button id="applyFilters" class="btn primary small">Apply Filters</button>
+          <button id="resetFilters" class="btn small">Reset</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="results-panel">
+      <div class="results-header">
+        <h4 id="resultCount">0 characters found</h4>
+        <div>
+          <button id="viewChartBtn" class="btn small">Age Chart</button>
+          <button id="viewListBtn" class="btn small active">List View</button>
+        </div>
+      </div>
+      <div class="results-list" id="resultsList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Age Distribution Modal -->
+<div id="chartModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width: 500px;">
+    <h3>Age Distribution</h3>
+    <div id="ageChart"></div>
+    <div class="modal-buttons">
+      <button id="closeChartBtn" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Data stores
+  let masterData = {
+    version: "2.0",
+    data: {
+      characters: [],
+      places: [],
+      ranks: [],
+      roles: [],
+      currentYear: 1250
+    }
+  };
+  
+  let filteredCharacters = [];
+  let currentView = 'list';
+  
+  function loadMasterData() {
+    const stored = localStorage.getItem('stillwaters_master');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        masterData = {
+          version: parsed.version || "2.0",
+          data: {
+            characters: parsed.data?.characters || [],
+            places: parsed.data?.places || [],
+            ranks: parsed.data?.ranks || [],
+            roles: parsed.data?.roles || [],
+            locationTypes: parsed.data?.locationTypes || [],
+            governments: parsed.data?.governments || [],
+            nameLists: parsed.data?.nameLists || {},
+            currentYear: parsed.data?.currentYear || 1250
+          }
+        };
+      } catch(e) { console.error('Error loading master data', e); }
+    }
+  }
+  
+  function calculateAge(birthYear, isDeceased, deathYear, currentYear) {
+    if (!birthYear) return 0;
+    if (isDeceased && deathYear) return deathYear - birthYear;
+    return currentYear - birthYear;
+  }
+  
+  function getLifeStage(age) {
+    if (age < 13) return 'child';
+    if (age < 18) return 'youth';
+    if (age < 60) return 'adult';
+    return 'elder';
+  }
+  
+  function getCurrentLocation(char, places) {
+    if (char.moves?.length) {
+      const currentMove = char.moves[char.moves.length - 1];
+      return places.find(p => p.id === currentMove.locationId);
+    }
+    return places.find(p => p.id === char.birthplaceId);
+  }
+  
+  function getRankName(rankId, ranks) {
+    const rank = ranks.find(r => r.id === rankId);
+    return rank ? `${rank.symbol} ${rank.name}` : null;
+  }
+  
+  function getActiveRank(char, ranks) {
+    const activeRank = char.rankAssignments?.find(r => r.isActive);
+    if (!activeRank) return null;
+    const rank = ranks.find(r => r.id === activeRank.rankId);
+    if (!rank) return null;
+    return {
+      name: rank.name,
+      symbol: rank.symbol,
+      number: activeRank.rankNumber,
+      title: activeRank.titleText
+    };
+  }
+  
+  function getRelationshipStatus(char) {
+    if (!char.relationships?.length) return 'single';
+    const hasOngoing = char.relationships.some(r => r.status === 'ongoing');
+    const isWidowed = char.relationships.some(r => r.status === 'widowed');
+    if (hasOngoing) return 'partnered';
+    if (isWidowed) return 'widowed';
+    return 'single';
+  }
+  
+  function getRoleName(char, roles) {
+    if (!char.currentRole) return null;
+    const role = roles.find(r => r.id === char.currentRole.id);
+    if (!role) return char.currentRole.name;
+    return role.name;
+  }
+  
+  function applyFilters() {
+    const characters = masterData.data.characters;
+    const places = masterData.data.places;
+    const ranks = masterData.data.ranks;
+    const roles = masterData.data.roles;
+    const currentYear = masterData.data.currentYear;
+    
+    const searchTerm = document.getElementById('searchName').value.toLowerCase();
+    const gender = document.getElementById('filterGender').value;
+    const lifeStage = document.getElementById('filterLifeStage').value;
+    const locationId = document.getElementById('filterLocation').value;
+    const rankId = document.getElementById('filterRank').value;
+    const roleId = document.getElementById('filterRole').value;
+    const relationshipStatus = document.getElementById('filterRelationship').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+    const minAge = parseInt(document.getElementById('minAge').value);
+    const maxAge = parseInt(document.getElementById('maxAge').value);
+    
+    filteredCharacters = characters.filter(char => {
+      const age = calculateAge(char.birthYear, char.isDeceased, char.deathYear, currentYear);
+      const stage = getLifeStage(age);
+      const currentLocation = getCurrentLocation(char, places);
+      const activeRank = getActiveRank(char, ranks);
+      const roleName = getRoleName(char, roles);
+      const relStatus = getRelationshipStatus(char);
+      
+      // Search by name
+      if (searchTerm && !`${char.name} ${char.surname || ''}`.toLowerCase().includes(searchTerm)) return false;
+      
+      // Gender filter
+      if (gender && char.gender !== gender) return false;
+      
+      // Life stage filter
+      if (lifeStage && stage !== lifeStage) return false;
+      
+      // Location filter
+      if (locationId && currentLocation?.id !== locationId) return false;
+      
+      // Rank filter
+      if (rankId && (!activeRank || activeRank.name !== rankId)) return false;
+      
+      // Role filter
+      if (roleId && (!roleName || roleName !== roleId)) return false;
+      
+      // Relationship status filter
+      if (relationshipStatus && relStatus !== relationshipStatus) return false;
+      
+      // Deceased status filter
+      if (statusFilter === 'living' && char.isDeceased) return false;
+      if (statusFilter === 'deceased' && !char.isDeceased) return false;
+      
+      // Age range filter
+      if (!isNaN(minAge) && age < minAge) return false;
+      if (!isNaN(maxAge) && age > maxAge) return false;
+      
+      return true;
+    });
+    
+    updateResultsDisplay();
+    updateStatsBar();
+  }
+  
+  function updateStatsBar() {
+    const characters = masterData.data.characters;
+    const currentYear = masterData.data.currentYear;
+    
+    const total = characters.length;
+    const living = characters.filter(c => !c.isDeceased).length;
+    const deceased = characters.filter(c => c.isDeceased).length;
+    const male = characters.filter(c => c.gender === 'male').length;
+    const female = characters.filter(c => c.gender === 'female').length;
+    const partnered = characters.filter(c => getRelationshipStatus(c) === 'partnered').length;
+    
+    const ages = characters.map(c => calculateAge(c.birthYear, c.isDeceased, c.deathYear, currentYear)).filter(a => a > 0);
+    const avgAge = ages.length ? Math.round(ages.reduce((a,b) => a+b, 0) / ages.length) : 0;
+    
+    document.getElementById('statsBar').innerHTML = `
+      <div class="stat-pill"><div class="value">${total}</div><div class="label">Total Souls</div></div>
+      <div class="stat-pill"><div class="value">${living}</div><div class="label">Living</div></div>
+      <div class="stat-pill"><div class="value">${deceased}</div><div class="label">Deceased</div></div>
+      <div class="stat-pill"><div class="value">${male}</div><div class="label">Male</div></div>
+      <div class="stat-pill"><div class="value">${female}</div><div class="label">Female</div></div>
+      <div class="stat-pill"><div class="value">${partnered}</div><div class="label">Partnered</div></div>
+      <div class="stat-pill"><div class="value">${avgAge}</div><div class="label">Avg Age</div></div>
+    `;
+  }
+  
+  function updateResultsDisplay() {
+    const count = filteredCharacters.length;
+    document.getElementById('resultCount').textContent = `${count} character${count !== 1 ? 's' : ''} found`;
+    
+    if (currentView === 'list') {
+      renderListView();
+    } else {
+      renderChartView();
+    }
+  }
+  
+  function renderListView() {
+    const container = document.getElementById('resultsList');
+    const places = masterData.data.places;
+    const ranks = masterData.data.ranks;
+    const roles = masterData.data.roles;
+    const currentYear = masterData.data.currentYear;
+    
+    if (!filteredCharacters.length) {
+      container.innerHTML = '<div class="empty-state">No characters match your filters</div>';
+      return;
+    }
+    
+    container.innerHTML = filteredCharacters.map(char => {
+      const age = calculateAge(char.birthYear, char.isDeceased, char.deathYear, currentYear);
+      const stage = getLifeStage(age);
+      const currentLocation = getCurrentLocation(char, places);
+      const activeRank = getActiveRank(char, ranks);
+      const roleName = getRoleName(char, roles);
+      const relStatus = getRelationshipStatus(char);
+      
+      let stageIcon = '';
+      if (stage === 'child') stageIcon = '◎';
+      else if (stage === 'youth') stageIcon = '◔';
+      else if (stage === 'adult') stageIcon = '◑';
+      else stageIcon = '◕';
+      
+      return `
+        <div class="character-card" data-id="${char.id}">
+          <div class="character-header">
+            <span class="character-name ${char.isDeceased ? 'deceased' : ''}">${escapeHtml(char.name)} ${escapeHtml(char.surname || '')}</span>
+            <div class="character-badges">
+              ${char.gender === 'male' ? '<span class="badge male">♂ Male</span>' : char.gender === 'female' ? '<span class="badge female">♀ Female</span>' : '<span class="badge">⚥ Unknown</span>'}
+              ${char.isDeceased ? '<span class="badge deceased">† Deceased</span>' : `<span class="badge">${stageIcon} ${stage}</span>`}
+              ${relStatus === 'partnered' ? '<span class="badge partnered">♡ Partnered</span>' : relStatus === 'widowed' ? '<span class="badge">💔 Widowed</span>' : ''}
+              ${activeRank ? `<span class="badge">${activeRank.symbol} ${activeRank.name}${activeRank.number ? ` #${activeRank.number}` : ''}</span>` : ''}
+            </div>
+          </div>
+          <div class="character-details">
+            <span>${age} years</span>
+            <span>${currentLocation?.displayName || 'Unknown'}</span>
+            ${roleName ? `<span>${escapeHtml(roleName)}</span>` : ''}
+            ${char.birthYear ? `<span>Born ${char.birthYear}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    document.querySelectorAll('.character-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const charId = card.getAttribute('data-id');
+        // Would open character detail in a modal or new tab
+        showToast(`Character ID: ${charId}`);
+      });
+    });
+  }
+  
+  function renderChartView() {
+    const container = document.getElementById('resultsList');
+    const currentYear = masterData.data.currentYear;
+    
+    // Age distribution
+    const ageGroups = {
+      '0-12': 0, '13-17': 0, '18-29': 0, '30-44': 0, '45-59': 0, '60-79': 0, '80+': 0
+    };
+    
+    filteredCharacters.forEach(char => {
+      const age = calculateAge(char.birthYear, char.isDeceased, char.deathYear, currentYear);
+      if (age < 13) ageGroups['0-12']++;
+      else if (age < 18) ageGroups['13-17']++;
+      else if (age < 30) ageGroups['18-29']++;
+      else if (age < 45) ageGroups['30-44']++;
+      else if (age < 60) ageGroups['45-59']++;
+      else if (age < 80) ageGroups['60-79']++;
+      else ageGroups['80+']++;
+    });
+    
+    const maxCount = Math.max(...Object.values(ageGroups));
+    
+    container.innerHTML = `
+      <div class="chart-container">
+        <div class="chart-title">Age Distribution (${filteredCharacters.length} characters)</div>
+        ${Object.entries(ageGroups).map(([group, count]) => `
+          <div class="age-bar">
+            <div class="age-label">${group}</div>
+            <div style="flex:1; background: var(--border); border-radius: 3px;">
+              <div class="age-bar-fill" style="width: ${maxCount ? (count / maxCount) * 100 : 0}%;"></div>
+            </div>
+            <div class="age-bar-count">${count}</div>
+          </div>
+        `).join('')}
+      </div>
+      
+      <div class="chart-container">
+        <div class="chart-title">⚥ Gender Distribution</div>
+        <div style="display: flex; gap: 16px; margin-top: 12px;">
+          ${['male', 'female', 'unknown'].map(gender => {
+            const count = filteredCharacters.filter(c => c.gender === gender).length;
+            const percent = filteredCharacters.length ? Math.round((count / filteredCharacters.length) * 100) : 0;
+            return `
+              <div style="flex:1; text-align: center;">
+                <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent);">${count}</div>
+                <div style="font-size: 0.6rem; color: var(--dim);">${gender === 'male' ? '♂ Male' : gender === 'female' ? '♀ Female' : '⚥ Unknown'}</div>
+                <div style="font-size: 0.55rem; color: var(--tmut);">${percent}%</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <div class="chart-title">♡ Relationship Status</div>
+        <div style="display: flex; gap: 16px; margin-top: 12px;">
+          ${['single', 'partnered', 'widowed'].map(status => {
+            const count = filteredCharacters.filter(c => getRelationshipStatus(c) === status).length;
+            const percent = filteredCharacters.length ? Math.round((count / filteredCharacters.length) * 100) : 0;
+            const icon = status === 'single' ? '♡' : status === 'partnered' ? '♡' : '◕';
+            return `
+              <div style="flex:1; text-align: center;">
+                <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent);">${count}</div>
+                <div style="font-size: 0.6rem; color: var(--dim);">${icon} ${status}</div>
+                <div style="font-size: 0.55rem; color: var(--tmut);">${percent}%</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  function updateFilterOptions() {
+    const places = masterData.data.places;
+    const ranks = masterData.data.ranks;
+    const roles = masterData.data.roles;
+    
+    // Location dropdown
+    const locationSelect = document.getElementById('filterLocation');
+    locationSelect.innerHTML = '<option value="">All</option>' + 
+      places.filter(p => p.variableKey).map(p => `<option value="${p.id}">${escapeHtml(p.displayName)}</option>`).join('');
+    
+    // Rank dropdown
+    const rankSelect = document.getElementById('filterRank');
+    rankSelect.innerHTML = '<option value="">All</option>' + 
+      ranks.map(r => `<option value="${r.name}">${r.symbol} ${escapeHtml(r.name)}</option>`).join('');
+    
+    // Role dropdown
+    const roleSelect = document.getElementById('filterRole');
+    roleSelect.innerHTML = '<option value="">All</option>' + 
+      roles.map(r => `<option value="${r.name}">${escapeHtml(r.name)}</option>`).join('');
+  }
+  
+  function resetFilters() {
+    document.getElementById('searchName').value = '';
+    document.getElementById('filterGender').value = '';
+    document.getElementById('filterLifeStage').value = '';
+    document.getElementById('filterLocation').value = '';
+    document.getElementById('filterRank').value = '';
+    document.getElementById('filterRole').value = '';
+    document.getElementById('filterRelationship').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('minAge').value = '';
+    document.getElementById('maxAge').value = '';
+    applyFilters();
+  }
+  
+  function showChartModal() {
+    const modal = document.getElementById('chartModal');
+    const currentYear = masterData.data.currentYear;
+    
+    const ageGroups = {
+      '0-12': 0, '13-17': 0, '18-29': 0, '30-44': 0, '45-59': 0, '60-79': 0, '80+': 0
+    };
+    
+    filteredCharacters.forEach(char => {
+      const age = calculateAge(char.birthYear, char.isDeceased, char.deathYear, currentYear);
+      if (age < 13) ageGroups['0-12']++;
+      else if (age < 18) ageGroups['13-17']++;
+      else if (age < 30) ageGroups['18-29']++;
+      else if (age < 45) ageGroups['30-44']++;
+      else if (age < 60) ageGroups['45-59']++;
+      else if (age < 80) ageGroups['60-79']++;
+      else ageGroups['80+']++;
+    });
+    
+    const maxCount = Math.max(...Object.values(ageGroups));
+    const chartHtml = Object.entries(ageGroups).map(([group, count]) => `
+      <div class="age-bar" style="margin-bottom: 8px;">
+        <div class="age-label" style="width: 45px;">${group}</div>
+        <div style="flex:1; background: var(--border); border-radius: 3px;">
+          <div class="age-bar-fill" style="width: ${maxCount ? (count / maxCount) * 100 : 0}%; background: var(--accent);"></div>
+        </div>
+        <div class="age-bar-count" style="width: 40px;">${count}</div>
+      </div>
+    `).join('');
+    
+    document.getElementById('ageChart').innerHTML = chartHtml;
+    modal.style.display = 'flex';
+  }
+  
+  function exportCensus() {
+    const exportData = {
+      type: "census",
+      exportDate: new Date().toISOString(),
+      filters: {
+        gender: document.getElementById('filterGender').value,
+        lifeStage: document.getElementById('filterLifeStage').value,
+        location: document.getElementById('filterLocation').value,
+        rank: document.getElementById('filterRank').value,
+        role: document.getElementById('filterRole').value,
+        relationship: document.getElementById('filterRelationship').value,
+        status: document.getElementById('filterStatus').value
+      },
+      results: filteredCharacters.map(char => {
+        const age = calculateAge(char.birthYear, char.isDeceased, char.deathYear, masterData.data.currentYear);
+        return {
+          id: char.id,
+          name: char.name,
+          surname: char.surname,
+          gender: char.gender,
+          age: age,
+          lifeStage: getLifeStage(age),
+          isDeceased: char.isDeceased,
+          relationshipStatus: getRelationshipStatus(char)
+        };
+      }),
+      summary: {
+        total: filteredCharacters.length,
+        male: filteredCharacters.filter(c => c.gender === 'male').length,
+        female: filteredCharacters.filter(c => c.gender === 'female').length,
+        living: filteredCharacters.filter(c => !c.isDeceased).length,
+        deceased: filteredCharacters.filter(c => c.isDeceased).length,
+        partnered: filteredCharacters.filter(c => getRelationshipStatus(c) === 'partnered').length
+      }
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `stillwaters_census_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Census exported');
+  }
+  
+  function showToast(msg) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m);
+  }
+  
+  function refresh() {
+    loadMasterData();
+    updateFilterOptions();
+    applyFilters();
+  }
+  
+  // ==================== INIT ====================
+  function init() {
+    loadMasterData();
+    updateFilterOptions();
+    applyFilters();
+    
+    document.getElementById('applyFilters').addEventListener('click', applyFilters);
+    document.getElementById('resetFilters').addEventListener('click', resetFilters);
+    document.getElementById('refreshBtn').addEventListener('click', refresh);
+    document.getElementById('exportCensusBtn').addEventListener('click', exportCensus);
+    document.getElementById('viewChartBtn').addEventListener('click', () => {
+      currentView = 'chart';
+      document.getElementById('viewChartBtn').classList.add('active');
+      document.getElementById('viewListBtn').classList.remove('active');
+      renderChartView();
+    });
+    document.getElementById('viewListBtn').addEventListener('click', () => {
+      currentView = 'list';
+      document.getElementById('viewListBtn').classList.add('active');
+      document.getElementById('viewChartBtn').classList.remove('active');
+      renderListView();
+    });
+    document.getElementById('closeChartBtn').addEventListener('click', () => {
+      document.getElementById('chartModal').style.display = 'none';
+    });
+    
+    // Enter key on search
+    document.getElementById('searchName').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') applyFilters();
+    });
+    
+    // Close modal on outside click
+    window.addEventListener('click', (e) => {
+      const modal = document.getElementById('chartModal');
+      if (e.target === modal) modal.style.display = 'none';
+    });
+    
+    // Listen for storage updates
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'stillwaters_master') {
+        refresh();
+      }
+    });
+  }
+  
+  init();
+</script>
+</body>
+</html>

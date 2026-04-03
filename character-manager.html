@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Character Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="stillwaters.css">
+
+</head>
+<body>
+
+<div class="topbar">
+  <div class="title">CHARACTER MANAGER</div>
+  <button id="menuToggle" class="filter-toggle" style="display:none;">☰</button>
+  <div style="flex:1"></div>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span style="font-size:0.7rem;">Year:</span>
+    <input type="number" id="currentYear" value="1250" style="width:80px;">
+  </div>
+  <button id="importCharsBtn" class="tb-btn">Import</button>
+  <button id="exportCharsBtn" class="tb-btn primary">Export</button>
+  <button id="addPersonBtn" class="tb-btn primary">+ Add Person</button>
+  <button id="generatePersonBtn" class="tb-btn">⚄ Generate</button>
+</div>
+
+<div class="char-app">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h3>CHARACTERS</h3>
+      <button id="filterToggleBtn" class="filter-toggle">▼ Filters</button>
+    </div>
+<div class="filter-container" id="filterContainer">
+  <div class="filter-header" id="filterHeader" style="display:flex; justify-content:space-between; align-items:center; padding:6px 12px; cursor:pointer; border-bottom:1px solid var(--border);">
+    <span style="font-size:0.6rem; font-family:'Cinzel', serif; color:var(--accent);">FILTERS</span>
+    <span id="filterCollapseIcon" style="font-size:0.65rem;">▼</span>
+  </div>
+  <div id="filterContent" class="filter-bar" style="padding:8px;">
+    <div class="filter-row-inline" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+      <select id="filterLifeStage" style="flex:1; min-width:80px; padding:4px 6px; font-size:0.65rem;"><option value="">Life Stage</option><option value="child">Child</option><option value="youth">Youth</option><option value="adult">Adult</option><option value="elder">Elder</option></select>
+      <select id="filterGender" style="flex:1; min-width:60px; padding:4px 6px; font-size:0.65rem;"><option value="">Gender</option><option value="male">♂</option><option value="female">♀</option><option value="unknown">⚥</option></select>
+      <select id="filterRelation" style="flex:1; min-width:80px; padding:4px 6px; font-size:0.65rem;"><option value="">Status</option><option value="single">Single</option><option value="partnered">Partnered</option><option value="widowed">Widowed</option></select>
+    </div>
+    <div class="filter-row-inline" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+      <select id="filterRank" style="flex:1; min-width:80px; padding:4px 6px; font-size:0.65rem;"><option value="">Rank</option></select>
+      <select id="filterRole" style="flex:1; min-width:80px; padding:4px 6px; font-size:0.65rem;"><option value="">Role</option></select>
+    </div>
+    <div class="filter-row-inline" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+      <select id="filterBirthLocation" style="flex:1; min-width:100px; padding:4px 6px; font-size:0.65rem;"><option value="">Birth Loc</option></select>
+      <select id="filterCurrentLocation" style="flex:1; min-width:100px; padding:4px 6px; font-size:0.65rem;"><option value="">Current Loc</option></select>
+    </div>
+    <div class="filter-row-inline" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;">
+      <label style="display:flex; align-items:center; gap:4px; font-size:0.6rem;"><input type="checkbox" id="filterShowDeceased"> Show Deceased</label>
+      <button id="clearFilters" class="clear-btn" style="padding:2px 8px; font-size:0.6rem;">Clear</button>
+    </div>
+  </div>
+</div>
+    <div class="char-list" id="charList"></div>
+  </div>
+  
+  <div class="main-panel">
+    <div class="panel-tabs">
+      <button class="tab-btn active" data-tab="view">View</button>
+      <button class="tab-btn" data-tab="edit">Edit</button>
+      <button class="tab-btn" data-tab="family">Family</button>
+      <button class="tab-btn" data-tab="love">Partners</button>
+      <button class="tab-btn" data-tab="friends">Friends</button>
+	  <button class="tab-btn" data-tab="roles">Roles</button>
+      <button class="tab-btn" data-tab="overview">Overview</button>
+    </div>
+    <div class="panel-content" id="panelContent">
+      <div class="empty-state">Select a character or add a new one</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ==================== UNIFIED DATA STRUCTURE ====================
+  let masterData = {
+    version: "2.0",
+    lastUpdated: new Date().toISOString(),
+    data: {
+      characters: [],
+      places: [],
+      ranks: [],
+      roles: [],
+      locationTypes: [],
+      governments: [],
+      nameLists: {},
+      currentYear: 1250
+    }
+  };
+  
+  let selectedCharId = null;
+  let currentYear = 1250;
+  
+  function generateId() { return 'char_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
+  
+  // ==================== LOAD/SAVE ====================
+  function loadMasterData() {
+    const stored = localStorage.getItem('stillwaters_master');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        masterData = {
+          version: parsed.version || "2.0",
+          data: {
+            characters: parsed.data?.characters || [],
+            places: parsed.data?.places || [],
+            ranks: parsed.data?.ranks || [],
+            roles: parsed.data?.roles || [],
+            locationTypes: parsed.data?.locationTypes || [],
+            governments: parsed.data?.governments || [],
+            nameLists: parsed.data?.nameLists || {},
+            currentYear: parsed.data?.currentYear || 1250
+          }
+        };
+      } catch(e) { console.error('Error loading master data', e); }
+    }
+    currentYear = masterData.data.currentYear;
+    const yearInput = document.getElementById('currentYear');
+    if (yearInput) yearInput.value = currentYear;
+    updateFilterOptions();
+  }
+  
+  function saveMasterData() {
+    masterData.lastUpdated = new Date().toISOString();
+    masterData.data.currentYear = currentYear;
+    localStorage.setItem('stillwaters_master', JSON.stringify(masterData));
+  }
+  
+  function calculateAge(birthYear, isDeceased, deathYear) {
+    if (!birthYear) return 0;
+    if (isDeceased && deathYear) return deathYear - birthYear;
+    return currentYear - birthYear;
+  }
+  
+  function getLifeStage(age) {
+    if (age < 13) return 'child';
+    if (age < 18) return 'youth';
+    if (age < 60) return 'adult';
+    return 'elder';
+  }
+  
+  function getCurrentLocation(char) {
+    if (char.moves?.length) {
+      const currentMove = char.moves[char.moves.length - 1];
+      const loc = masterData.data.places.find(p => p.id === currentMove.locationId);
+      return loc?.displayName || 'Unknown';
+    }
+    const loc = masterData.data.places.find(p => p.id === char.birthplaceId);
+    return loc?.displayName || 'Unknown';
+  }
+  
+  function getRankDisplay(rankId, rankNumber) {
+    const rank = masterData.data.ranks.find(r => r.id === rankId);
+    if (!rank) return null;
+    return { symbol: rank.symbol, name: rank.name, display: `${rank.symbol}${rankNumber || ''}` };
+  }
+  
+  function getActiveRankDisplay(char) {
+    if (!char.activeRankId) return null;
+    return getRankDisplay(char.activeRankId, char.activeRankNumber);
+  }
+  
+  function updateFilterOptions() {
+    const rankSelect = document.getElementById('filterRank');
+    const roleSelect = document.getElementById('filterRole');
+    const birthLocSelect = document.getElementById('filterBirthLocation');
+    const currentLocSelect = document.getElementById('filterCurrentLocation');
+    
+    if (rankSelect) {
+      rankSelect.innerHTML = '<option value="">All</option>' + masterData.data.ranks.map(r => `<option value="${r.id}">${r.symbol} ${r.name}</option>`).join('');
+    }
+    if (roleSelect) {
+      const roles = [...new Set(masterData.data.characters.map(c => c.role).filter(Boolean))];
+      roleSelect.innerHTML = '<option value="">All</option>' + roles.map(r => `<option value="${r}">${r}</option>`).join('');
+    }
+    if (birthLocSelect) {
+      const places = masterData.data.places.filter(p => p.displayName);
+      birthLocSelect.innerHTML = '<option value="">All</option>' + places.map(p => `<option value="${p.id}">${p.displayName}</option>`).join('');
+    }
+    if (currentLocSelect) {
+      const places = masterData.data.places.filter(p => p.displayName);
+      currentLocSelect.innerHTML = '<option value="">All</option>' + places.map(p => `<option value="${p.id}">${p.displayName}</option>`).join('');
+    }
+  }
+  
+  // ==================== RENDER CHARACTER LIST ====================
+  function renderCharList() {
+    const container = document.getElementById('charList');
+    const lifeStage = document.getElementById('filterLifeStage')?.value || '';
+    const gender = document.getElementById('filterGender')?.value || '';
+    const relation = document.getElementById('filterRelation')?.value || '';
+    const rankFilter = document.getElementById('filterRank')?.value || '';
+    const roleFilter = document.getElementById('filterRole')?.value || '';
+    const birthLocFilter = document.getElementById('filterBirthLocation')?.value || '';
+    const currentLocFilter = document.getElementById('filterCurrentLocation')?.value || '';
+    const showDeceased = document.getElementById('filterShowDeceased')?.checked || false;
+    const characters = masterData.data.characters;
+    
+    let filtered = characters.filter(c => {
+      const age = calculateAge(c.birthYear, c.isDeceased, c.deathYear);
+      const stage = getLifeStage(age);
+      if (lifeStage && stage !== lifeStage) return false;
+      if (gender && c.gender !== gender) return false;
+      if (!showDeceased && c.isDeceased) return false;
+      
+      const hasPartner = c.relationships?.some(r => r.status === 'ongoing');
+      const isWidowed = c.relationships?.some(r => r.status === 'widowed');
+      if (relation === 'single' && hasPartner) return false;
+      if (relation === 'partnered' && !hasPartner) return false;
+      if (relation === 'widowed' && !isWidowed) return false;
+      
+      if (rankFilter && c.activeRankId !== rankFilter) return false;
+      if (roleFilter && c.role !== roleFilter) return false;
+      if (birthLocFilter && c.birthplaceId !== birthLocFilter) return false;
+      if (currentLocFilter) {
+        const currentLoc = getCurrentLocation(c);
+        const loc = masterData.data.places.find(p => p.id === currentLocFilter);
+        if (currentLoc !== loc?.displayName) return false;
+      }
+      return true;
+    });
+    
+    if (!filtered.length) { container.innerHTML = '<div class="empty-state">No characters found</div>'; return; }
+    
+    container.innerHTML = filtered.map(c => {
+      const age = calculateAge(c.birthYear, c.isDeceased, c.deathYear);
+      const rankDisplay = getActiveRankDisplay(c);
+      const location = getCurrentLocation(c);
+      return `
+        <div class="char-item ${selectedCharId === c.id ? 'selected' : ''}" data-id="${c.id}">
+          <div class="char-name">
+            <span class="${c.isDeceased ? 'deceased' : ''}">${rankDisplay ? `${rankDisplay.display} ` : ''}${escapeHtml(c.name)} ${escapeHtml(c.surname || '')}</span>
+          </div>
+          <div class="char-details">
+            <span>${c.gender === 'male' ? '♂' : c.gender === 'female' ? '♀' : '⚥'}</span>
+            <span>${age} yrs</span>
+            <span>${location}</span>
+            ${c.isDeceased ? '<span>†</span>' : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+    document.querySelectorAll('.char-item').forEach(el => el.addEventListener('click', () => selectCharacter(el.dataset.id)));
+  }
+  
+  function selectCharacter(id) { 
+    selectedCharId = id; 
+    renderCharList(); 
+    renderCurrentTab();
+    if (window.innerWidth <= 768) {
+      document.getElementById('sidebar').classList.remove('mobile-visible');
+    }
+  }
+  
+  function renderCurrentTab() {
+    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'view';
+    if (activeTab === 'view') renderViewTab();
+    else if (activeTab === 'edit') renderEditTab();
+    else if (activeTab === 'family') renderFamilyTab();
+    else if (activeTab === 'love') renderLoveTab();
+    else if (activeTab === 'friends') renderFriendsTab();
+    else if (activeTab === 'roles') renderRolesTab();
+    else if (activeTab === 'overview') renderOverviewTab();
+  }
+  
+  // ==================== VIEW TAB ====================
+  function renderViewTab() {
+    const c = masterData.data.characters.find(c => c.id === selectedCharId);
+    if (!c) { document.getElementById('panelContent').innerHTML = '<div class="empty-state">Character not found</div>'; return; }
+    const age = calculateAge(c.birthYear, c.isDeceased, c.deathYear);
+    const rankDisplay = getActiveRankDisplay(c);
+    const birthplace = masterData.data.places.find(l => l.id === c.birthplaceId);
+    const currentLoc = getCurrentLocation(c);
+    
+    document.getElementById('panelContent').innerHTML = `
+      <div class="view-section">
+        <h2>${rankDisplay ? `${rankDisplay.display} ` : ''}${escapeHtml(c.name)} ${escapeHtml(c.surname || '')}</h2>
+        <div class="warning-badge">🆔 ${c.id}</div>
+        <div class="info-grid">
+          <div class="info-label">Gender</div><div class="info-value">${c.gender || 'Unknown'}</div>
+          <div class="info-label">Attraction</div><div class="info-value">${c.attraction || 'Unknown'}</div>
+          <div class="info-label">Born</div><div class="info-value">Year ${c.birthYear || '?'}</div>
+          <div class="info-label">Age</div><div class="info-value">${age} years</div>
+          <div class="info-label">Status</div><div class="info-value">${c.isDeceased ? `Deceased (${c.deathYear})` : 'Living'}</div>
+          ${c.deathCause ? `<div class="info-label">Cause of Death</div><div class="info-value">${escapeHtml(c.deathCause)}</div>` : ''}
+          <div class="info-label">Rank</div><div class="info-value">${rankDisplay ? `${rankDisplay.symbol} ${rankDisplay.name}${c.activeRankNumber ? ` #${c.activeRankNumber}` : ''}` : 'None'}</div>
+          <div class="info-label">Role</div><div class="info-value">${c.role || 'None'}</div>
+          <div class="info-label">Birthplace</div><div class="info-value">${birthplace?.displayName || 'Unknown'}</div>
+          <div class="info-label">Current Location</div><div class="info-value">${currentLoc}</div>
+          <div class="info-label">Household</div><div class="info-value">${c.household || 'None'}</div>
+        </div>
+        ${c.notes ? `<div class="collapsible-section"><div class="section-header">Notes <span class="arrow">▶</span></div><div class="section-content"><div>${escapeHtml(c.notes)}</div></div></div>` : ''}
+      </div>`;
+    
+    document.querySelectorAll('.collapsible-section .section-header').forEach(h => {
+      const content = h.nextElementSibling;
+      const arrow = h.querySelector('.arrow');
+      h.addEventListener('click', () => { content.classList.toggle('expanded'); arrow?.classList.toggle('expanded'); });
+    });
+  }
+  
+  // ==================== EDIT TAB ====================
+  function renderEditTab() {
+    const c = masterData.data.characters.find(c => c.id === selectedCharId);
+    if (!c) { document.getElementById('panelContent').innerHTML = '<div class="empty-state">Character not found</div>'; return; }
+    
+    const places = masterData.data.places;
+    const ranks = masterData.data.ranks;
+    
+    // Store original values for change detection
+    const wasDeceased = c.isDeceased;
+    
+    document.getElementById('panelContent').innerHTML = `
+      <div class="edit-tab">
+        <form id="editForm">
+          <div class="collapsible-section"><div class="section-header">Identity <span class="arrow">▶</span></div><div class="section-content">
+            <div class="form-row"><div class="form-group"><label>First Name</label><input id="firstName" value="${escapeHtml(c.name)}"></div>
+            <div class="form-group"><label>Surname</label><input id="surname" value="${escapeHtml(c.surname || '')}"></div></div>
+            <div class="form-row"><div class="form-group"><label>Gender</label><select id="gender"><option value="male" ${c.gender === 'male' ? 'selected' : ''}>Male</option><option value="female" ${c.gender === 'female' ? 'selected' : ''}>Female</option><option value="unknown" ${c.gender === 'unknown' ? 'selected' : ''}>Unknown</option></select></div>
+            <div class="form-group"><label>Attraction</label><select id="attraction"><option value="both" ${c.attraction === 'both' ? 'selected' : ''}>Both</option><option value="men" ${c.attraction === 'men' ? 'selected' : ''}>Men</option><option value="women" ${c.attraction === 'women' ? 'selected' : ''}>Women</option><option value="neither" ${c.attraction === 'neither' ? 'selected' : ''}>Neither</option></select></div></div>
+            <div class="form-row"><div class="form-group"><label>Birth Year</label><input type="number" id="birthYear" value="${c.birthYear || ''}"></div>
+            <div class="form-group"><label>Role</label><input id="role" value="${escapeHtml(c.role || '')}"></div></div>
+          </div></div>
+          
+          <div class="collapsible-section"><div class="section-header">Life & Death <span class="arrow">▶</span></div><div class="section-content">
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+              <input type="checkbox" id="isDeceased" ${c.isDeceased ? 'checked' : ''}> 
+              <span style="font-size:0.75rem;">Deceased</span>
+            </label>
+            <div id="deathFields" style="display:${c.isDeceased ? 'block' : 'none'}">
+              <div class="form-row"><div class="form-group"><label>Death Year</label><input type="number" id="deathYear" value="${c.deathYear || ''}"></div>
+              <div class="form-group"><label>Cause of Death</label><input id="deathCause" value="${escapeHtml(c.deathCause || '')}"></div></div>
+            </div>
+          </div></div>
+          
+          <div class="collapsible-section"><div class="section-header">Ranks <span class="arrow">▶</span></div><div class="section-content">
+            <div id="ranksList"></div>
+            <div class="rank-buttons">${ranks.map(r => `<button type="button" class="rank-btn" data-rank-id="${r.id}">${r.symbol} ${r.name}</button>`).join('')}</div>
+            <div class="form-group" style="margin-top:8px;"><label>Rank Number (optional)</label><input type="number" id="rankNumber" placeholder="e.g., 1, 2, 3..."></div>
+          </div></div>
+          
+          <div class="collapsible-section"><div class="section-header">Location <span class="arrow">▶</span></div><div class="section-content">
+            <div class="form-group"><label>Birthplace</label>
+              <div class="searchable-select-container" style="position:relative;">
+                <input type="text" id="birthplaceSearch" placeholder="Search birthplace..." class="searchable-select-input" autocomplete="off">
+                <div id="birthplaceDropdown" class="searchable-select-dropdown" style="position:absolute; top:100%; left:0; right:0; background:var(--bg2); border:1px solid var(--border); border-radius:4px; max-height:200px; overflow-y:auto; z-index:100; display:none;"></div>
+                <select id="birthplace" style="display:none;">${places.map(p => `<option value="${p.id}" ${c.birthplaceId === p.id ? 'selected' : ''}>${escapeHtml(p.displayName)}</option>`).join('')}</select>
+              </div>
+            </div>
+            <div class="form-group"><label>Household</label><input id="household" value="${escapeHtml(c.household || '')}"></div>
+            <div id="movesList"></div>
+            <button type="button" id="addMoveBtn" class="btn small">+ Add Move</button>
+          </div></div>
+          
+          <div class="collapsible-section"><div class="section-header">Notes <span class="arrow">▶</span></div><div class="section-content">
+            <textarea id="notes" rows="4">${escapeHtml(c.notes || '')}</textarea>
+          </div></div>
+          
+          <div class="action-buttons">
+            <button type="submit" class="btn primary">Save Changes</button>
+            <button type="button" id="deleteCharBtn" class="btn danger">Delete Character</button>
+          </div>
+        </form>
+      </div>`;
+  
+    // Setup searchable birthplace dropdown
+    const birthplaceSelect = document.getElementById('birthplace');
+    const birthplaceSearch = document.getElementById('birthplaceSearch');
+    const birthplaceDropdown = document.getElementById('birthplaceDropdown');
+    const birthplaceOptions = Array.from(birthplaceSelect.options).map(opt => ({ value: opt.value, text: opt.textContent }));
+    
+    function updateBirthplaceDropdown(filter = '') {
+      birthplaceDropdown.innerHTML = '';
+      const filtered = birthplaceOptions.filter(opt => opt.text.toLowerCase().includes(filter.toLowerCase()));
+      filtered.forEach(opt => {
+        const item = document.createElement('div');
+        item.textContent = opt.text;
+        item.style.padding = '6px 8px';
+        item.style.cursor = 'pointer';
+        item.onclick = () => {
+          birthplaceSearch.value = opt.text;
+          birthplaceSelect.value = opt.value;
+          birthplaceDropdown.style.display = 'none';
+          birthplaceSelect.dispatchEvent(new Event('change'));
+        };
+        item.onmouseenter = (e) => e.target.style.background = 'var(--bg3)';
+        item.onmouseleave = (e) => e.target.style.background = '';
+        birthplaceDropdown.appendChild(item);
+      });
+      if (filtered.length === 0) {
+        const empty = document.createElement('div');
+        empty.textContent = 'No locations found';
+        empty.style.padding = '6px 8px';
+        empty.style.color = 'var(--dim)';
+        empty.style.fontStyle = 'italic';
+        birthplaceDropdown.appendChild(empty);
+      }
+    }
+    
+    const selectedOption = birthplaceOptions.find(opt => opt.value === c.birthplaceId);
+    if (selectedOption) birthplaceSearch.value = selectedOption.text;
+    
+    birthplaceSearch.addEventListener('focus', () => {
+      updateBirthplaceDropdown('');
+      birthplaceDropdown.style.display = 'block';
+    });
+    birthplaceSearch.addEventListener('input', (e) => updateBirthplaceDropdown(e.target.value));
+    document.addEventListener('click', (e) => {
+      if (!birthplaceSearch.contains(e.target) && !birthplaceDropdown.contains(e.target)) {
+        birthplaceDropdown.style.display = 'none';
+      }
+    });
+    
+    // Render ranks list
+    const ranksContainer = document.getElementById('ranksList');
+    const rankAssignments = c.rankAssignments || [];
+    ranksContainer.innerHTML = rankAssignments.map(ra => {
+      const rank = ranks.find(r => r.id === ra.rankId);
+      return `<div class="assigned-rank"><span>${rank?.symbol} ${rank?.name}${ra.number ? ` #${ra.number}` : ''}</span><button type="button" class="btn small danger remove-rank-btn" data-rank-id="${ra.rankId}" data-rank-number="${ra.number}">Remove</button></div>`;
+    }).join('');
+    
+    // Render moves list
+    const movesContainer = document.getElementById('movesList');
+    const moves = c.moves || [];
+    movesContainer.innerHTML = moves.map((m, i) => {
+      const loc = places.find(p => p.id === m.locationId);
+      return `<div class="move-item"><span>${m.year} → ${loc?.displayName || 'Unknown'}</span><button type="button" class="btn small danger" data-move-idx="${i}">✕</button></div>`;
+    }).join('');
+    
+    // Death fields toggle
+    const deceasedCheckbox = document.getElementById('isDeceased');
+    if (deceasedCheckbox) {
+      deceasedCheckbox.addEventListener('change', (e) => {
+        const deathFields = document.getElementById('deathFields');
+        if (deathFields) deathFields.style.display = e.target.checked ? 'block' : 'none';
+      });
+    }
+    
+    // Add rank
+    document.querySelectorAll('.rank-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rankId = btn.dataset.rankId;
+        const rankNum = parseInt(document.getElementById('rankNumber').value) || undefined;
+        if (!c.rankAssignments) c.rankAssignments = [];
+        c.rankAssignments.push({ rankId, number: rankNum });
+        if (!c.activeRankId) { c.activeRankId = rankId; c.activeRankNumber = rankNum; }
+        saveMasterData();
+        renderEditTab();
+        showToast('Rank added');
+      });
+    });
+    
+    // Remove rank
+    document.querySelectorAll('.remove-rank-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rankId = btn.dataset.rankId;
+        const rankNum = btn.dataset.rankNumber ? parseInt(btn.dataset.rankNumber) : undefined;
+        c.rankAssignments = c.rankAssignments.filter(ra => !(ra.rankId === rankId && ra.number === rankNum));
+        if (c.activeRankId === rankId && c.activeRankNumber === rankNum) {
+          c.activeRankId = c.rankAssignments[0]?.rankId || null;
+          c.activeRankNumber = c.rankAssignments[0]?.number || null;
+        }
+        saveMasterData();
+        renderEditTab();
+        showToast('Rank removed');
+      });
+    });
+    
+    // Remove move
+    document.querySelectorAll('[data-move-idx]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.moveIdx);
+        c.moves.splice(idx, 1);
+        saveMasterData();
+        renderEditTab();
+        showToast('Move removed');
+      });
+    });
+    
+    // Add move
+    const addMoveBtn = document.getElementById('addMoveBtn');
+    if (addMoveBtn) {
+      addMoveBtn.addEventListener('click', () => {
+        const year = prompt('Year of move:');
+        if (!year) return;
+        const locName = prompt('New location:');
+        if (!locName) return;
+        const loc = places.find(p => p.displayName === locName);
+        if (!loc) { alert('Location not found. Create it in Locations Manager first.'); return; }
+        if (!c.moves) c.moves = [];
+        c.moves.push({ year: parseInt(year), locationId: loc.id });
+        c.moves.sort((a,b) => a.year - b.year);
+        saveMasterData();
+        renderEditTab();
+        showToast('Move added');
+      });
+    }
+    
+    // Save form
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+      editForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const newDeceased = document.getElementById('isDeceased').checked;
+        const newDeathYear = newDeceased ? (parseInt(document.getElementById('deathYear').value) || null) : null;
+        
+        // Check if death status changed
+        if (newDeceased && !wasDeceased) {
+          if (confirm('Marking this character as deceased will automatically set all ongoing relationships to widowed. Continue?')) {
+            c.isDeceased = newDeceased;
+            c.deathYear = newDeathYear;
+            c.deathCause = document.getElementById('deathCause').value;
+            
+            // Update all ongoing relationships to widowed
+            if (c.relationships) {
+              c.relationships.forEach(rel => {
+                if (rel.status === 'ongoing') {
+                  rel.status = 'widowed';
+                  if (!rel.details) rel.details = {};
+                  rel.details.endYear = newDeathYear || currentYear;
+                }
+              });
+            }
+            
+            // Also update reverse relationships
+            masterData.data.characters.forEach(other => {
+              if (other.id === c.id) return;
+              const relIndex = (other.relationships || []).findIndex(r => r.partnerId === c.id && r.status === 'ongoing');
+              if (relIndex !== -1) {
+                other.relationships[relIndex].status = 'widowed';
+                if (!other.relationships[relIndex].details) other.relationships[relIndex].details = {};
+                other.relationships[relIndex].details.endYear = newDeathYear || currentYear;
+              }
+            });
+          } else {
+            document.getElementById('isDeceased').checked = false;
+            return;
+          }
+        } else {
+          c.isDeceased = newDeceased;
+          c.deathYear = newDeathYear;
+          c.deathCause = document.getElementById('deathCause').value;
+        }
+        
+        // Save other fields
+        c.name = document.getElementById('firstName').value;
+        c.surname = document.getElementById('surname').value;
+        c.gender = document.getElementById('gender').value;
+        c.attraction = document.getElementById('attraction').value;
+        c.birthYear = parseInt(document.getElementById('birthYear').value) || null;
+        c.role = document.getElementById('role').value;
+        c.birthplaceId = document.getElementById('birthplace').value;
+        c.household = document.getElementById('household').value;
+        c.notes = document.getElementById('notes').value;
+        
+        saveMasterData();
+        renderCharList();
+        renderViewTab();
+        showToast('Character saved');
+      });
+    }
+    
+    // Delete character
+    const deleteBtn = document.getElementById('deleteCharBtn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => {
+        if (confirm(`Delete ${c.name} permanently? This will also remove them from all relationships.`)) {
+          // Remove from all relationships
+          masterData.data.characters.forEach(other => {
+            if (other.id === c.id) return;
+            if (other.relationships) {
+              other.relationships = other.relationships.filter(r => r.partnerId !== c.id);
+            }
+            if (other.friends) {
+              other.friends = other.friends.filter(f => f !== c.id);
+            }
+            if (other.motherId === c.id) other.motherId = null;
+            if (other.fatherId === c.id) other.fatherId = null;
+          });
+          
+          const idx = masterData.data.characters.findIndex(ch => ch.id === c.id);
+          masterData.data.characters.splice(idx, 1);
+          if (selectedCharId === c.id) selectedCharId = null;
+          saveMasterData();
+          renderCharList();
+          document.getElementById('panelContent').innerHTML = '<div class="empty-state">Character deleted</div>';
+          showToast('Character deleted');
+        }
+      });
+    }
+    
+    // Expand all sections by default
+    document.querySelectorAll('.collapsible-section .section-header').forEach(h => {
+      const content = h.nextElementSibling;
+      const arrow = h.querySelector('.arrow');
+      if (!h.hasListener) {
+        h.hasListener = true;
+        h.addEventListener('click', () => { 
+          content.classList.toggle('expanded'); 
+          arrow?.classList.toggle('expanded'); 
+        });
+      }
+      content.classList.add('expanded');
+      arrow?.classList.add('expanded');
+    });
+  }
+  
+  // ==================== FAMILY TAB ====================
+  function renderFamilyTab() {
+    const c = masterData.data.characters.find(c => c.id === selectedCharId);
+    if (!c) return;
+    
+    const mother = c.motherId ? masterData.data.characters.find(m => m.id === c.motherId) : null;
+    const father = c.fatherId ? masterData.data.characters.find(f => f.id === c.fatherId) : null;
+    const children = masterData.data.characters.filter(ch => ch.motherId === c.id || ch.fatherId === c.id);
+    const siblings = masterData.data.characters.filter(ch => ch.id !== c.id && ((ch.motherId && ch.motherId === c.motherId) || (ch.fatherId && ch.fatherId === c.fatherId)));
+    
+    document.getElementById('panelContent').innerHTML = `
+      <div class="collapsible-section"><div class="section-header">Parents <span class="arrow">▶</span></div><div class="section-content">
+        <div class="family-card">
+          <div class="card-name" data-id="${mother?.id || ''}" style="${!mother ? 'opacity:0.5;' : ''}">${mother ? (mother.isDeceased ? '† ' : '') + (getActiveRankDisplay(mother)?.display || '') + ' ' + escapeHtml(mother.name) + ' ' + escapeHtml(mother.surname || '') : 'No Mother Assigned'}</div>
+          <div class="card-details">${mother ? `${mother.gender === 'male' ? '♂' : mother.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(mother.birthYear, mother.isDeceased, mother.deathYear)} · ${getCurrentLocation(mother)}` : ''}</div>
+          <button id="setMotherModalBtn" class="btn small" style="margin-top:8px;">Set Mother</button>
+          ${mother ? `<button id="removeMotherBtn" class="btn small danger" style="margin-left:8px;">Remove</button>` : ''}
+        </div>
+        <div class="family-card">
+          <div class="card-name" data-id="${father?.id || ''}" style="${!father ? 'opacity:0.5;' : ''}">${father ? (father.isDeceased ? '† ' : '') + (getActiveRankDisplay(father)?.display || '') + ' ' + escapeHtml(father.name) + ' ' + escapeHtml(father.surname || '') : 'No Father Assigned'}</div>
+          <div class="card-details">${father ? `${father.gender === 'male' ? '♂' : father.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(father.birthYear, father.isDeceased, father.deathYear)} · ${getCurrentLocation(father)}` : ''}</div>
+          <button id="setFatherModalBtn" class="btn small" style="margin-top:8px;">Set Father</button>
+          ${father ? `<button id="removeFatherBtn" class="btn small danger" style="margin-left:8px;">Remove</button>` : ''}
+        </div>
+      </div></div>
+      
+      <div class="collapsible-section"><div class="section-header">Children (${children.length}) <span class="arrow">▶</span></div><div class="section-content">
+        ${children.length ? children.sort((a,b) => (a.birthYear || 0) - (b.birthYear || 0)).map(ch => `
+          <div class="family-card">
+            <div class="card-name" data-id="${ch.id}">${ch.isDeceased ? '† ' : ''}${(getActiveRankDisplay(ch)?.display || '')} ${escapeHtml(ch.name)} ${escapeHtml(ch.surname || '')}</div>
+            <div class="card-details">${ch.gender === 'male' ? '♂' : ch.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(ch.birthYear, ch.isDeceased, ch.deathYear)} · ${getCurrentLocation(ch)}</div>
+            <button class="btn small danger remove-child" data-id="${ch.id}" style="margin-top:8px;">Remove Child</button>
+          </div>`).join('') : '<div class="empty-state">No children</div>'}
+        <button id="addChildModalBtn" class="btn primary" style="margin-top:8px;">+ Add Existing Child</button>
+        <button id="generateChildBtn" class="btn primary" style="margin-top:8px; margin-left:8px;">✨ Generate Newborn</button>
+      </div></div>
+      
+      <div class="collapsible-section"><div class="section-header">Siblings (${siblings.length}) <span class="arrow">▶</span></div><div class="section-content">
+        ${siblings.length ? siblings.sort((a,b) => (a.birthYear || 0) - (b.birthYear || 0)).map(s => `
+          <div class="family-card">
+            <div class="card-name" data-id="${s.id}">${s.isDeceased ? '† ' : ''}${(getActiveRankDisplay(s)?.display || '')} ${escapeHtml(s.name)} ${escapeHtml(s.surname || '')}</div>
+            <div class="card-details">${s.gender === 'male' ? '♂' : s.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(s.birthYear, s.isDeceased, s.deathYear)} · ${getCurrentLocation(s)}</div>
+          </div>`).join('') : '<div class="empty-state">No siblings</div>'}
+      </div></div>`;
+    
+    // Click handlers for navigation
+    document.querySelectorAll('.card-name[data-id]').forEach(el => {
+      if (el.dataset.id) el.addEventListener('click', () => selectCharacter(el.dataset.id));
+    });
+    
+    document.getElementById('setMotherModalBtn')?.addEventListener('click', () => openAddParentModal('mother'));
+    document.getElementById('setFatherModalBtn')?.addEventListener('click', () => openAddParentModal('father'));
+    document.getElementById('addChildModalBtn')?.addEventListener('click', () => openAddChildModal());
+    document.getElementById('generateChildBtn')?.addEventListener('click', () => generateNewborn(c.id));
+    document.getElementById('removeMotherBtn')?.addEventListener('click', () => { if (confirm('Remove mother?')) { c.motherId = null; saveMasterData(); renderFamilyTab(); } });
+    document.getElementById('removeFatherBtn')?.addEventListener('click', () => { if (confirm('Remove father?')) { c.fatherId = null; saveMasterData(); renderFamilyTab(); } });
+    document.querySelectorAll('.remove-child').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const childId = btn.dataset.id;
+        const child = masterData.data.characters.find(ch => ch.id === childId);
+        if (child && confirm(`Remove ${child.name} as child?`)) {
+          if (child.fatherId === c.id) child.fatherId = null;
+          if (child.motherId === c.id) child.motherId = null;
+          saveMasterData();
+          renderFamilyTab();
+        }
+      });
+    });
+    
+    // Expand sections
+    document.querySelectorAll('.collapsible-section .section-header').forEach(h => {
+      const content = h.nextElementSibling;
+      const arrow = h.querySelector('.arrow');
+      h.addEventListener('click', () => { content.classList.toggle('expanded'); arrow?.classList.toggle('expanded'); });
+      content.classList.add('expanded');
+      arrow?.classList.add('expanded');
+    });
+  }
+  
+  function openAddParentModal(parentType) {
+    const c = masterData.data.characters.find(ch => ch.id === selectedCharId);
+    if (!c) return;
+    
+    const isMother = parentType === 'mother';
+    let available = masterData.data.characters.filter(ch => 
+      ch.id !== c.id && 
+      ch.gender === (isMother ? 'female' : 'male') &&
+      (!c.birthYear || (ch.birthYear && ch.birthYear <= c.birthYear - 14))
+    );
+    
+    let searchTerm = '';
+    
+    function renderList() {
+      const filtered = available.filter(ch => 
+        ch.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (ch.surname || '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      const listContainer = document.getElementById('parentList');
+      if (!filtered.length) {
+        listContainer.innerHTML = '<div class="empty-state">No candidates found</div>';
+        return;
+      }
+      listContainer.innerHTML = filtered.map(ch => `
+        <div class="parent-option" data-id="${ch.id}" style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong>${escapeHtml(ch.name)} ${escapeHtml(ch.surname || '')}</strong><br>
+            <span style="font-size:0.65rem; color:var(--dim);">${ch.gender === 'male' ? '♂' : '♀'} · Age: ${calculateAge(ch.birthYear, ch.isDeceased, ch.deathYear)} · b.${ch.birthYear}</span>
+          </div>
+          <button class="btn small primary">Select</button>
+        </div>
+      `).join('');
+      
+      document.querySelectorAll('.parent-option').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const parentId = opt.dataset.id;
+          if (isMother) c.motherId = parentId;
+          else c.fatherId = parentId;
+          saveMasterData();
+          modal.remove();
+          renderFamilyTab();
+          showToast(`${isMother ? 'Mother' : 'Father'} set`);
+        });
+      });
+    }
+    
+    const modal = document.createElement('div'); modal.className = 'modal active';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:500px;">
+        <h3>➕ Set ${isMother ? 'Mother' : 'Father'} for ${escapeHtml(c.name)}</h3>
+        <div style="margin-bottom:12px;">
+          <input type="text" id="parentSearch" placeholder="Search by name..." style="width:100%; padding:6px 8px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text);">
+        </div>
+        <div id="parentList" style="max-height:350px; overflow-y:auto;"></div>
+        <div style="margin-top:16px;"><button id="closeParentModal" class="btn">Cancel</button></div>
+      </div>`;
+    document.body.appendChild(modal);
+    
+    document.getElementById('parentSearch').addEventListener('input', (e) => {
+      searchTerm = e.target.value;
+      renderList();
+    });
+    document.getElementById('closeParentModal').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+    
+    renderList();
+  }
+  
+  function openAddChildModal() {
+    const c = masterData.data.characters.find(ch => ch.id === selectedCharId);
+    if (!c) return;
+    
+    const existingChildren = masterData.data.characters.filter(ch => ch.motherId === c.id || ch.fatherId === c.id);
+    let available = masterData.data.characters.filter(ch => 
+      ch.id !== c.id && 
+      !existingChildren.includes(ch) &&
+      (!ch.birthYear || (ch.birthYear > (c.birthYear || 0)))
+    );
+    
+    let filters = { orphan: false, search: '' };
+    
+    function renderList() {
+      let filtered = [...available];
+      if (filters.orphan) filtered = filtered.filter(ch => !ch.motherId && !ch.fatherId);
+      if (filters.search) {
+        filtered = filtered.filter(ch => 
+          ch.name.toLowerCase().includes(filters.search.toLowerCase()) || 
+          (ch.surname || '').toLowerCase().includes(filters.search.toLowerCase())
+        );
+      }
+      
+      const listContainer = document.getElementById('childList');
+      if (!filtered.length) {
+        listContainer.innerHTML = '<div class="empty-state">No candidates found</div>';
+        return;
+      }
+      listContainer.innerHTML = filtered.map(ch => `
+        <div class="child-option" data-id="${ch.id}" style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong>${escapeHtml(ch.name)} ${escapeHtml(ch.surname || '')}</strong><br>
+            <span style="font-size:0.65rem; color:var(--dim);">${ch.gender === 'male' ? '♂' : ch.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(ch.birthYear, ch.isDeceased, ch.deathYear)} · b.${ch.birthYear}</span>
+          </div>
+          <button class="btn small primary">Select</button>
+        </div>
+      `).join('');
+      
+      document.querySelectorAll('.child-option').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const childId = opt.dataset.id;
+          const child = masterData.data.characters.find(ch => ch.id === childId);
+          if (child) {
+            if (c.gender === 'male') child.fatherId = c.id;
+            else child.motherId = c.id;
+            saveMasterData();
+            modal.remove();
+            renderFamilyTab();
+            showToast('Child added');
+          }
+        });
+      });
+    }
+    
+    const modal = document.createElement('div'); modal.className = 'modal active';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:500px;">
+        <h3>➕ Add Child for ${escapeHtml(c.name)}</h3>
+        <div style="margin-bottom:12px;">
+          <input type="text" id="childSearch" placeholder="Search by name..." style="width:100%; padding:6px 8px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text);">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="orphanOnlyFilter"> Orphans only</label>
+        </div>
+        <div id="childList" style="max-height:300px; overflow-y:auto;"></div>
+        <div style="margin-top:16px;"><button id="closeChildModal" class="btn">Cancel</button></div>
+      </div>`;
+    document.body.appendChild(modal);
+    
+    document.getElementById('childSearch').addEventListener('input', (e) => {
+      filters.search = e.target.value;
+      renderList();
+    });
+    document.getElementById('orphanOnlyFilter').addEventListener('change', (e) => {
+      filters.orphan = e.target.checked;
+      renderList();
+    });
+    document.getElementById('closeChildModal').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+    
+    renderList();
+  }
+  
+  // ==================== NEWBORN GENERATION ====================
+  function generateNewborn(parentId) {
+    const parent = masterData.data.characters.find(c => c.id === parentId);
+    if (!parent) { showToast('Parent not found'); return; }
+    
+    const ongoingRelationships = (parent.relationships || []).filter(r => r.status === 'ongoing');
+    const partners = ongoingRelationships.map(r => masterData.data.characters.find(p => p.id === r.partnerId)).filter(p => p && !p.isDeceased);
+    
+    if (partners.length === 0) { showToast('Need a living partner to have a child'); return; }
+    
+    let otherParent = null;
+    if (partners.length === 1) {
+      otherParent = partners[0];
+    } else {
+      const partnerList = partners.map((p, i) => `${i+1}. ${p.name} ${p.surname || ''} (${p.gender === 'male' ? '♂' : '♀'}, Age: ${calculateAge(p.birthYear, p.isDeceased, p.deathYear)})`).join('\n');
+      const choice = prompt(`Select the other parent:\n${partnerList}\n\nEnter number (1-${partners.length}):`);
+      if (!choice) return;
+      const idx = parseInt(choice) - 1;
+      if (idx >= 0 && idx < partners.length) otherParent = partners[idx];
+      else { showToast('Invalid selection'); return; }
+    }
+    
+    if (!otherParent) return;
+    
+    let mother = null, father = null;
+    if (parent.gender === 'female') { mother = parent; father = otherParent; }
+    else if (parent.gender === 'male') { mother = otherParent; father = parent; }
+    else {
+      const isMother = confirm(`Is ${parent.name} the mother? Click OK for Mother, Cancel for Father`);
+      if (isMother) { mother = parent; father = otherParent; }
+      else { mother = otherParent; father = parent; }
+    }
+    
+    if (!mother || mother.gender !== 'female') {
+      if (parent.gender === 'female') mother = parent;
+      else if (otherParent.gender === 'female') mother = otherParent;
+      else { showToast('Need a female mother to have a child'); return; }
+    }
+    
+    if (father && father.gender !== 'male') father = null;
+    if (!mother.birthYear) { showToast(`${mother.name} needs a birth year set first`); return; }
+    
+    const minYear = mother.birthYear + 14;
+    const maxYear = Math.min(mother.birthYear + 45, currentYear);
+    if (minYear > maxYear) { showToast(`${mother.name} is outside childbearing age (14-45)`); return; }
+    
+    const birthYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
+    const gender = Math.random() < 0.5 ? 'male' : 'female';
+    const maleNames = ['Kai', 'Mako', 'Tane', 'Rangi', 'Koa', 'Keanu', 'Ari', 'Leo', 'Nico', 'Ikaia', 'Sione', 'Tama', 'Vaea', 'Laki', 'Kaleo'];
+    const femaleNames = ['Leilani', 'Moana', 'Nani', 'Tui', 'Hina', 'Lani', 'Malia', 'Rai', 'Tara', 'Vai', 'Manaia', 'Aroha', 'Eponi', 'Luna', 'Mira'];
+    const name = gender === 'male' ? maleNames[Math.floor(Math.random() * maleNames.length)] : femaleNames[Math.floor(Math.random() * femaleNames.length)];
+    
+    let birthplaceId = null;
+    if (father && father.moves && father.moves.length) birthplaceId = father.moves[father.moves.length - 1].locationId;
+    if (!birthplaceId && father && father.birthplaceId) birthplaceId = father.birthplaceId;
+    if (!birthplaceId && mother && mother.moves && mother.moves.length) birthplaceId = mother.moves[mother.moves.length - 1].locationId;
+    if (!birthplaceId && mother && mother.birthplaceId) birthplaceId = mother.birthplaceId;
+    
+    const newChar = {
+      id: generateId(), name: name, surname: '', gender: gender, attraction: 'both',
+      birthYear: birthYear, isDeceased: false, deathYear: null, deathCause: '',
+      rankAssignments: [], activeRankId: null, activeRankNumber: null,
+      birthplaceId: birthplaceId, moves: [], role: '', household: '', notes: '',
+      motherId: mother.id, fatherId: father ? father.id : null, relationships: [], friends: []
+    };
+    
+    masterData.data.characters.push(newChar);
+    saveMasterData();
+    renderCharList();
+    selectCharacter(newChar.id);
+    showToast(`🎉 ${name} born!`);
+  }
+  
+  // ==================== LOVE TAB ====================
+  function renderLoveTab() {
+    const c = masterData.data.characters.find(c => c.id === selectedCharId);
+    if (!c) return;
+    
+    const relationships = c.relationships || [];
+    const partners = relationships.map(r => ({ ...r, char: masterData.data.characters.find(ch => ch.id === r.partnerId) })).filter(r => r.char);
+    
+    document.getElementById('panelContent').innerHTML = `
+      <div class="love-tab">
+        <div class="collapsible-section"><div class="section-header">Partners (${partners.length}) <span class="arrow">▶</span></div><div class="section-content">
+          ${partners.length ? partners.map(p => `
+            <div class="love-card" data-partner="${p.partnerId}" style="cursor:pointer;">
+              <div><span class="card-name" data-id="${p.partnerId}">${p.char.isDeceased ? '† ' : ''}${(getActiveRankDisplay(p.char)?.display || '')} ${escapeHtml(p.char.name)} ${escapeHtml(p.char.surname || '')}</span>
+              <span class="badge badge-${p.status}">${p.status}</span>
+              ${p.details?.type ? `<span class="badge">${p.details.type}</span>` : ''}
+              ${p.details?.startYear ? `<span class="badge">${p.details.startYear}${p.details.endYear ? `-${p.details.endYear}` : ''}</span>` : ''}</div>
+              <div class="card-details">${p.char.gender === 'male' ? '♂' : p.char.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(p.char.birthYear, p.char.isDeceased, p.char.deathYear)} · ${getCurrentLocation(p.char)}</div>
+              ${p.details?.notes ? `<div class="card-sub">📝 ${escapeHtml(p.details.notes)}</div>` : ''}
+            </div>`).join('') : '<div class="empty-state">No partners</div>'}
+          <button id="addPartnerBtn" class="btn primary">+ Add Partner</button>
+        </div></div>
+      </div>`;
+    
+    document.querySelectorAll('.card-name').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); selectCharacter(el.dataset.id); }));
+    document.querySelectorAll('.love-card').forEach(card => {
+      card.addEventListener('click', (e) => { if (!e.target.classList.contains('card-name')) openPartnerDetails(c.id, card.dataset.partner); });
+    });
+    document.getElementById('addPartnerBtn')?.addEventListener('click', () => openAddPartnerModal(c.id));
+    
+    document.querySelectorAll('.collapsible-section .section-header').forEach(h => {
+      const content = h.nextElementSibling;
+      const arrow = h.querySelector('.arrow');
+      h.addEventListener('click', () => { content.classList.toggle('expanded'); arrow?.classList.toggle('expanded'); });
+      content.classList.add('expanded');
+      arrow?.classList.add('expanded');
+    });
+  }
+  
+  function checkIfRelated(charId, partnerId) {
+    const char = masterData.data.characters.find(c => c.id === charId);
+    const partner = masterData.data.characters.find(c => c.id === partnerId);
+    if (!char || !partner) return null;
+    const relations = [];
+    if ((char.motherId && partner.motherId && char.motherId === partner.motherId) ||
+        (char.fatherId && partner.fatherId && char.fatherId === partner.fatherId)) relations.push('siblings');
+    if (char.motherId === partnerId || char.fatherId === partnerId) relations.push(`${partner.name} is parent of ${char.name}`);
+    if (partner.motherId === charId || partner.fatherId === charId) relations.push(`${char.name} is parent of ${partner.name}`);
+    return relations.length > 0 ? relations : null;
+  }
+  
+  function openAddPartnerModal(charId) {
+    const c = masterData.data.characters.find(ch => ch.id === charId);
+    const existingPartnerIds = (c.relationships || []).map(r => r.partnerId);
+    const allLocations = [...new Set(masterData.data.characters.map(ch => getCurrentLocation(ch)))];
+    
+    let available = masterData.data.characters.filter(ch => 
+      ch.id !== c.id && !existingPartnerIds.includes(ch.id) && !ch.isDeceased && (ch.birthYear ? (currentYear - ch.birthYear) >= 14 : true)
+    );
+    
+    let filters = { gender: null, status: null, location: null, peer: false, search: '' };
+    
+    function applyFilters() {
+      let filtered = [...available];
+      if (filters.search) filtered = filtered.filter(ch => ch.name.toLowerCase().includes(filters.search.toLowerCase()) || (ch.surname || '').toLowerCase().includes(filters.search.toLowerCase()));
+      if (filters.gender) filtered = filtered.filter(ch => ch.gender === filters.gender);
+      if (filters.status === 'single') filtered = filtered.filter(ch => !ch.relationships?.some(r => r.status === 'ongoing'));
+      if (filters.status === 'partnered') filtered = filtered.filter(ch => ch.relationships?.some(r => r.status === 'ongoing'));
+      if (filters.location) filtered = filtered.filter(ch => getCurrentLocation(ch) === filters.location);
+      if (filters.peer && c.birthYear) filtered = filtered.filter(ch => Math.abs((ch.birthYear || 0) - c.birthYear) <= 15);
+      renderList(filtered);
+    }
+    
+    function renderList(filtered) {
+      const listContainer = document.getElementById('partnerList');
+      if (!filtered.length) { listContainer.innerHTML = '<div class="empty-state">No candidates found</div>'; return; }
+      listContainer.innerHTML = filtered.map(ch => `
+        <div class="partner-option" data-id="${ch.id}" style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+          <div><strong>${ch.isDeceased ? '† ' : ''}${(getActiveRankDisplay(ch)?.display || '')} ${escapeHtml(ch.name)} ${escapeHtml(ch.surname || '')}</strong><br>
+          <span style="font-size:0.65rem; color:var(--dim);">${ch.gender === 'male' ? '♂' : ch.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(ch.birthYear, ch.isDeceased, ch.deathYear)} · ${getCurrentLocation(ch)}</span></div>
+          <button class="btn small primary">Select</button>
+        </div>`).join('');
+      
+      document.querySelectorAll('.partner-option').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const partnerId = opt.dataset.id;
+          const relations = checkIfRelated(c.id, partnerId);
+          if (relations && relations.length > 0 && !confirm(`⚠️ WARNING: This person is related as ${relations.join(', ')}. Continue anyway?`)) return;
+          
+          if (!c.relationships) c.relationships = [];
+          c.relationships.push({ partnerId: partnerId, status: 'ongoing', details: { startYear: currentYear } });
+          const partner = masterData.data.characters.find(ch => ch.id === partnerId);
+          if (partner) {
+            if (!partner.relationships) partner.relationships = [];
+            if (!partner.relationships.some(r => r.partnerId === c.id)) {
+              partner.relationships.push({ partnerId: c.id, status: 'ongoing', details: { startYear: currentYear } });
+            }
+          }
+          saveMasterData();
+          modal.remove();
+          renderLoveTab();
+          showToast('Partner added');
+        });
+      });
+    }
+    
+    const modal = document.createElement('div'); modal.className = 'modal active';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:600px;">
+        <h3>➕ Add Partner for ${escapeHtml(c.name)}</h3>
+        <div class="filter-row-inline" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border);">
+          <input type="text" id="partnerSearchInput" placeholder="Search by name..." style="flex:2; min-width:150px; padding:6px 8px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text);">
+          <select id="partnerGenderFilter" style="padding:6px 8px;"><option value="">All Genders</option><option value="male">Male ♂</option><option value="female">Female ♀</option></select>
+          <select id="partnerStatusFilter" style="padding:6px 8px;"><option value="">All Status</option><option value="single">Single</option><option value="partnered">Partnered</option></select>
+          <select id="partnerLocationFilter" style="padding:6px 8px;"><option value="">All Locations</option>${allLocations.map(l => `<option value="${l}">${l}</option>`).join('')}</select>
+          <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" id="partnerPeerFilter"> Peers (±15y)</label>
+          <button id="clearPartnerFiltersBtn" class="btn small">Clear</button>
+        </div>
+        <div id="partnerList" style="max-height:400px; overflow-y:auto;"></div>
+        <div style="margin-top:16px;"><button id="closePartnerModalBtn" class="btn">Cancel</button></div>
+      </div>`;
+    document.body.appendChild(modal);
+    
+    function updateFiltersAndRender() {
+      filters.search = document.getElementById('partnerSearchInput')?.value || '';
+      filters.gender = document.getElementById('partnerGenderFilter')?.value || null;
+      filters.status = document.getElementById('partnerStatusFilter')?.value || null;
+      filters.location = document.getElementById('partnerLocationFilter')?.value || null;
+      filters.peer = document.getElementById('partnerPeerFilter')?.checked || false;
+      applyFilters();
+    }
+    
+    document.getElementById('partnerSearchInput')?.addEventListener('input', updateFiltersAndRender);
+    document.getElementById('partnerGenderFilter')?.addEventListener('change', updateFiltersAndRender);
+    document.getElementById('partnerStatusFilter')?.addEventListener('change', updateFiltersAndRender);
+    document.getElementById('partnerLocationFilter')?.addEventListener('change', updateFiltersAndRender);
+    document.getElementById('partnerPeerFilter')?.addEventListener('change', updateFiltersAndRender);
+    document.getElementById('clearPartnerFiltersBtn')?.addEventListener('click', () => {
+      if (document.getElementById('partnerSearchInput')) document.getElementById('partnerSearchInput').value = '';
+      if (document.getElementById('partnerGenderFilter')) document.getElementById('partnerGenderFilter').value = '';
+      if (document.getElementById('partnerStatusFilter')) document.getElementById('partnerStatusFilter').value = '';
+      if (document.getElementById('partnerLocationFilter')) document.getElementById('partnerLocationFilter').value = '';
+      if (document.getElementById('partnerPeerFilter')) document.getElementById('partnerPeerFilter').checked = false;
+      updateFiltersAndRender();
+    });
+    document.getElementById('closePartnerModalBtn')?.addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+    
+    updateFiltersAndRender();
+  }
+  
+  function openPartnerDetails(charId, partnerId) {
+    const c = masterData.data.characters.find(ch => ch.id === charId);
+    const rel = c.relationships.find(r => r.partnerId === partnerId);
+    const partner = masterData.data.characters.find(ch => ch.id === partnerId);
+    if (!rel || !partner) return;
+    
+    const modal = document.createElement('div'); modal.className = 'modal active';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3>💕 ${escapeHtml(partner.name)} ${escapeHtml(partner.surname || '')}</h3>
+        <div class="warning-badge" style="margin-bottom:16px;">${partner.isDeceased ? '⚠️ This person is deceased' : ''}</div>
+        <div class="form-group"><label>Status</label><select id="relStatus"><option value="ongoing" ${rel.status === 'ongoing' ? 'selected' : ''}>Ongoing</option><option value="ended" ${rel.status === 'ended' ? 'selected' : ''}>Ended</option><option value="widowed" ${rel.status === 'widowed' ? 'selected' : ''}>Widowed</option></select></div>
+        <div class="form-group"><label>Type</label><select id="relType"><option value="">—</option><option value="casual" ${rel.details?.type === 'casual' ? 'selected' : ''}>Casual</option><option value="serious" ${rel.details?.type === 'serious' ? 'selected' : ''}>Serious</option><option value="affair" ${rel.details?.type === 'affair' ? 'selected' : ''}>Affair</option><option value="betrothed" ${rel.details?.type === 'betrothed' ? 'selected' : ''}>Betrothed</option></select></div>
+        <div class="form-row"><div class="form-group"><label>Start Year</label><input type="number" id="startYear" value="${rel.details?.startYear || ''}"></div><div class="form-group"><label>End Year</label><input type="number" id="endYear" value="${rel.details?.endYear || ''}"></div></div>
+        <div class="form-group"><label>Notes</label><textarea id="relNotes" rows="2">${escapeHtml(rel.details?.notes || '')}</textarea></div>
+        <div class="action-buttons"><button id="saveRelBtn" class="btn primary">Save</button><button id="deleteRelBtn" class="btn danger">Remove</button><button id="closeRelModal" class="btn">Cancel</button></div>
+      </div>`;
+    document.body.appendChild(modal);
+    
+    document.getElementById('saveRelBtn').addEventListener('click', () => {
+      const newStatus = document.getElementById('relStatus').value;
+      rel.status = newStatus;
+      if (!rel.details) rel.details = {};
+      rel.details.type = document.getElementById('relType').value || null;
+      rel.details.startYear = parseInt(document.getElementById('startYear').value) || null;
+      rel.details.endYear = parseInt(document.getElementById('endYear').value) || null;
+      rel.details.notes = document.getElementById('relNotes').value;
+      if (newStatus === 'widowed') rel.details.endYear = rel.details.endYear || partner.deathYear || currentYear;
+      saveMasterData();
+      modal.remove();
+      renderLoveTab();
+      showToast('Relationship updated');
+    });
+    document.getElementById('deleteRelBtn').addEventListener('click', () => {
+      if (confirm('Remove this relationship permanently?')) {
+        c.relationships = c.relationships.filter(r => r.partnerId !== partnerId);
+        saveMasterData();
+        modal.remove();
+        renderLoveTab();
+        showToast('Relationship removed');
+      }
+    });
+    document.getElementById('closeRelModal').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+  }
+  
+  // ==================== FRIENDS TAB ====================
+  function renderFriendsTab() {
+    const c = masterData.data.characters.find(c => c.id === selectedCharId);
+    if (!c) return;
+    
+    const friends = (c.friends || []).map(fId => masterData.data.characters.find(f => f.id === fId)).filter(f => f);
+    
+    document.getElementById('panelContent').innerHTML = `
+      <div class="friends-tab">
+        <div class="collapsible-section"><div class="section-header">Friends (${friends.length}) <span class="arrow">▶</span></div><div class="section-content">
+          ${friends.length ? friends.sort((a,b) => (b.birthYear || 0) - (a.birthYear || 0)).map(f => `
+            <div class="friend-card" data-friend="${f.id}">
+              <div><span class="card-name" data-id="${f.id}">${f.isDeceased ? '† ' : ''}${(getActiveRankDisplay(f)?.display || '')} ${escapeHtml(f.name)} ${escapeHtml(f.surname || '')}</span>
+              <button class="btn small danger" data-action="remove" style="float:right;">Remove</button></div>
+              <div class="card-details">${f.gender === 'male' ? '♂' : f.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(f.birthYear, f.isDeceased, f.deathYear)} · ${getCurrentLocation(f)}</div>
+            </div>`).join('') : '<div class="empty-state">No friends</div>'}
+          <button id="addFriendBtn" class="btn primary">+ Add Friend</button>
+        </div></div>
+      </div>`;
+    
+    document.querySelectorAll('.card-name').forEach(el => el.addEventListener('click', () => selectCharacter(el.dataset.id)));
+    document.querySelectorAll('[data-action="remove"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const card = btn.closest('.friend-card');
+        const fid = card.dataset.friend;
+        if (confirm('Remove this friend?')) {
+          c.friends = c.friends.filter(f => f !== fid);
+          const friend = masterData.data.characters.find(f => f.id === fid);
+          if (friend && friend.friends) friend.friends = friend.friends.filter(f => f !== c.id);
+          saveMasterData();
+          renderFriendsTab();
+          showToast('Friend removed');
+        }
+      });
+    });
+    document.getElementById('addFriendBtn')?.addEventListener('click', () => openAddFriendModal(c.id));
+    
+    document.querySelectorAll('.collapsible-section .section-header').forEach(h => {
+      const content = h.nextElementSibling;
+      const arrow = h.querySelector('.arrow');
+      h.addEventListener('click', () => { content.classList.toggle('expanded'); arrow?.classList.toggle('expanded'); });
+      content.classList.add('expanded');
+      arrow?.classList.add('expanded');
+    });
+  }
+  
+  function openAddFriendModal(charId) {
+    const c = masterData.data.characters.find(ch => ch.id === charId);
+    const existingFriendIds = c.friends || [];
+    let available = masterData.data.characters.filter(ch => 
+      ch.id !== c.id && !existingFriendIds.includes(ch.id) && !ch.isDeceased && calculateAge(ch.birthYear, ch.isDeceased, ch.deathYear) >= 13
+    );
+    
+    const locations = [...new Set(masterData.data.characters.map(ch => getCurrentLocation(ch)).filter(l => l && l !== 'Unknown'))];
+    let filters = { gender: null, location: null, peer: false, search: '' };
+    
+    function applyFilters() {
+      let filtered = [...available];
+      if (filters.search) filtered = filtered.filter(ch => ch.name.toLowerCase().includes(filters.search.toLowerCase()) || (ch.surname || '').toLowerCase().includes(filters.search.toLowerCase()));
+      if (filters.gender) filtered = filtered.filter(ch => ch.gender === filters.gender);
+      if (filters.location && filters.location !== '') filtered = filtered.filter(ch => getCurrentLocation(ch) === filters.location);
+      if (filters.peer && c.birthYear) filtered = filtered.filter(ch => Math.abs((ch.birthYear || 0) - c.birthYear) <= 15);
+      renderList(filtered);
+    }
+    
+    function renderList(filtered) {
+      const listContainer = document.getElementById('friendList');
+      if (!filtered.length) { listContainer.innerHTML = '<div class="empty-state" style="padding:20px;">No candidates found</div>'; return; }
+      listContainer.innerHTML = filtered.map(ch => `
+        <div class="friend-option" data-id="${ch.id}" style="padding:12px; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:background 0.2s;">
+          <div><strong style="color:var(--accent);">${ch.isDeceased ? '† ' : ''}${(getActiveRankDisplay(ch)?.display || '')} ${escapeHtml(ch.name)} ${escapeHtml(ch.surname || '')}</strong><br>
+          <span style="font-size:0.65rem; color:var(--dim);">${ch.gender === 'male' ? '♂' : ch.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(ch.birthYear, ch.isDeceased, ch.deathYear)} · 📍 ${getCurrentLocation(ch)}</span></div>
+          <button class="btn small primary select-friend-btn" style="padding:4px 12px;">Select</button>
+        </div>`).join('');
+      
+      document.querySelectorAll('.select-friend-btn, .friend-option').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const friendOption = el.closest('.friend-option');
+          if (!friendOption) return;
+          const friendId = friendOption.dataset.id;
+          if (!c.friends) c.friends = [];
+          if (!c.friends.includes(friendId)) {
+            c.friends.push(friendId);
+            const friend = masterData.data.characters.find(f => f.id === friendId);
+            if (friend) { if (!friend.friends) friend.friends = []; if (!friend.friends.includes(c.id)) friend.friends.push(c.id); }
+            saveMasterData();
+            modal.remove();
+            renderFriendsTab();
+            showToast(`Added ${escapeHtml(friend?.name || 'friend')} as friend`);
+          }
+        });
+      });
+    }
+    
+    const modal = document.createElement('div'); modal.className = 'modal active';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:550px;">
+        <h3>➕ Add Friend for ${escapeHtml(c.name)}</h3>
+        <div class="filter-row-inline" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border);">
+          <input type="text" id="friendSearchInput" placeholder="Search by name..." style="flex:2; min-width:150px; padding:6px 8px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text);">
+          <select id="friendGenderFilter" style="padding:6px 8px;"><option value="">All Genders</option><option value="male">♂ Male</option><option value="female">♀ Female</option></select>
+          <select id="friendLocationFilter" style="padding:6px 8px;"><option value="">All Locations</option>${locations.map(l => `<option value="${l}">📍 ${l}</option>`).join('')}</select>
+          <label style="display:flex; align-items:center; gap:4px; padding:0 8px; white-space:nowrap;"><input type="checkbox" id="friendPeerFilter"> Peers (±15y)</label>
+          <button id="clearFriendFiltersBtn" class="btn small" style="padding:4px 12px;">Clear</button>
+        </div>
+        <div id="friendList" style="max-height:400px; overflow-y:auto; border:1px solid var(--border2); border-radius:6px;"></div>
+        <div style="margin-top:16px; text-align:right;"><button id="closeFriendModalBtn" class="btn">Cancel</button></div>
+      </div>`;
+    document.body.appendChild(modal);
+    
+    function updateFiltersAndRender() {
+      filters.search = document.getElementById('friendSearchInput')?.value || '';
+      filters.gender = document.getElementById('friendGenderFilter')?.value || null;
+      filters.location = document.getElementById('friendLocationFilter')?.value || null;
+      filters.peer = document.getElementById('friendPeerFilter')?.checked || false;
+      applyFilters();
+    }
+    
+    document.getElementById('friendSearchInput')?.addEventListener('input', updateFiltersAndRender);
+    document.getElementById('friendGenderFilter')?.addEventListener('change', updateFiltersAndRender);
+    document.getElementById('friendLocationFilter')?.addEventListener('change', updateFiltersAndRender);
+    document.getElementById('friendPeerFilter')?.addEventListener('change', updateFiltersAndRender);
+    document.getElementById('clearFriendFiltersBtn')?.addEventListener('click', () => {
+      const searchInput = document.getElementById('friendSearchInput');
+      const genderSelect = document.getElementById('friendGenderFilter');
+      const locationSelect = document.getElementById('friendLocationFilter');
+      const peerCheckbox = document.getElementById('friendPeerFilter');
+      if (searchInput) searchInput.value = '';
+      if (genderSelect) genderSelect.value = '';
+      if (locationSelect) locationSelect.value = '';
+      if (peerCheckbox) peerCheckbox.checked = false;
+      updateFiltersAndRender();
+    });
+    document.getElementById('closeFriendModalBtn')?.addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+    
+    applyFilters();
+  }
+  
+  // ==================== OVERVIEW TAB ====================
+  function renderOverviewTab() {
+    const c = masterData.data.characters.find(c => c.id === selectedCharId);
+    if (!c) return;
+    
+    const mother = c.motherId ? masterData.data.characters.find(m => m.id === c.motherId) : null;
+    const father = c.fatherId ? masterData.data.characters.find(f => f.id === c.fatherId) : null;
+    const children = masterData.data.characters.filter(ch => ch.motherId === c.id || ch.fatherId === c.id);
+    const siblings = masterData.data.characters.filter(ch => ch.id !== c.id && ((ch.motherId && ch.motherId === c.motherId) || (ch.fatherId && ch.fatherId === c.fatherId)));
+    
+    const allRelationships = c.relationships || [];
+    const partners = allRelationships.map(r => ({ ...r, char: masterData.data.characters.find(p => p.id === r.partnerId), displayStatus: r.status === 'ongoing' ? '❤️ Ongoing' : r.status === 'ended' ? '💔 Ended' : '† Widowed' })).filter(r => r.char);
+    const friends = (c.friends || []).map(fId => masterData.data.characters.find(f => f.id === fId)).filter(f => f);
+    
+    const reversePartners = [];
+    masterData.data.characters.forEach(other => {
+      if (other.id === c.id) return;
+      const rel = (other.relationships || []).find(r => r.partnerId === c.id);
+      if (rel && !partners.some(p => p.partnerId === other.id)) reversePartners.push({ partnerId: other.id, status: rel.status, details: rel.details, char: other, displayStatus: rel.status === 'ongoing' ? '❤️ Ongoing' : rel.status === 'ended' ? '💔 Ended' : '† Widowed' });
+    });
+    const allPartners = [...partners, ...reversePartners];
+    
+    function renderPersonRow(person, status = null, colorClass) {
+      if (!person) return '';
+      const rankDisplay = getActiveRankDisplay(person);
+      const age = calculateAge(person.birthYear, person.isDeceased, person.deathYear);
+      const location = getCurrentLocation(person);
+      const statusBadge = status ? `<span class="badge badge-${status === '❤️ Ongoing' ? 'ongoing' : status === '💔 Ended' ? 'ended' : 'widowed'}" style="margin-left:8px;">${status}</span>` : '';
+      return `<div class="overview-row" data-id="${person.id}"><div class="overview-color-bar ${colorClass}"></div><div class="overview-name">${person.isDeceased ? '† ' : ''}${rankDisplay ? `${rankDisplay.display} ` : ''}${escapeHtml(person.name)} ${escapeHtml(person.surname || '')}${statusBadge}</div><div class="overview-details">${person.gender === 'male' ? '♂' : person.gender === 'female' ? '♀' : '⚥'} · Age: ${age} · 📍 ${location}${person.isDeceased ? ' · † Deceased' : ''}</div></div>`;
+    }
+    
+    const sortedChildren = [...children].sort((a, b) => (a.birthYear || 0) - (b.birthYear || 0));
+    const sortedSiblings = [...siblings].sort((a, b) => (b.birthYear || 0) - (a.birthYear || 0));
+    const sortedPartners = [...allPartners].sort((a, b) => (b.details?.startYear || 0) - (a.details?.startYear || 0));
+    const sortedFriends = [...friends].sort((a, b) => (b.birthYear || 0) - (a.birthYear || 0));
+    
+    document.getElementById('panelContent').innerHTML = `
+      <div class="overview-tab">
+        <div class="overview-section"><div class="overview-header"><div class="overview-color-bar color-parent"></div><span>Parents</span></div>${mother ? renderPersonRow(mother, null, 'color-parent') : '<div class="overview-row"><div class="overview-color-bar color-parent"></div><div style="color:var(--dim);">No mother recorded</div></div>'}${father ? renderPersonRow(father, null, 'color-parent') : '<div class="overview-row"><div class="overview-color-bar color-parent"></div><div style="color:var(--dim);">No father recorded</div></div>'}</div>
+        <div class="separator"></div>
+        <div class="overview-section"><div class="overview-header"><div class="overview-color-bar color-partner"></div><span>Partners (${sortedPartners.length})</span></div>${sortedPartners.length ? sortedPartners.map(p => renderPersonRow(p.char, p.displayStatus, 'color-partner')).join('') : '<div class="overview-row"><div class="overview-color-bar color-partner"></div><div style="color:var(--dim);">No partners</div></div>'}</div>
+        <div class="separator"></div>
+        <div class="overview-section"><div class="overview-header"><div class="overview-color-bar color-child"></div><span>Children (${sortedChildren.length})</span></div>${sortedChildren.length ? sortedChildren.map(ch => renderPersonRow(ch, null, 'color-child')).join('') : '<div class="overview-row"><div class="overview-color-bar color-child"></div><div style="color:var(--dim);">No children</div></div>'}</div>
+        <div class="separator"></div>
+        <div class="overview-section"><div class="overview-header"><div class="overview-color-bar color-sibling"></div><span>Siblings (${sortedSiblings.length})</span></div>${sortedSiblings.length ? sortedSiblings.map(s => renderPersonRow(s, null, 'color-sibling')).join('') : '<div class="overview-row"><div class="overview-color-bar color-sibling"></div><div style="color:var(--dim);">No siblings</div></div>'}</div>
+        <div class="separator"></div>
+        <div class="overview-section"><div class="overview-header"><div class="overview-color-bar color-friend"></div><span>Friends (${sortedFriends.length})</span></div>${sortedFriends.length ? sortedFriends.map(f => renderPersonRow(f, null, 'color-friend')).join('') : '<div class="overview-row"><div class="overview-color-bar color-friend"></div><div style="color:var(--dim);">No friends</div></div>'}</div>
+      </div>`;
+    
+    document.querySelectorAll('.overview-row[data-id]').forEach(row => { row.addEventListener('click', (e) => { if (!e.target.classList?.contains('badge')) selectCharacter(row.dataset.id); }); row.style.cursor = 'pointer'; });
+  }
+  
+  // ==================== ROLES TAB ====================
+  function renderRolesTab() {
+    const c = masterData.data.characters.find(ch => ch.id === selectedCharId);
+    if (!c) { document.getElementById('panelContent').innerHTML = '<div class="empty-state">Select a character first</div>'; return; }
+    
+    const professions = masterData.data.roles || [];
+    const assigned = c.professions || [];
+    const isMaster = c.isMaster || false;
+    const masterProfessionId = c.masterProfessionId;
+    const apprentices = c.apprentices || [];
+    const available = professions.filter(p => !assigned.some(a => a.id === p.id));
+    
+    document.getElementById('panelContent').innerHTML = `
+      <div class="roles-tab">
+        <div class="collapsible-section"><div class="section-header">Assigned Professions <span class="arrow">▶</span></div><div class="section-content"><div id="assignedProfessionsList">${assigned.length ? assigned.map(prof => `<div class="profession-card" data-prof-id="${prof.id}"><div class="profession-header"><div><span class="profession-name">${escapeHtml(prof.name)}</span></div><div><span class="primary-star ${prof.primary ? 'active' : ''}" data-primary="${prof.id}" style="cursor:pointer;">${prof.primary ? '★' : '☆'}</span><button class="btn small danger" data-remove="${prof.id}" style="margin-left:8px;">Remove</button></div></div><div class="profession-notes"><textarea class="prof-notes" data-prof="${prof.id}" placeholder="Notes..." rows="2" style="width:100%; padding:4px 6px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); font-size:0.7rem;">${escapeHtml(prof.notes || '')}</textarea></div></div>`).join('') : '<div class="empty-state" style="padding:20px;">No professions assigned</div>'}</div></div></div>
+        <div class="collapsible-section"><div class="section-header">Master Status <span class="arrow">▶</span></div><div class="section-content"><div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="isMasterToggle" ${isMaster ? 'checked' : ''}> <span>This character is a Master</span></label><div id="masterProfessionSelect" style="${!isMaster ? 'display:none;' : ''}"><select id="masterProfession" style="padding:6px 10px;"><option value="">Select profession...</option>${assigned.map(p => `<option value="${p.id}" ${masterProfessionId === p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</select></div></div></div></div>
+        <div class="collapsible-section"><div class="section-header">Apprentices (${apprentices.length}) <span class="arrow">▶</span></div><div class="section-content"><div id="apprenticesList">${apprentices.length ? apprentices.map(appId => { const app = masterData.data.characters.find(ch => ch.id === appId); if (!app) return ''; return `<div class="family-card" data-app="${appId}"><div style="display:flex; justify-content:space-between; align-items:center;"><div><span class="card-name" data-id="${appId}">${app.isDeceased ? '† ' : ''}${(getActiveRankDisplay(app)?.display || '')} ${escapeHtml(app.name)} ${escapeHtml(app.surname || '')}</span><div class="card-details">${app.gender === 'male' ? '♂' : app.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(app.birthYear, app.isDeceased, app.deathYear)} · ${getCurrentLocation(app)}</div></div><button class="btn small danger" data-remove-app="${appId}">Remove</button></div></div>`; }).join('') : '<div class="empty-state" style="padding:20px;">No apprentices</div>'}</div><button id="addApprenticeBtn" class="btn primary" style="margin-top:12px;">+ Add Apprentice</button></div></div>
+        <div class="collapsible-section"><div class="section-header">Available Professions <span class="arrow">▶</span></div><div class="section-content"><div id="availableProfessionsList">${available.length ? available.map(prof => `<div class="profession-card"><div class="profession-header"><div><span class="profession-name">${escapeHtml(prof.name)}</span></div><button class="btn small primary" data-add="${prof.id}">+ Assign</button></div></div>`).join('') : '<div class="empty-state" style="padding:20px;">All professions assigned</div>'}</div></div></div>
+      </div>`;
+    
+    attachRolesEventListeners(c);
+    
+    setTimeout(() => {
+      document.querySelectorAll('#panelContent .collapsible-section .section-header').forEach(header => {
+        const content = header.nextElementSibling;
+        const arrow = header.querySelector('.arrow');
+        if (content && !content.classList.contains('expanded')) content.classList.add('expanded');
+        if (arrow && !arrow.classList.contains('expanded')) arrow.classList.add('expanded');
+        if (!header.hasListener) { header.hasListener = true; header.addEventListener('click', (e) => { e.stopPropagation(); const targetContent = header.nextElementSibling; const targetArrow = header.querySelector('.arrow'); if (targetContent) targetContent.classList.toggle('expanded'); if (targetArrow) targetArrow.classList.toggle('expanded'); }); }
+      });
+    }, 50);
+  }
+  
+  function attachRolesEventListeners(c) {
+    document.querySelectorAll('.primary-star').forEach(star => { star.addEventListener('click', () => { const profId = star.dataset.primary; c.professions.forEach(p => { p.primary = (p.id === profId); }); saveMasterData(); renderRolesTab(); showToast('Primary profession updated'); }); });
+    document.querySelectorAll('[data-remove]').forEach(btn => { btn.addEventListener('click', () => { const profId = btn.dataset.remove; if (confirm('Remove this profession?')) { c.professions = c.professions.filter(p => p.id !== profId); if (c.masterProfessionId === profId) { c.masterProfessionId = null; c.isMaster = false; } saveMasterData(); renderRolesTab(); showToast('Profession removed'); } }); });
+    document.querySelectorAll('.prof-notes').forEach(textarea => { textarea.addEventListener('change', (e) => { const profId = textarea.dataset.prof; const prof = c.professions.find(p => p.id === profId); if (prof) { prof.notes = e.target.value; saveMasterData(); } }); });
+    document.querySelectorAll('[data-add]').forEach(btn => { btn.addEventListener('click', () => { const profId = btn.dataset.add; const fullProf = masterData.data.roles.find(p => p.id === profId); if (fullProf) { if (!c.professions) c.professions = []; c.professions.push({ id: fullProf.id, name: fullProf.name, primary: false, specs: [], notes: '' }); saveMasterData(); renderRolesTab(); showToast(`Added ${fullProf.name}`); } }); });
+    
+    const masterToggle = document.getElementById('isMasterToggle');
+    const masterSelectDiv = document.getElementById('masterProfessionSelect');
+    const masterSelect = document.getElementById('masterProfession');
+    if (masterToggle) { masterToggle.addEventListener('change', (e) => { c.isMaster = e.target.checked; if (!c.isMaster) { c.masterProfessionId = null; if (masterSelectDiv) masterSelectDiv.style.display = 'none'; } else { if (masterSelectDiv) masterSelectDiv.style.display = 'block'; } saveMasterData(); renderRolesTab(); }); }
+    if (masterSelect) { masterSelect.addEventListener('change', (e) => { c.masterProfessionId = e.target.value || null; saveMasterData(); }); }
+    
+    const addApprenticeBtn = document.getElementById('addApprenticeBtn');
+    if (addApprenticeBtn) addApprenticeBtn.addEventListener('click', () => openAddApprenticeModal(c.id));
+    
+    document.querySelectorAll('[data-remove-app]').forEach(btn => { btn.addEventListener('click', () => { const appId = btn.dataset.removeApp; if (confirm('Remove this apprentice?')) { c.apprentices = c.apprentices.filter(id => id !== appId); const apprentice = masterData.data.characters.find(ch => ch.id === appId); if (apprentice) apprentice.masterId = null; saveMasterData(); renderRolesTab(); showToast('Apprentice removed'); } }); });
+  }
+  
+  function openAddApprenticeModal(masterId) {
+    const master = masterData.data.characters.find(ch => ch.id === masterId);
+    if (!master) return;
+    const existingApprenticeIds = master.apprentices || [];
+    let available = masterData.data.characters.filter(ch => ch.id !== masterId && !existingApprenticeIds.includes(ch.id) && !ch.isDeceased && (ch.birthYear ? (currentYear - ch.birthYear) >= 14 : true));
+    let searchTerm = ''; let filters = { gender: null, peer: false };
+    function renderList() {
+      let filtered = [...available];
+      if (searchTerm) filtered = filtered.filter(ch => ch.name.toLowerCase().includes(searchTerm.toLowerCase()) || (ch.surname || '').toLowerCase().includes(searchTerm.toLowerCase()));
+      if (filters.gender) filtered = filtered.filter(ch => ch.gender === filters.gender);
+      if (filters.peer && master.birthYear) filtered = filtered.filter(ch => Math.abs((ch.birthYear || 0) - master.birthYear) <= 20);
+      const listContainer = document.getElementById('apprenticeList');
+      if (!filtered.length) { listContainer.innerHTML = '<div class="empty-state">No candidates found</div>'; return; }
+      listContainer.innerHTML = filtered.map(ch => `<div class="apprentice-option" data-id="${ch.id}" style="padding:10px; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><strong>${escapeHtml(ch.name)} ${escapeHtml(ch.surname || '')}</strong><br><span style="font-size:0.65rem; color:var(--dim);">${ch.gender === 'male' ? '♂' : ch.gender === 'female' ? '♀' : '⚥'} · Age: ${calculateAge(ch.birthYear, ch.isDeceased, ch.deathYear)} · ${getCurrentLocation(ch)}</span></div><button class="btn small primary">Select</button></div>`).join('');
+      document.querySelectorAll('.apprentice-option').forEach(opt => { opt.addEventListener('click', (e) => { e.stopPropagation(); const apprenticeId = opt.dataset.id; if (!master.apprentices) master.apprentices = []; master.apprentices.push(apprenticeId); const apprentice = masterData.data.characters.find(ch => ch.id === apprenticeId); if (apprentice) apprentice.masterId = masterId; saveMasterData(); modal.remove(); renderRolesTab(); showToast('Apprentice added'); }); });
+    }
+    const modal = document.createElement('div'); modal.className = 'modal active';
+    modal.innerHTML = `<div class="modal-content" style="max-width:500px;"><h3>➕ Add Apprentice for ${escapeHtml(master.name)}</h3><div style="margin-bottom:12px;"><input type="text" id="apprenticeSearch" placeholder="Search by name..." style="width:100%; padding:6px 8px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text);"></div><div class="filter-row-inline" style="display:flex; gap:8px; margin-bottom:12px;"><select id="apprenticeGenderFilter" style="padding:4px 6px; font-size:0.65rem;"><option value="">All Genders</option><option value="male">Male</option><option value="female">Female</option></select><label style="display:flex; align-items:center; gap:4px; font-size:0.65rem;"><input type="checkbox" id="apprenticePeerFilter"> Peers (±20y)</label></div><div id="apprenticeList" style="max-height:350px; overflow-y:auto;"></div><div style="margin-top:16px;"><button id="closeApprenticeModal" class="btn">Cancel</button></div></div>`;
+    document.body.appendChild(modal);
+    document.getElementById('apprenticeSearch').addEventListener('input', (e) => { searchTerm = e.target.value; renderList(); });
+    document.getElementById('apprenticeGenderFilter').addEventListener('change', (e) => { filters.gender = e.target.value || null; renderList(); });
+    document.getElementById('apprenticePeerFilter').addEventListener('change', (e) => { filters.peer = e.target.checked; renderList(); });
+    document.getElementById('closeApprenticeModal').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+    renderList();
+  }
+  
+  // ==================== UTILITIES ====================
+  function addNewPerson() {
+    const newChar = { id: generateId(), name: 'New Character', surname: '', gender: 'unknown', attraction: 'both', birthYear: currentYear - 25, isDeceased: false, deathYear: null, deathCause: '', rankAssignments: [], activeRankId: null, activeRankNumber: null, birthplaceId: null, moves: [], role: '', household: '', notes: '', motherId: null, fatherId: null, relationships: [], friends: [] };
+    masterData.data.characters.push(newChar);
+    saveMasterData();
+    renderCharList();
+    selectCharacter(newChar.id);
+    showToast(`${newChar.name} created`);
+  }
+  
+  function generateRandomPerson() {
+    const gender = ['male', 'female', 'unknown'][Math.floor(Math.random() * 3)];
+    const maleNames = ['Kai', 'Mako', 'Tane', 'Rangi', 'Koa', 'Keanu', 'Ari', 'Leo', 'Nico', 'Ikaia', 'Sione', 'Tama', 'Vaea'];
+    const femaleNames = ['Leilani', 'Moana', 'Nani', 'Tui', 'Hina', 'Lani', 'Malia', 'Rai', 'Tara', 'Vai', 'Manaia', 'Aroha', 'Eponi'];
+    const name = gender === 'male' ? maleNames[Math.floor(Math.random() * maleNames.length)] : gender === 'female' ? femaleNames[Math.floor(Math.random() * femaleNames.length)] : 'Rowan';
+    const ranks = masterData.data.ranks;
+    const randomRank = ranks.length ? ranks[Math.floor(Math.random() * ranks.length)] : null;
+    const randomAge = Math.floor(Math.random() * 70) + 10;
+    const randomBirthYear = currentYear - randomAge;
+    const newChar = { id: generateId(), name: name, surname: '', gender: gender, attraction: ['men', 'women', 'both', 'neither'][Math.floor(Math.random() * 4)], birthYear: randomBirthYear, isDeceased: false, deathYear: null, deathCause: '', rankAssignments: randomRank ? [{ rankId: randomRank.id, number: null }] : [], activeRankId: randomRank?.id || null, activeRankNumber: null, birthplaceId: null, moves: [], role: '', household: '', notes: '', motherId: null, fatherId: null, relationships: [], friends: [] };
+    masterData.data.characters.push(newChar);
+    saveMasterData();
+    renderCharList();
+    selectCharacter(newChar.id);
+    showToast(`⚄ Random character created: ${name}`);
+    return newChar;
+  }
+  
+  function exportData() {
+    const exportObj = { type: "master", version: "2.0", exportDate: new Date().toISOString(), data: { characters: masterData.data.characters, places: masterData.data.places, ranks: masterData.data.ranks, roles: masterData.data.roles, locationTypes: masterData.data.locationTypes, governments: masterData.data.governments, nameLists: masterData.data.nameLists, currentYear: masterData.data.currentYear } };
+    const dataStr = JSON.stringify(exportObj, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `stillwaters_master_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Master data exported');
+  }
+  
+  function importData() {
+    const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          if (imported.type === "master" && imported.data) {
+            if (imported.data.characters) masterData.data.characters = imported.data.characters;
+            if (imported.data.places) masterData.data.places = imported.data.places;
+            if (imported.data.ranks) masterData.data.ranks = imported.data.ranks;
+            if (imported.data.roles) masterData.data.roles = imported.data.roles;
+            if (imported.data.locationTypes) masterData.data.locationTypes = imported.data.locationTypes;
+            if (imported.data.governments) masterData.data.governments = imported.data.governments;
+            if (imported.data.nameLists) masterData.data.nameLists = imported.data.nameLists;
+            if (imported.data.currentYear) masterData.data.currentYear = imported.data.currentYear;
+          } else if (imported.data && imported.data.characters) {
+            masterData.data.characters = imported.data.characters;
+            if (imported.data.places) masterData.data.places = imported.data.places;
+            if (imported.data.ranks) masterData.data.ranks = imported.data.ranks;
+            if (imported.data.currentYear) masterData.data.currentYear = imported.data.currentYear;
+          } else if (imported.characters) {
+            masterData.data.characters = imported.characters;
+            if (imported.places) masterData.data.places = imported.places;
+            if (imported.ranks) masterData.data.ranks = imported.ranks;
+            if (imported.currentYear) masterData.data.currentYear = imported.currentYear;
+          } else throw new Error('Unrecognized file format');
+          currentYear = masterData.data.currentYear;
+          const yearInput = document.getElementById('currentYear');
+          if (yearInput) yearInput.value = currentYear;
+          masterData.data.characters.forEach(char => { if (!char.relationships) char.relationships = []; if (!char.friends) char.friends = []; if (!char.rankAssignments) char.rankAssignments = []; if (!char.moves) char.moves = []; if (!char.appearance) char.appearance = {}; });
+          saveMasterData();
+          renderCharList();
+          updateFilterOptions();
+          selectedCharId = null;
+          document.getElementById('panelContent').innerHTML = '<div class="empty-state">Select a character to view details</div>';
+          showToast(`Imported ${masterData.data.characters.length} characters`);
+        } catch(err) { alert('Invalid JSON: ' + err.message); }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+  
+  function showToast(msg) {
+    let c = document.getElementById('toast-container');
+    if (!c) { c = document.createElement('div'); c.id = 'toast-container'; c.style.position = 'fixed'; c.style.bottom = '20px'; c.style.right = '20px'; c.style.zIndex = '9999'; c.style.display = 'flex'; c.style.flexDirection = 'column'; c.style.gap = '8px'; document.body.appendChild(c); }
+    const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; c.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  }
+  
+  function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m); }
+  
+  // ==================== INIT ====================
+  function init() {
+    loadMasterData(); renderCharList();
+    
+    const filterContent = document.getElementById('filterContent');
+    const filterCollapseIcon = document.getElementById('filterCollapseIcon');
+    const filterHeader = document.getElementById('filterHeader');
+    let filtersCollapsed = false;
+    if (filterHeader && filterContent) {
+      filterHeader.addEventListener('click', () => {
+        filtersCollapsed = !filtersCollapsed;
+        if (filtersCollapsed) { filterContent.style.maxHeight = '0'; filterContent.style.padding = '0 12px'; filterContent.style.overflow = 'hidden'; if (filterCollapseIcon) filterCollapseIcon.textContent = '▶'; }
+        else { filterContent.style.maxHeight = '400px'; filterContent.style.padding = '12px'; filterContent.style.overflow = 'auto'; if (filterCollapseIcon) filterCollapseIcon.textContent = '▼'; }
+      });
+      filterContent.style.maxHeight = '400px'; filterContent.style.padding = '12px'; filterContent.style.overflow = 'auto';
+    }
+    
+    const yearInput = document.getElementById('currentYear');
+    if (yearInput) yearInput.addEventListener('change', () => { currentYear = parseInt(yearInput.value); saveMasterData(); renderCharList(); if (selectedCharId) renderCurrentTab(); });
+    document.getElementById('clearFilters')?.addEventListener('click', () => { document.querySelectorAll('.filter-bar select, .filter-bar input').forEach(s => { if(s.type !== 'checkbox') s.value = ''; else s.checked = false; }); renderCharList(); });
+    document.getElementById('addPersonBtn')?.addEventListener('click', addNewPerson);
+    const generatePersonBtn = document.getElementById('generatePersonBtn');
+    if (generatePersonBtn) { const newGenerateBtn = generatePersonBtn.cloneNode(true); generatePersonBtn.parentNode.replaceChild(newGenerateBtn, generatePersonBtn); newGenerateBtn.addEventListener('click', () => { const p = generateRandomPerson(); saveMasterData(); renderCharList(); selectCharacter(p.id); }); }
+    document.getElementById('importCharsBtn')?.addEventListener('click', importData);
+    document.getElementById('exportCharsBtn')?.addEventListener('click', exportData);
+    
+    const menuToggle = document.getElementById('menuToggle');
+    if (menuToggle) { menuToggle.style.display = window.innerWidth <= 768 ? 'block' : 'none'; menuToggle.addEventListener('click', () => document.getElementById('sidebar').classList.toggle('mobile-visible')); }
+    window.addEventListener('resize', () => { if (window.innerWidth > 768) { document.getElementById('sidebar').classList.remove('mobile-visible'); if (menuToggle) menuToggle.style.display = 'none'; } else { if (menuToggle) menuToggle.style.display = 'block'; } });
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); if (selectedCharId) renderCurrentTab(); else document.getElementById('panelContent').innerHTML = '<div class="empty-state">Select a character first</div>'; }); });
+    
+    document.getElementById('filterLifeStage')?.addEventListener('change', renderCharList);
+    document.getElementById('filterGender')?.addEventListener('change', renderCharList);
+    document.getElementById('filterRelation')?.addEventListener('change', renderCharList);
+    document.getElementById('filterRank')?.addEventListener('change', renderCharList);
+    document.getElementById('filterRole')?.addEventListener('change', renderCharList);
+    document.getElementById('filterBirthLocation')?.addEventListener('change', renderCharList);
+    document.getElementById('filterCurrentLocation')?.addEventListener('change', renderCharList);
+    document.getElementById('filterShowDeceased')?.addEventListener('change', renderCharList);
+    
+    window.addEventListener('storage', (e) => { if (e.key === 'stillwaters_master') { loadMasterData(); updateFilterOptions(); renderCharList(); if (selectedCharId) renderCurrentTab(); } });
+    
+    if (masterData.data.characters.length === 0) {
+      const panelContent = document.getElementById('panelContent');
+      if (panelContent) { panelContent.innerHTML = `<div class="empty-state">👤 No characters<br><br><button id="quickAdd" class="btn primary">+ Add First</button><button id="quickGen" class="btn">⚄ Generate</button></div>`; document.getElementById('quickAdd')?.addEventListener('click', addNewPerson); document.getElementById('quickGen')?.addEventListener('click', () => { const p = generateRandomPerson(); saveMasterData(); renderCharList(); selectCharacter(p.id); }); }
+    }
+  }
+  
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+</script>
+</body>
+</html>

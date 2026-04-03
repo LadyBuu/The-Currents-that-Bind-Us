@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Timeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="stillwaters.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="title">TIMELINE</div>
+  <div style="flex:1"></div>
+  <button id="importBtn" class="tb-btn">Import JSON</button>
+  <button id="refreshBtn" class="tb-btn primary">⟳ Refresh</button>
+</div>
+
+<div class="timeline-app">
+  <div class="toolbar">
+    <div class="year-input">
+      <span>Jump to year:</span>
+      <input type="number" id="jumpYear" placeholder="Year">
+      <button id="jumpBtn" class="btn small">Go</button>
+    </div>
+    <div class="year-input">
+      <span>Events in year:</span>
+      <input type="number" id="yearEventsInput" placeholder="Year">
+      <button id="showYearEventsBtn" class="btn small">Show Events</button>
+    </div>
+  </div>
+  
+  <div class="stats-bar" id="statsBar"></div>
+  
+  <div class="timeline-container" id="timelineContainer">
+    <div class="empty-state">Loading timeline... Please import data or refresh.</div>
+  </div>
+</div>
+
+<!-- Event Details Modal -->
+<div id="eventModal" class="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Event Details</h3>
+    <div id="modalContent"></div>
+    <div class="modal-buttons">
+      <button id="closeEventModal" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Year Events Modal -->
+<div id="yearModal" class="modal">
+  <div class="modal-content">
+    <h3 id="yearModalTitle">Events in Year</h3>
+    <div id="yearModalContent" class="year-events-list"></div>
+    <div class="modal-buttons">
+      <button id="closeYearModal" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ==================== DATA STORES ====================
+  let masterData = {
+    version: "2.0",
+    data: {
+      characters: [],
+      places: [],
+      ranks: [],
+      roles: [],
+      currentYear: 1250
+    }
+  };
+  
+  let allEvents = [];
+  let minYear = Infinity;
+  let maxYear = -Infinity;
+  
+  // ==================== LOAD DATA ====================
+  function loadMasterData() {
+    const stored = localStorage.getItem('stillwaters_master');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        masterData = {
+          version: parsed.version || "2.0",
+          data: {
+            characters: parsed.data?.characters || [],
+            places: parsed.data?.places || [],
+            ranks: parsed.data?.ranks || [],
+            roles: parsed.data?.roles || [],
+            locationTypes: parsed.data?.locationTypes || [],
+            governments: parsed.data?.governments || [],
+            nameLists: parsed.data?.nameLists || {},
+            currentYear: parsed.data?.currentYear || 1250
+          }
+        };
+      } catch(e) { console.error('Error loading master data', e); }
+    }
+  }
+  
+  function getPlaceName(placeId) {
+    if (!placeId) return 'Unknown';
+    const place = masterData.data.places.find(p => p.id === placeId);
+    return place?.displayName || 'Unknown';
+  }
+  
+  // ==================== BUILD EVENTS ====================
+  function buildEvents() {
+    allEvents = [];
+    const characters = masterData.data.characters;
+    const currentYear = masterData.data.currentYear;
+    
+    characters.forEach(char => {
+      // Birth event
+      if (char.birthYear) {
+        allEvents.push({
+          year: char.birthYear,
+          type: 'birth',
+          title: `${char.name} ${char.surname || ''} was born`,
+          details: `Born in ${getPlaceName(char.birthplaceId)}`,
+          character: char,
+          characterId: char.id
+        });
+        if (char.birthYear < minYear) minYear = char.birthYear;
+        if (char.birthYear > maxYear) maxYear = char.birthYear;
+      }
+      
+      // Death event
+      if (char.isDeceased && char.deathYear) {
+        allEvents.push({
+          year: char.deathYear,
+          type: 'death',
+          title: `${char.name} ${char.surname || ''} died`,
+          details: `Cause: ${char.deathCause || 'Unknown'}`,
+          character: char,
+          characterId: char.id
+        });
+        if (char.deathYear < minYear) minYear = char.deathYear;
+        if (char.deathYear > maxYear) maxYear = char.deathYear;
+      }
+      
+      // Move events
+      if (char.moves && char.moves.length) {
+        char.moves.forEach(move => {
+          if (move.year) {
+            allEvents.push({
+              year: move.year,
+              type: 'move',
+              title: `${char.name} ${char.surname || ''} moved`,
+              details: `Moved to ${getPlaceName(move.locationId)}${move.note ? ` (${move.note})` : ''}`,
+              character: char,
+              characterId: char.id,
+              moveData: move
+            });
+            if (move.year < minYear) minYear = move.year;
+            if (move.year > maxYear) maxYear = move.year;
+          }
+        });
+      }
+      
+      // Relationship events
+      if (char.relationships && char.relationships.length) {
+        char.relationships.forEach(rel => {
+          const partner = characters.find(p => p.id === rel.partnerId);
+          if (partner && rel.startYear) {
+            allEvents.push({
+              year: rel.startYear,
+              type: 'relationship-start',
+              title: `${char.name} and ${partner.name} started a relationship`,
+              details: `Type: ${rel.type}${rel.notes ? ` - ${rel.notes}` : ''}`,
+              character: char,
+              characterId: char.id,
+              partner: partner,
+              relationship: rel
+            });
+            if (rel.startYear < minYear) minYear = rel.startYear;
+            if (rel.startYear > maxYear) maxYear = rel.startYear;
+          }
+          
+          if (partner && rel.endYear && (rel.status === 'terminated' || rel.status === 'widowed')) {
+            allEvents.push({
+              year: rel.endYear,
+              type: 'relationship-end',
+              title: `${char.name} and ${partner.name} ended their relationship`,
+              details: `Status: ${rel.status === 'widowed' ? 'Widowed' : 'Terminated'}${rel.notes ? ` - ${rel.notes}` : ''}`,
+              character: char,
+              characterId: char.id,
+              partner: partner,
+              relationship: rel
+            });
+            if (rel.endYear < minYear) minYear = rel.endYear;
+            if (rel.endYear > maxYear) maxYear = rel.endYear;
+          }
+        });
+      }
+    });
+    
+    // Sort events by year
+    allEvents.sort((a, b) => a.year - b.year);
+    
+    // Add a small buffer for empty years
+    if (minYear === Infinity) minYear = 1000;
+    if (maxYear === -Infinity) maxYear = currentYear;
+    minYear = Math.min(minYear, 1000);
+    maxYear = Math.max(maxYear, currentYear);
+  }
+  
+  // ==================== RENDER TIMELINE ====================
+  function renderTimeline() {
+    const container = document.getElementById('timelineContainer');
+    
+    if (allEvents.length === 0) {
+      container.innerHTML = '<div class="empty-state">No events found. Import data to see timeline.</div>';
+      return;
+    }
+    
+    // Group events by year
+    const eventsByYear = {};
+    allEvents.forEach(event => {
+      if (!eventsByYear[event.year]) eventsByYear[event.year] = [];
+      eventsByYear[event.year].push(event);
+    });
+    
+    // Get all years from min to max
+    const years = [];
+    for (let y = minYear; y <= maxYear; y++) {
+      years.push(y);
+    }
+    
+    // Update stats
+    const uniqueYears = Object.keys(eventsByYear).length;
+    document.getElementById('statsBar').innerHTML = `
+      <span>Span: ${minYear} - ${maxYear}</span>
+      <span>Years with events: ${uniqueYears}</span>
+      <span>Total events: ${allEvents.length}</span>
+      <span>Characters: ${masterData.data.characters.length}</span>
+    `;
+    
+    // Render timeline
+    container.innerHTML = `
+      <div class="timeline-line">
+        ${years.map(year => {
+          const yearEvents = eventsByYear[year] || [];
+          const hasEvents = yearEvents.length > 0;
+          
+          return `
+            <div class="timeline-year">
+              <div class="year-marker" data-year="${year}" style="background: ${hasEvents ? 'var(--accent)' : 'var(--border2)'}">
+                ${hasEvents ? '●' : '○'}
+              </div>
+              <div class="year-label">Year ${year}</div>
+              <div class="events-list">
+                ${yearEvents.map(event => `
+                  <div class="event-item" data-event-idx="${allEvents.indexOf(event)}">
+                    <span class="event-type ${event.type}">${getEventTypeLabel(event.type)}</span>
+                    <span class="event-title">${escapeHtml(event.title)}</span>
+                    <div class="event-details">${escapeHtml(event.details)}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    
+    // Add click handlers for year markers
+    document.querySelectorAll('.year-marker').forEach(marker => {
+      marker.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const year = parseInt(marker.getAttribute('data-year'));
+        showYearEvents(year);
+      });
+    });
+    
+    // Add click handlers for events
+    document.querySelectorAll('.event-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const eventIdx = parseInt(item.getAttribute('data-event-idx'));
+        showEventDetails(eventIdx);
+      });
+    });
+  }
+  
+  function getEventTypeLabel(type) {
+    const labels = {
+      'birth': 'BIRTH',
+      'death': 'DEATH',
+      'move': 'MOVE',
+      'relationship-start': 'RELATIONSHIP START',
+      'relationship-end': 'RELATIONSHIP END'
+    };
+    return labels[type] || type.toUpperCase();
+  }
+  
+  // ==================== SHOW EVENT DETAILS ====================
+  function showEventDetails(eventIdx) {
+    const event = allEvents[eventIdx];
+    if (!event) return;
+    
+    const modal = document.getElementById('eventModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    
+    modalTitle.textContent = `${getEventTypeLabel(event.type)} - Year ${event.year}`;
+    
+    let detailsHtml = `
+      <div class="event-detail-item">
+        <div class="character-name" data-id="${event.characterId}">${escapeHtml(event.character.name)} ${escapeHtml(event.character.surname || '')}</div>
+        <div style="margin-top: 8px;">
+          <strong>Event:</strong> ${escapeHtml(event.title)}<br>
+          <strong>Details:</strong> ${escapeHtml(event.details)}<br>
+          <strong>Year:</strong> ${event.year}
+        </div>
+    `;
+    
+    if (event.partner) {
+      detailsHtml += `
+        <div style="margin-top: 8px;">
+          <strong>With:</strong> <span class="character-name" data-id="${event.partner.id}">${escapeHtml(event.partner.name)} ${escapeHtml(event.partner.surname || '')}</span>
+        </div>
+      `;
+    }
+    
+    if (event.type === 'move' && event.moveData) {
+      detailsHtml += `
+        <div style="margin-top: 8px;">
+          <strong>From/To:</strong> ${event.moveData.note || 'No additional notes'}
+        </div>
+      `;
+    }
+    
+    if (event.type === 'relationship-start' && event.relationship) {
+      detailsHtml += `
+        <div style="margin-top: 8px;">
+          <strong>Relationship Type:</strong> ${event.relationship.type}<br>
+          ${event.relationship.notes ? `<strong>Notes:</strong> ${escapeHtml(event.relationship.notes)}` : ''}
+        </div>
+      `;
+    }
+    
+    if (event.type === 'relationship-end' && event.relationship) {
+      detailsHtml += `
+        <div style="margin-top: 8px;">
+          <strong>End Reason:</strong> ${event.relationship.status === 'widowed' ? 'Death of partner' : 'Terminated'}<br>
+          ${event.relationship.notes ? `<strong>Notes:</strong> ${escapeHtml(event.relationship.notes)}` : ''}
+        </div>
+      `;
+    }
+    
+    if (event.character.isDeceased && event.character.deathCause && event.type !== 'death') {
+      detailsHtml += `
+        <div style="margin-top: 8px; color: var(--deceased);">
+          Note: This character is deceased (${event.character.deathYear})
+        </div>
+      `;
+    }
+    
+    detailsHtml += `</div>`;
+    
+    modalContent.innerHTML = detailsHtml;
+    modal.classList.add('active');
+    
+    // Add click handlers for character names
+    document.querySelectorAll('#modalContent .character-name').forEach(el => {
+      el.addEventListener('click', () => {
+        const charId = el.getAttribute('data-id');
+        if (charId) {
+          // You could open character in a new tab or show more details
+          showToast(`Character ID: ${charId} - Would open character profile in full version`);
+        }
+      });
+    });
+  }
+  
+  // ==================== SHOW YEAR EVENTS ====================
+  function showYearEvents(year) {
+    const events = allEvents.filter(e => e.year === year);
+    const modal = document.getElementById('yearModal');
+    const modalTitle = document.getElementById('yearModalTitle');
+    const modalContent = document.getElementById('yearModalContent');
+    
+    modalTitle.textContent = `Events in Year ${year}`;
+    
+    if (events.length === 0) {
+      modalContent.innerHTML = '<div class="empty-state">No events recorded for this year</div>';
+    } else {
+      modalContent.innerHTML = events.map(event => `
+        <div class="event-detail-item" data-event-idx="${allEvents.indexOf(event)}">
+          <span class="event-type ${event.type}">${getEventTypeLabel(event.type)}</span>
+          <div class="character-name" data-id="${event.characterId}">${escapeHtml(event.character.name)} ${escapeHtml(event.character.surname || '')}</div>
+          <div style="margin-top: 6px; font-size: 0.7rem;">${escapeHtml(event.title)}</div>
+          <div style="font-size: 0.65rem; color: var(--dim);">${escapeHtml(event.details)}</div>
+        </div>
+      `).join('');
+      
+      // Add click handlers for events in modal
+      document.querySelectorAll('#yearModalContent .event-detail-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const eventIdx = parseInt(item.getAttribute('data-event-idx'));
+          modal.classList.remove('active');
+          showEventDetails(eventIdx);
+        });
+      });
+      
+      // Add click handlers for character names
+      document.querySelectorAll('#yearModalContent .character-name').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const charId = el.getAttribute('data-id');
+          if (charId) showToast(`Character ID: ${charId}`);
+        });
+      });
+    }
+    
+    modal.classList.add('active');
+  }
+  
+  // ==================== JUMP TO YEAR ====================
+  function jumpToYear() {
+    const year = parseInt(document.getElementById('jumpYear').value);
+    if (isNaN(year)) {
+      showToast('Please enter a valid year');
+      return;
+    }
+    
+    const container = document.getElementById('timelineContainer');
+    const yearElements = container.querySelectorAll('.timeline-year');
+    
+    for (let i = 0; i < yearElements.length; i++) {
+      const yearEl = yearElements[i];
+      const yearText = yearEl.querySelector('.year-label')?.textContent;
+      if (yearText && yearText.includes(year.toString())) {
+        yearEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Highlight the year marker temporarily
+        const marker = yearEl.querySelector('.year-marker');
+        if (marker) {
+          marker.style.transform = 'scale(1.3)';
+          marker.style.transition = 'transform 0.3s';
+          setTimeout(() => {
+            marker.style.transform = '';
+          }, 1000);
+        }
+        return;
+      }
+    }
+    
+    showToast(`Year ${year} not found in timeline`);
+  }
+  
+  // ==================== SHOW EVENTS IN SPECIFIC YEAR ====================
+  function showEventsInYear() {
+    const year = parseInt(document.getElementById('yearEventsInput').value);
+    if (isNaN(year)) {
+      showToast('Please enter a valid year');
+      return;
+    }
+    showYearEvents(year);
+  }
+  
+  // ==================== IMPORT DATA ====================
+  function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          
+          if (imported.type === "master" && imported.data) {
+            masterData = {
+              version: imported.version,
+              data: imported.data
+            };
+          } else if (imported.data && imported.data.characters) {
+            masterData = imported;
+          } else if (imported.characters) {
+            masterData = {
+              version: "2.0",
+              data: {
+                characters: imported.characters,
+                places: imported.places || [],
+                ranks: imported.ranks || [],
+                roles: imported.roles || [],
+                currentYear: imported.currentYear || 1250
+              }
+            };
+          } else if (Array.isArray(imported)) {
+            masterData = {
+              version: "2.0",
+              data: {
+                characters: imported,
+                places: [],
+                ranks: [],
+                roles: [],
+                currentYear: 1250
+              }
+            };
+          }
+          
+          localStorage.setItem('stillwaters_master', JSON.stringify(masterData));
+          refreshTimeline();
+          showToast('Data imported successfully');
+        } catch(err) { alert('Invalid JSON: ' + err.message); }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+  
+  function refreshTimeline() {
+    loadMasterData();
+    buildEvents();
+    renderTimeline();
+  }
+  
+  function showToast(msg) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m);
+  }
+  
+  // ==================== INIT ====================
+  function init() {
+    loadMasterData();
+    buildEvents();
+    renderTimeline();
+    
+    document.getElementById('importBtn').addEventListener('click', importData);
+    document.getElementById('refreshBtn').addEventListener('click', refreshTimeline);
+    document.getElementById('jumpBtn').addEventListener('click', jumpToYear);
+    document.getElementById('showYearEventsBtn').addEventListener('click', showEventsInYear);
+    document.getElementById('closeEventModal').addEventListener('click', () => {
+      document.getElementById('eventModal').classList.remove('active');
+    });
+    document.getElementById('closeYearModal').addEventListener('click', () => {
+      document.getElementById('yearModal').classList.remove('active');
+    });
+    
+    // Enter key on inputs
+    document.getElementById('jumpYear').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') jumpToYear();
+    });
+    document.getElementById('yearEventsInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') showEventsInYear();
+    });
+    
+    window.addEventListener('click', (e) => {
+      const eventModal = document.getElementById('eventModal');
+      const yearModal = document.getElementById('yearModal');
+      if (e.target === eventModal) eventModal.classList.remove('active');
+      if (e.target === yearModal) yearModal.classList.remove('active');
+    });
+    
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'stillwaters_master') {
+        refreshTimeline();
+      }
+    });
+  }
+  
+  init();
+</script>
+</body>
+</html>
