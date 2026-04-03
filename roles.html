@@ -17,315 +17,270 @@
   <button id="exportBtn" class="tb-btn primary">Export JSON</button>
 </div>
 
-<div class="roles-app">
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <h3>ROLES</h3>
-      <button id="addRoleBtn" class="btn primary small">+ Add New Role</button>
+<div style="display: flex; flex-direction: column; height: calc(100vh - 44px); overflow: hidden;">
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #0d1119; border-bottom: 1px solid #1e2738; flex-shrink: 0;">
+    <div style="font-family: 'Cinzel', serif; font-size: 0.7rem; color: #6a9ecf;">⚙️ PROFESSIONS & VOCATIONS</div>
+    <div style="display: flex; gap: 10px;">
+      <input type="text" id="searchInput" placeholder="Search roles..." style="padding: 6px 10px; background: #090c12; border: 1px solid #1e2738; border-radius: 6px; color: #cdd5e0; width: 200px;">
+      <button id="addRoleBtn" style="background: #1a2d48; border: 1px solid #6a9ecf; color: #6a9ecf; padding: 6px 12px; border-radius: 4px; cursor: pointer;">+ Add New Role</button>
     </div>
-    <div class="role-list" id="roleList"></div>
   </div>
   
-  <div class="main-panel">
-    <div class="panel-header">
-      <h2 id="selectedRoleTitle">Select a role to view or edit</h2>
-      <div>
-        <button id="deleteRoleBtn" class="btn danger small" style="display:none;">Delete Role</button>
+  <div style="display: flex; flex: 1; overflow: hidden;">
+    <!-- LEFT SIDEBAR -->
+    <div style="width: 360px; border-right: 1px solid #1e2738; display: flex; flex-direction: column; overflow: hidden; background: #0d1119; flex-shrink: 0;">
+      <div style="padding: 12px 16px; background: #121820; border-bottom: 1px solid #1e2738;">
+        <span style="font-size: 0.6rem; color: #8aabb8;">Click any role to edit</span>
       </div>
+      <div id="rolesGrid" style="flex: 1; overflow-y: auto; padding: 12px;"></div>
     </div>
-    <div class="panel-content" id="panelContent">
-      <div class="empty-state">
-        No role selected<br>
-        <small>Click on a role from the left sidebar to view or edit its details</small>
+    
+    <!-- RIGHT PANEL -->
+    <div id="detailPanel" style="flex: 1; overflow-y: auto; background: #090c12; padding: 20px;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #8aabb8; text-align: center;">
+        ← Select a role from the left to edit
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  // ==================== UNIFIED MASTER DATA STRUCTURE ====================
-  let masterData = {
-    version: "2.0",
-    lastUpdated: new Date().toISOString(),
-    data: {
-      characters: [],
-      locationTypes: [],
-      governments: [],
-      places: [],
-      ranks: [],
-      roles: [],
-      nameLists: {},
-      cityNameParts: { prefixes: [], roots: [], suffixes: [] },
-      currentYear: 1250
-    }
-  };
-  
+  // Data
+  let roles = [];
   let selectedRoleId = null;
+  let searchTerm = '';
   
-  function generateId() { return 'role_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
+  function generateId() {
+    return 'role_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+  }
   
-  // ==================== LOAD FROM UNIFIED STORAGE ====================
-  function loadMasterData() {
+  function loadData() {
     const stored = localStorage.getItem('stillwaters_master');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        masterData = {
-          version: parsed.version || "2.0",
-          lastUpdated: parsed.lastUpdated || new Date().toISOString(),
-          data: {
-            characters: parsed.data?.characters || [],
-            locationTypes: parsed.data?.locationTypes || [],
-            governments: parsed.data?.governments || [],
-            places: parsed.data?.places || [],
-            ranks: parsed.data?.ranks || [],
-            roles: parsed.data?.roles || [],
-            nameLists: parsed.data?.nameLists || {},
-            cityNameParts: parsed.data?.cityNameParts || { prefixes: [], roots: [], suffixes: [] },
-            currentYear: parsed.data?.currentYear || 1250
-          }
-        };
-      } catch(e) { console.error('Error loading master data', e); }
-    } else {
-      // Initialize with default roles
-      masterData.data.roles = [
-        { id: generateId(), name: "Farmer", specializations: ["Wheat", "Barley", "Corn"], notes: "Cultivates crops and manages agricultural lands." },
-        { id: generateId(), name: "Blacksmith", specializations: ["Weapons", "Armor", "Tools"], notes: "Works with metal to create and repair items." },
-        { id: generateId(), name: "Healer", specializations: ["Herbalism", "Surgery", "Midwifery"], notes: "Provides medical care and healing services." }
+        if (parsed.data?.roles) roles = parsed.data.roles;
+        else if (parsed.roles) roles = parsed.roles;
+      } catch(e) { console.error(e); }
+    }
+    
+    if (!roles.length) {
+      roles = [
+        { id: generateId(), name: "Farmer", specializations: ["Wheat", "Barley", "Corn", "Rice"], notes: "Cultivates crops and manages agricultural lands." },
+        { id: generateId(), name: "Fisher", specializations: ["Deep Sea", "River", "Net Making"], notes: "Harvests the waters for food and trade." },
+        { id: generateId(), name: "Physician", specializations: ["Herbalism", "Surgery", "Midwifery"], notes: "Provides medical care and healing services." },
+        { id: generateId(), name: "Very Long Role Name That Should Wrap Properly And Not Get Cut Off", specializations: ["Test"], notes: "Testing long names." }
       ];
-      saveMasterData();
+      saveData();
     }
   }
   
-  function saveMasterData() {
-    masterData.lastUpdated = new Date().toISOString();
-    localStorage.setItem('stillwaters_master', JSON.stringify(masterData));
+  function saveData() {
+    localStorage.setItem('stillwaters_master', JSON.stringify({ version: "2.0", data: { roles: roles } }));
   }
   
-  // ==================== ROLE OPERATIONS ====================
-  function getRoles() { return masterData.data.roles; }
-  function setRoles(roles) { masterData.data.roles = roles; saveMasterData(); }
-  
-  // ==================== RENDER ROLE LIST ====================
-  function renderRoleList() {
-    const container = document.getElementById('roleList');
-    const roles = getRoles();
+  function renderRolesGrid() {
+    const container = document.getElementById('rolesGrid');
+    let filtered = roles;
+    if (searchTerm) filtered = roles.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    if (!roles.length) {
-      container.innerHTML = '<div class="empty-state" style="padding:20px;">No roles yet.<br>Click "Add New Role" to begin.</div>';
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="padding: 40px; text-align: center; color: #8aabb8;">No roles found</div>';
       return;
     }
     
-    container.innerHTML = roles.map(role => `
-      <div class="role-item ${selectedRoleId === role.id ? 'selected' : ''}" data-role-id="${role.id}">
-        <div class="role-name">${escapeHtml(role.name)}</div>
-        <div class="role-specs">
-          ${role.specializations?.slice(0, 3).map(s => `<span class="spec-tag">${escapeHtml(s)}</span>`).join('')}
-          ${role.specializations?.length > 3 ? `<span class="spec-tag">+${role.specializations.length - 3}</span>` : ''}
+    container.innerHTML = filtered.map(role => `
+      <div onclick="selectRole('${role.id}')" style="
+        background: ${selectedRoleId === role.id ? '#1a2d48' : '#0d1119'};
+        border: 1px solid ${selectedRoleId === role.id ? '#6a9ecf' : '#1e2738'};
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+      " onmouseover="this.style.borderColor='#6a9ecf'" onmouseout="this.style.borderColor='${selectedRoleId === role.id ? '#6a9ecf' : '#1e2738'}'">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <div style="
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6a9ecf;
+            line-height: 1.4;
+            flex: 1;
+          ">${escapeHtml(role.name)}</div>
+          <div style="
+            font-size: 0.55rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #090c12;
+            border: 1px solid #2a3a50;
+            color: #8aabb8;
+            white-space: nowrap;
+          ">${role.specializations?.length || 0} specs</div>
         </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px;">
+          ${(role.specializations || []).slice(0, 3).map(s => `<span style="background: #090c12; border: 1px solid #2a3a50; border-radius: 12px; padding: 2px 8px; font-size: 0.6rem; color: #8aabb8;">${escapeHtml(s)}</span>`).join('')}
+          ${(role.specializations?.length || 0) > 3 ? `<span style="background: #1a2d48; border-color: #6a9ecf; color: #6a9ecf; border-radius: 12px; padding: 2px 8px; font-size: 0.6rem;">+${role.specializations.length - 3}</span>` : ''}
+        </div>
+        ${role.notes ? `<div style="font-size: 0.6rem; color: #6a8098; margin-top: 8px; padding-top: 6px; border-top: 1px solid #2a3a50;">${escapeHtml(role.notes.substring(0, 60))}${role.notes.length > 60 ? '...' : ''}</div>` : ''}
       </div>
     `).join('');
+  }
+  
+  function selectRole(id) {
+    selectedRoleId = id;
+    renderRolesGrid();
     
-    document.querySelectorAll('.role-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const roleId = item.getAttribute('data-role-id');
-        selectRole(roleId);
-      });
-    });
-  }
-  
-  function selectRole(roleId) {
-    selectedRoleId = roleId;
-    renderRoleList();
-    renderRoleEditor(roleId);
-  }
-  
-  // ==================== RENDER ROLE EDITOR ====================
-  function renderRoleEditor(roleId) {
-    const role = getRoles().find(r => r.id === roleId);
+    const role = roles.find(r => r.id === id);
     if (!role) return;
     
-    document.getElementById('selectedRoleTitle').textContent = `Editing: ${escapeHtml(role.name)}`;
-    document.getElementById('deleteRoleBtn').style.display = 'inline-block';
-    
-    const content = `
-      <form id="roleForm">
-        <div class="form-section">
-          <div class="form-group">
-            <label>Role Name</label>
-            <input type="text" id="roleName" value="${escapeHtml(role.name)}" placeholder="e.g., Farmer, Blacksmith, Healer" required>
-          </div>
+    document.getElementById('detailPanel').innerHTML = `
+      <div style="background: #0d1119; border: 1px solid #1e2738; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; height: 100%;">
+        <div style="padding: 16px 20px; background: #121820; border-bottom: 1px solid #1e2738; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+          <h2 style="margin: 0; font-size: 0.8rem; font-family: 'Cinzel', serif; color: #6a9ecf;">✎ Edit: ${escapeHtml(role.name)}</h2>
+          <button id="deleteBtn" style="background: #2a1a1a; border: 1px solid #8a3020; color: #c08080; padding: 4px 12px; border-radius: 4px; cursor: pointer;">Delete Role</button>
         </div>
-        
-        <div class="specializations-section">
-          <div class="specializations-header">
-            <h3>Specializations</h3>
-            <button type="button" id="addSpecializationBtn" class="btn small">+ Add Specialization</button>
-          </div>
-          <div id="specializationsList" class="specs-list">
-            ${renderSpecializations(role.specializations, roleId)}
-          </div>
+        <div style="padding: 20px; flex: 1; overflow-y: auto;">
+          <form id="roleForm">
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 0.65rem; font-family: 'Cinzel', serif; color: #6a9ecf; margin-bottom: 6px;">Role Name</label>
+              <input type="text" id="roleName" value="${escapeHtml(role.name)}" required style="width: 100%; padding: 8px 10px; background: #090c12; border: 1px solid #1e2738; color: #cdd5e0; border-radius: 6px; font-size: 0.8rem;">
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 0.65rem; font-family: 'Cinzel', serif; color: #6a9ecf; margin-bottom: 6px;">Specializations</label>
+              <div id="specsList" style="margin-bottom: 10px;">
+                ${(role.specializations || []).map((spec, i) => `
+                  <span style="display: inline-flex; align-items: center; gap: 6px; background: #090c12; border: 1px solid #2a3a50; border-radius: 20px; padding: 4px 10px; font-size: 0.7rem; margin-right: 6px; margin-bottom: 6px;">
+                    ${escapeHtml(spec)}
+                    <button type="button" class="remove-spec" data-index="${i}" style="background: none; border: none; color: #c08080; cursor: pointer;">✖</button>
+                  </span>
+                `).join('') || '<span style="color:#6a8098; font-size:0.7rem;">No specializations added yet.</span>'}
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="newSpec" placeholder="New specialization..." style="flex: 1; padding: 6px 10px; background: #090c12; border: 1px solid #1e2738; border-radius: 6px; color: #cdd5e0;">
+                <button type="button" id="addSpecBtn" style="background: #1e2738; border: 1px solid #1e2738; color: #cdd5e0; padding: 6px 12px; border-radius: 4px; cursor: pointer;">+ Add</button>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 0.65rem; font-family: 'Cinzel', serif; color: #6a9ecf; margin-bottom: 6px;">Notes</label>
+              <textarea id="roleNotes" rows="4" style="width: 100%; padding: 8px 10px; background: #090c12; border: 1px solid #1e2738; color: #cdd5e0; border-radius: 6px; font-size: 0.8rem;">${escapeHtml(role.notes || '')}</textarea>
+            </div>
+          </form>
         </div>
-        
-        <div class="form-section">
-          <div class="form-group">
-            <label>Notes</label>
-            <textarea id="roleNotes" rows="4" placeholder="Additional information about this role...">${escapeHtml(role.notes || '')}</textarea>
-          </div>
+        <div style="padding: 16px 20px; border-top: 1px solid #1e2738; display: flex; justify-content: flex-end; flex-shrink: 0;">
+          <button type="submit" form="roleForm" style="background: #1a2d48; border: 1px solid #6a9ecf; color: #6a9ecf; padding: 8px 20px; border-radius: 4px; cursor: pointer;">💾 Save Changes</button>
         </div>
-        
-        <div class="action-buttons">
-          <button type="submit" class="btn primary">Save Changes</button>
-        </div>
-      </form>
+      </div>
     `;
     
-    document.getElementById('panelContent').innerHTML = content;
-    
-    document.getElementById('roleForm').addEventListener('submit', (e) => {
+    document.getElementById('roleForm').onsubmit = (e) => {
       e.preventDefault();
-      saveRole(roleId);
-    });
+      saveRole(role.id);
+    };
     
-    document.getElementById('addSpecializationBtn').addEventListener('click', () => {
-      addSpecialization(roleId);
-    });
+    document.getElementById('addSpecBtn').onclick = () => addSpecialization(role.id);
+    document.getElementById('deleteBtn').onclick = () => deleteRole(role.id);
+    
+    document.getElementById('newSpec').onkeypress = (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addSpecialization(role.id); }
+    };
     
     document.querySelectorAll('.remove-spec').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.onclick = (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        const specIndex = parseInt(btn.getAttribute('data-spec-index'));
-        removeSpecialization(roleId, specIndex);
-      });
+        const idx = parseInt(btn.getAttribute('data-index'));
+        removeSpecialization(role.id, idx);
+      };
     });
-  }
-  
-  function renderSpecializations(specializations, roleId) {
-    if (!specializations || specializations.length === 0) {
-      return '<div class="empty-specs">No specializations added yet. Click "+ Add Specialization" to add some.</div>';
-    }
-    
-    return specializations.map((spec, index) => `
-      <div class="spec-tag-item">
-        ${escapeHtml(spec)}
-        <button type="button" data-spec-index="${index}" class="remove-spec">✖</button>
-      </div>
-    `).join('');
   }
   
   function addSpecialization(roleId) {
-    const roles = getRoles();
-    const role = roles.find(r => r.id === roleId);
-    if (!role) return;
+    const input = document.getElementById('newSpec');
+    const newSpec = input.value.trim();
+    if (!newSpec) return;
     
-    const newSpec = prompt('Enter specialization name:', '');
-    if (newSpec && newSpec.trim()) {
+    const role = roles.find(r => r.id === roleId);
+    if (role) {
       if (!role.specializations) role.specializations = [];
-      role.specializations.push(newSpec.trim());
-      setRoles(roles);
-      renderRoleEditor(roleId);
-      renderRoleList();
-      showToast(`Added specialization "${newSpec}" to ${role.name}`);
+      if (!role.specializations.includes(newSpec)) {
+        role.specializations.push(newSpec);
+        saveData();
+        selectRole(roleId);
+        renderRolesGrid();
+        showToast(`Added "${newSpec}"`);
+      } else {
+        showToast('Already exists');
+      }
+    }
+    input.value = '';
+  }
+  
+  function removeSpecialization(roleId, index) {
+    const role = roles.find(r => r.id === roleId);
+    if (role && role.specializations && role.specializations[index]) {
+      role.specializations.splice(index, 1);
+      saveData();
+      selectRole(roleId);
+      renderRolesGrid();
+      showToast('Removed');
     }
   }
   
-  function removeSpecialization(roleId, specIndex) {
-    const roles = getRoles();
-    const role = roles.find(r => r.id === roleId);
-    if (!role) return;
-    
-    const removedSpec = role.specializations[specIndex];
-    role.specializations.splice(specIndex, 1);
-    setRoles(roles);
-    renderRoleEditor(roleId);
-    renderRoleList();
-    showToast(`Removed specialization "${removedSpec}" from ${role.name}`);
-  }
-  
   function saveRole(roleId) {
-    const roles = getRoles();
     const role = roles.find(r => r.id === roleId);
     if (!role) return;
     
     const newName = document.getElementById('roleName').value.trim();
     if (!newName) {
-      alert('Role name is required');
+      showToast('Name required');
       return;
     }
     
-    const oldName = role.name;
     role.name = newName;
     role.notes = document.getElementById('roleNotes').value;
-    
-    setRoles(roles);
-    renderRoleList();
-    document.getElementById('selectedRoleTitle').textContent = `Editing: ${escapeHtml(role.name)}`;
-    showToast(`Role "${oldName}" saved successfully`);
+    saveData();
+    renderRolesGrid();
+    selectRole(roleId);
+    showToast(`Saved "${role.name}"`);
   }
   
-  // ==================== ADD NEW ROLE ====================
+  function deleteRole(roleId) {
+    if (!confirm('Delete this role permanently?')) return;
+    roles = roles.filter(r => r.id !== roleId);
+    selectedRoleId = null;
+    saveData();
+    renderRolesGrid();
+    document.getElementById('detailPanel').innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #8aabb8;">Role deleted. Select another role from the left.</div>';
+    showToast('Role deleted');
+  }
+  
   function addNewRole() {
-    const roleName = prompt('Enter role name:', 'New Role');
-    if (!roleName || !roleName.trim()) return;
+    const name = prompt('Enter role name:');
+    if (!name || !name.trim()) return;
     
-    const roles = getRoles();
     const newRole = {
       id: generateId(),
-      name: roleName.trim(),
+      name: name.trim(),
       specializations: [],
       notes: ''
     };
-    
     roles.push(newRole);
-    setRoles(roles);
-    renderRoleList();
+    saveData();
+    renderRolesGrid();
     selectRole(newRole.id);
-    showToast(`Created new role: ${roleName}`);
+    showToast(`Created "${name.trim()}"`);
   }
   
-  // ==================== DELETE ROLE ====================
-  function deleteRole() {
-    if (!selectedRoleId) return;
-    
-    const roles = getRoles();
-    const role = roles.find(r => r.id === selectedRoleId);
-    if (!role) return;
-    
-    if (confirm(`Delete role "${role.name}"? This will remove it from all characters.`)) {
-      const updatedRoles = roles.filter(r => r.id !== selectedRoleId);
-      setRoles(updatedRoles);
-      selectedRoleId = null;
-      renderRoleList();
-      document.getElementById('selectedRoleTitle').textContent = 'Select a role to view or edit';
-      document.getElementById('deleteRoleBtn').style.display = 'none';
-      document.getElementById('panelContent').innerHTML = `
-        <div class="empty-state">
-          Role deleted<br>
-          <small>Click on a role from the left sidebar to view or edit details</small>
-        </div>
-      `;
-      showToast(`Deleted role: ${role.name}`);
-    }
-  }
-  
-  // ==================== IMPORT/EXPORT (UNIFIED - SAME FOR ALL TOOLS) ====================
   function exportData() {
-    // Export the FULL unified master data
-    const exportObj = {
-      type: "master",
-      version: masterData.version,
-      exportDate: new Date().toISOString(),
-      data: masterData.data
-    };
-    const dataStr = JSON.stringify(exportObj, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
+    const exportObj = { type: "master", version: "2.0", data: { roles: roles } };
+    const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `stillwaters_master_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+    a.download = `stillwaters_roles_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
     a.click();
-    URL.revokeObjectURL(a.href);
-    showToast('Full master data exported');
+    showToast('Exported');
   }
   
   function importData() {
@@ -338,154 +293,13 @@
       reader.onload = (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
-          
-          // Universal import handler - works with ANY file from ANY Still Waters tool
-          let newMasterData = null;
-          
-          // Case 1: Full unified master export (type: "master")
-          if (imported.type === "master" && imported.data) {
-            newMasterData = imported;
-            showToast(`Importing full master data (${Object.keys(imported.data).length} categories)`);
-          }
-          // Case 2: Legacy export with data.roles (from older version)
-          else if (imported.data && imported.data.roles) {
-            newMasterData = imported;
-            showToast(`Importing master data with roles`);
-          }
-          // Case 3: Direct roles array (from old Roles Manager)
-          else if (Array.isArray(imported) && imported[0]?.specializations !== undefined) {
-            newMasterData = {
-              type: "master",
-              version: "2.0",
-              exportDate: new Date().toISOString(),
-              data: {
-                ...masterData.data,
-                roles: imported
-              }
-            };
-            showToast(`Importing roles array (${imported.length} roles) - preserving other data`);
-          }
-          // Case 4: Locations export (has places, locationTypes, governments)
-          else if (imported.places || imported.locationTypes || imported.governments) {
-            newMasterData = {
-              type: "master",
-              version: "2.0",
-              exportDate: new Date().toISOString(),
-              data: {
-                ...masterData.data,
-                places: imported.places || masterData.data.places,
-                locationTypes: imported.locationTypes || masterData.data.locationTypes,
-                governments: imported.governments || masterData.data.governments
-              }
-            };
-            showToast(`Importing locations data - preserving roles and other data`);
-          }
-          // Case 5: Ranks export (array of ranks)
-          else if (Array.isArray(imported) && imported[0]?.priority !== undefined) {
-            newMasterData = {
-              type: "master",
-              version: "2.0",
-              exportDate: new Date().toISOString(),
-              data: {
-                ...masterData.data,
-                ranks: imported
-              }
-            };
-            showToast(`Importing ranks array (${imported.length} ranks) - preserving other data`);
-          }
-          // Case 6: Names export (has nameLists)
-          else if (imported.nameLists || imported.cityNameParts) {
-            newMasterData = {
-              type: "master",
-              version: "2.0",
-              exportDate: new Date().toISOString(),
-              data: {
-                ...masterData.data,
-                nameLists: imported.nameLists || masterData.data.nameLists,
-                cityNameParts: imported.cityNameParts || masterData.data.cityNameParts
-              }
-            };
-            showToast(`Importing names data - preserving roles and other data`);
-          }
-          // Case 7: Characters export (array of characters)
-          else if (Array.isArray(imported) && imported[0]?.gender !== undefined) {
-            newMasterData = {
-              type: "master",
-              version: "2.0",
-              exportDate: new Date().toISOString(),
-              data: {
-                ...masterData.data,
-                characters: imported
-              }
-            };
-            showToast(`Importing characters array (${imported.length} characters) - preserving roles`);
-          }
-          // Case 8: Any other object - try to merge what we can
-          else if (typeof imported === 'object') {
-            newMasterData = {
-              type: "master",
-              version: "2.0",
-              exportDate: new Date().toISOString(),
-              data: {
-                ...masterData.data,
-                ...imported
-              }
-            };
-            showToast(`Importing data - merging with existing`);
-          }
-          
-          if (newMasterData) {
-            // Merge roles specifically (preserve existing, add new)
-            if (newMasterData.data.roles && Array.isArray(newMasterData.data.roles)) {
-              const currentRoles = masterData.data.roles;
-              const newRoles = newMasterData.data.roles;
-              
-              newRoles.forEach(importedRole => {
-                const existingIndex = currentRoles.findIndex(r => r.id === importedRole.id);
-                if (existingIndex !== -1) {
-                  // Update existing role
-                  currentRoles[existingIndex] = { ...currentRoles[existingIndex], ...importedRole };
-                } else {
-                  // Add new role (generate ID if missing)
-                  if (!importedRole.id) importedRole.id = generateId();
-                  if (!importedRole.specializations) importedRole.specializations = [];
-                  if (!importedRole.notes) importedRole.notes = '';
-                  currentRoles.push(importedRole);
-                }
-              });
-              newMasterData.data.roles = currentRoles;
-            }
-            
-            // Update master data
-            masterData = {
-              version: newMasterData.version,
-              lastUpdated: new Date().toISOString(),
-              data: newMasterData.data
-            };
-            
-            saveMasterData();
-            renderRoleList();
-            
-            // Refresh display if a role was selected
-            if (selectedRoleId) {
-              const roleExists = masterData.data.roles.some(r => r.id === selectedRoleId);
-              if (roleExists) {
-                renderRoleEditor(selectedRoleId);
-              } else {
-                selectedRoleId = null;
-                document.getElementById('selectedRoleTitle').textContent = 'Select a role to view or edit';
-                document.getElementById('deleteRoleBtn').style.display = 'none';
-                document.getElementById('panelContent').innerHTML = '<div class="empty-state">Role data updated. Select a role from the list.</div>';
-              }
-            }
-            
-            showToast(`Import successful! Total roles: ${masterData.data.roles.length}`);
-          } else {
-            alert('Unable to parse file format. Please export from one of the Still Waters tools.');
-          }
-        } catch(err) { 
-          alert('Invalid JSON: ' + err.message); 
-        }
+          if (imported.data?.roles) roles = imported.data.roles;
+          else if (imported.roles) roles = imported.roles;
+          else if (Array.isArray(imported)) roles = imported;
+          saveData();
+          renderRolesGrid();
+          showToast(`Imported ${roles.length} roles`);
+        } catch(err) { alert('Invalid JSON'); }
       };
       reader.readAsText(file);
     };
@@ -497,10 +311,20 @@
     if (!container) {
       container = document.createElement('div');
       container.id = 'toast-container';
+      container.style.position = 'fixed';
+      container.style.bottom = '20px';
+      container.style.right = '20px';
+      container.style.zIndex = '9999';
       document.body.appendChild(container);
     }
     const toast = document.createElement('div');
-    toast.className = 'toast';
+    toast.style.background = '#0d1119';
+    toast.style.border = '1px solid #6a9ecf';
+    toast.style.borderRadius = '4px';
+    toast.style.padding = '8px 16px';
+    toast.style.color = '#6a9ecf';
+    toast.style.fontFamily = "'Cinzel', serif";
+    toast.style.fontSize = '0.75rem';
     toast.innerText = msg;
     container.appendChild(toast);
     setTimeout(() => toast.remove(), 2500);
@@ -508,45 +332,21 @@
   
   function escapeHtml(str) {
     if (!str) return '';
-    return String(str).replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
+    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
   }
   
-  // ==================== INIT ====================
-  function init() {
-    loadMasterData();
-    renderRoleList();
-    
-    document.getElementById('addRoleBtn').addEventListener('click', addNewRole);
-    document.getElementById('deleteRoleBtn').addEventListener('click', deleteRole);
-    document.getElementById('importBtn').addEventListener('click', importData);
-    document.getElementById('exportBtn').addEventListener('click', exportData);
-    
-    // Listen for cross-tab updates
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'stillwaters_master') {
-        loadMasterData();
-        renderRoleList();
-        if (selectedRoleId) {
-          const roleExists = getRoles().some(r => r.id === selectedRoleId);
-          if (roleExists) {
-            renderRoleEditor(selectedRoleId);
-          } else {
-            selectedRoleId = null;
-            document.getElementById('selectedRoleTitle').textContent = 'Select a role to view or edit';
-            document.getElementById('deleteRoleBtn').style.display = 'none';
-            document.getElementById('panelContent').innerHTML = '<div class="empty-state">Role data updated in another tab</div>';
-          }
-        }
-      }
-    });
-  }
+  window.selectRole = selectRole;
   
-  init();
+  loadData();
+  renderRolesGrid();
+  
+  document.getElementById('addRoleBtn').onclick = addNewRole;
+  document.getElementById('importBtn').onclick = importData;
+  document.getElementById('exportBtn').onclick = exportData;
+  document.getElementById('searchInput').oninput = (e) => {
+    searchTerm = e.target.value;
+    renderRolesGrid();
+  };
 </script>
 </body>
 </html>
