@@ -126,12 +126,62 @@
     .searchable-select-dropdown div:hover { background: var(--bg3); }
     .searchable-select-dropdown div:last-child { border-bottom: none; }
     
-    /* Character List */
-    .char-list { flex: 1; overflow-y: auto; padding: 12px; min-height: 0; }
-    .char-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
-    .char-item:hover, .char-item.selected { border-color: var(--accent); background: var(--bg3); }
-    .char-name { font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 600; color: var(--accent); display: flex; justify-content: space-between; align-items: center; }
-    .char-details { font-size: 0.6rem; color: var(--dim); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; }
+    /* Character List - Updated with scrollbar, smaller names, rank circle */
+    .char-list { 
+      flex: 1; 
+      overflow-y: auto; 
+      padding: 12px; 
+      min-height: 0;
+    }
+    
+    .char-item { 
+      background: var(--bg); 
+      border: 1px solid var(--border); 
+      border-radius: 8px; 
+      padding: 8px 10px; 
+      margin-bottom: 6px; 
+      cursor: pointer; 
+      transition: all 0.2s; 
+    }
+    .char-item:hover, .char-item.selected { 
+      border-color: var(--accent); 
+      background: var(--bg3); 
+    }
+    
+    .char-name { 
+      font-family: 'Cinzel', serif; 
+      font-size: 0.75rem; 
+      font-weight: 600; 
+      color: var(--accent); 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .rank-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-dim);
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      font-size: 0.65rem;
+      font-weight: bold;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+    
+    .char-details { 
+      font-size: 0.55rem; 
+      color: var(--dim); 
+      margin-top: 4px; 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 8px; 
+    }
     .deceased { color: var(--deceased); text-decoration: line-through; }
     
     /* Main Panel */
@@ -140,6 +190,25 @@
     .tab-btn { padding: 10px 16px; background: none; border: none; font-family: 'Cinzel', serif; font-size: 0.65rem; cursor: pointer; color: var(--dim); border-bottom: 2px solid transparent; white-space: nowrap; }
     .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
     .panel-content { flex: 1; overflow-y: auto; padding: 20px; }
+    
+    /* Mobile bottom padding */
+    @media (max-width: 768px) {
+      .panel-content {
+        padding-bottom: 80px !important;
+      }
+      .edit-tab, .view-section, .love-tab, .friends-tab, .roles-tab, .overview-tab {
+        padding-bottom: 60px;
+      }
+      .action-buttons {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg2);
+        padding: 12px;
+        margin: 0 -20px -20px -20px;
+        border-top: 1px solid var(--border);
+        z-index: 10;
+      }
+    }
     
     /* Collapsible Sections */
     .collapsible-section { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
@@ -174,6 +243,7 @@
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-size: 0.65rem; font-family: 'Cinzel', serif; color: var(--accent); margin-bottom: 4px; }
     .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 6px 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; font-size: 0.8rem; }
+    .form-group input:read-only { background: var(--bg); color: var(--dim); cursor: default; }
     
     .rank-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
     .rank-btn { padding: 4px 12px; background: var(--bg); border: 1px solid var(--border2); border-radius: 20px; font-size: 0.7rem; cursor: pointer; }
@@ -230,7 +300,7 @@
     .btn.danger { background: rgba(139,64,64,0.2); border-color: var(--danger); color: var(--danger-lt); }
     .btn.small { padding: 3px 8px; font-size: 0.6rem; }
     
-    /* Mobile */
+    /* Mobile base styles */
     @media (max-width: 768px) {
       .sidebar { position: absolute; top: 0; left: 0; bottom: 0; transform: translateX(-100%); z-index: 100; width: 280px; }
       .sidebar.mobile-visible { transform: translateX(0); }
@@ -271,91 +341,91 @@
       to { opacity: 0; transform: translateX(100%); }
     }
 	
-	/* Roles Tab Styles */
-.profession-card {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
-  transition: all 0.2s;
-}
-.profession-card:hover {
-  border-color: var(--accent);
-}
-.profession-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.profession-name {
-  font-family: 'Cinzel', serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--accent);
-}
-.profession-type {
-  font-size: 0.6rem;
-  padding: 2px 8px;
-  border-radius: 12px;
-  background: var(--bg2);
-}
-.profession-specs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 10px 0;
-}
-.spec-tag {
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.6rem;
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.spec-tag:hover {
-  border-color: var(--accent);
-}
-.spec-tag.selected {
-  background: var(--accent-dim);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.profession-notes {
-  font-size: 0.65rem;
-  color: var(--dim);
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border2);
-}
-.master-badge {
-  background: rgba(106, 158, 206, 0.2);
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 0.6rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.primary-star {
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.15s;
-}
-.primary-star:hover {
-  transform: scale(1.1);
-}
-.primary-star.active {
-  color: gold;
-  text-shadow: 0 0 4px rgba(255,215,0,0.5);
-}
+    /* Roles Tab Styles */
+    .profession-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    .profession-card:hover {
+      border-color: var(--accent);
+    }
+    .profession-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .profession-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .profession-type {
+      font-size: 0.6rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--bg2);
+    }
+    .profession-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0;
+    }
+    .spec-tag {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.6rem;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .spec-tag:hover {
+      border-color: var(--accent);
+    }
+    .spec-tag.selected {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .profession-notes {
+      font-size: 0.65rem;
+      color: var(--dim);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border2);
+    }
+    .master-badge {
+      background: rgba(106, 158, 206, 0.2);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.6rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .primary-star {
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.15s;
+    }
+    .primary-star:hover {
+      transform: scale(1.1);
+    }
+    .primary-star.active {
+      color: gold;
+      text-shadow: 0 0 4px rgba(255,215,0,0.5);
+    }
 </style>
 </head>
 <body>
@@ -574,24 +644,27 @@
     
     if (!filtered.length) { container.innerHTML = '<div class="empty-state">No characters found</div>'; return; }
     
-    container.innerHTML = filtered.map(c => {
-      const age = calculateAge(c.birthYear, c.isDeceased, c.deathYear);
-      const rankDisplay = getActiveRankDisplay(c);
-      const location = getCurrentLocation(c);
-      return `
-        <div class="char-item ${selectedCharId === c.id ? 'selected' : ''}" data-id="${c.id}">
-          <div class="char-name">
-            <span class="${c.isDeceased ? 'deceased' : ''}">${rankDisplay ? `${rankDisplay.display} ` : ''}${escapeHtml(c.name)} ${escapeHtml(c.surname || '')}</span>
-          </div>
-          <div class="char-details">
-            <span>${c.gender === 'male' ? '♂' : c.gender === 'female' ? '♀' : '⚥'}</span>
-            <span>${age} yrs</span>
-            <span>${location}</span>
-            ${c.isDeceased ? '<span>†</span>' : ''}
-          </div>
-        </div>
-      `;
-    }).join('');
+container.innerHTML = filtered.map(c => {
+  const age = calculateAge(c.birthYear, c.isDeceased, c.deathYear);
+  const rankDisplay = getActiveRankDisplay(c);
+  const location = getCurrentLocation(c);
+  return `
+    <div class="char-item ${selectedCharId === c.id ? 'selected' : ''}" data-id="${c.id}">
+      <div class="char-name">
+        <span class="${c.isDeceased ? 'deceased' : ''}">
+          ${rankDisplay ? `<span class="rank-circle">${rankDisplay.symbol}${rankDisplay.name ? rankDisplay.display.replace(rankDisplay.symbol, '') : ''}</span>` : ''}
+          ${escapeHtml(c.name)} ${escapeHtml(c.surname || '')}
+        </span>
+      </div>
+      <div class="char-details">
+        <span>${c.gender === 'male' ? '♂' : c.gender === 'female' ? '♀' : '⚥'}</span>
+        <span>${age} yrs</span>
+        <span>${location}</span>
+        ${c.isDeceased ? '<span>†</span>' : ''}
+      </div>
+    </div>
+  `;
+}).join('');
     document.querySelectorAll('.char-item').forEach(el => el.addEventListener('click', () => selectCharacter(el.dataset.id)));
   }
   
@@ -676,10 +749,33 @@ function renderEditTab() {
       <input id="surname" value="${escapeHtml(c.surname || '')}">
     </div>
   </div>
-  <div class="form-row"><div class="form-group"><label>Gender</label><select id="gender"><option value="male" ${c.gender === 'male' ? 'selected' : ''}>Male</option><option value="female" ${c.gender === 'female' ? 'selected' : ''}>Female</option><option value="unknown" ${c.gender === 'unknown' ? 'selected' : ''}>Unknown</option></select></div>
-  <div class="form-group"><label>Attraction</label><select id="attraction"><option value="both" ${c.attraction === 'both' ? 'selected' : ''}>Both</option><option value="men" ${c.attraction === 'men' ? 'selected' : ''}>Men</option><option value="women" ${c.attraction === 'women' ? 'selected' : ''}>Women</option><option value="neither" ${c.attraction === 'neither' ? 'selected' : ''}>Neither</option></select></div></div>
-  <div class="form-row"><div class="form-group"><label>Birth Year</label><input type="number" id="birthYear" value="${c.birthYear || ''}"></div>
-  <div class="form-group"><label>Role</label><input id="role" value="${escapeHtml(c.role || '')}"></div></div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Gender</label>
+      <select id="gender"><option value="male" ${c.gender === 'male' ? 'selected' : ''}>Male</option><option value="female" ${c.gender === 'female' ? 'selected' : ''}>Female</option><option value="unknown" ${c.gender === 'unknown' ? 'selected' : ''}>Unknown</option></select>
+    </div>
+    <div class="form-group">
+      <label>Attraction</label>
+      <select id="attraction"><option value="both" ${c.attraction === 'both' ? 'selected' : ''}>Both</option><option value="men" ${c.attraction === 'men' ? 'selected' : ''}>Men</option><option value="women" ${c.attraction === 'women' ? 'selected' : ''}>Women</option><option value="neither" ${c.attraction === 'neither' ? 'selected' : ''}>Neither</option></select>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Birth Year</label>
+      <input type="number" id="birthYear" value="${c.birthYear || ''}">
+    </div>
+    <div class="form-group">
+      <label>Age</label>
+      <input type="number" id="ageDisplay" readonly style="background:var(--bg); color:var(--dim);" value="${calculateAge(c.birthYear, c.isDeceased, c.deathYear)}">
+      <small style="font-size:0.55rem;">Auto-calculated</small>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Role</label>
+      <input id="role" value="${escapeHtml(c.role || '')}">
+    </div>
+  </div>
 </div></div>
         
         <div class="collapsible-section"><div class="section-header">Life & Death <span class="arrow">▶</span></div><div class="section-content">
@@ -692,6 +788,23 @@ function renderEditTab() {
             <div class="form-group"><label>Cause of Death</label><input id="deathCause" value="${escapeHtml(c.deathCause || '')}"></div></div>
           </div>
         </div></div>
+		
+		// Link birth year to age display
+const birthYearInput = document.getElementById('birthYear');
+const ageDisplay = document.getElementById('ageDisplay');
+if (birthYearInput && ageDisplay) {
+  const updateAge = () => {
+    const birthYear = parseInt(birthYearInput.value);
+    if (birthYear && !isNaN(birthYear)) {
+      const age = currentYear - birthYear;
+      ageDisplay.value = age >= 0 ? age : 0;
+    } else {
+      ageDisplay.value = '?';
+    }
+  };
+  birthYearInput.addEventListener('input', updateAge);
+  updateAge();
+}
         
         <div class="collapsible-section"><div class="section-header">Ranks <span class="arrow">▶</span></div><div class="section-content">
           <div id="ranksList"></div>
@@ -729,48 +842,61 @@ function renderEditTab() {
   const birthplaceDropdown = document.getElementById('birthplaceDropdown');
   const birthplaceOptions = Array.from(birthplaceSelect.options).map(opt => ({ value: opt.value, text: opt.textContent }));
   
-  function updateBirthplaceDropdown(filter = '') {
-    birthplaceDropdown.innerHTML = '';
-    const filtered = birthplaceOptions.filter(opt => opt.text.toLowerCase().includes(filter.toLowerCase()));
-    filtered.forEach(opt => {
-      const item = document.createElement('div');
-      item.textContent = opt.text;
-      item.style.padding = '6px 8px';
-      item.style.cursor = 'pointer';
-      item.onclick = () => {
-        birthplaceSearch.value = opt.text;
-        birthplaceSelect.value = opt.value;
-        birthplaceDropdown.style.display = 'none';
-        birthplaceSelect.dispatchEvent(new Event('change'));
-      };
-      item.onmouseenter = (e) => e.target.style.background = 'var(--bg3)';
-      item.onmouseleave = (e) => e.target.style.background = '';
-      birthplaceDropdown.appendChild(item);
-    });
-    if (filtered.length === 0) {
-      const empty = document.createElement('div');
-      empty.textContent = 'No locations found';
-      empty.style.padding = '6px 8px';
-      empty.style.color = 'var(--dim)';
-      empty.style.fontStyle = 'italic';
-      birthplaceDropdown.appendChild(empty);
-    }
-  }
-  
-  const selectedOption = birthplaceOptions.find(opt => opt.value === c.birthplaceId);
-  if (selectedOption) birthplaceSearch.value = selectedOption.text;
-  
-  birthplaceSearch.addEventListener('focus', () => {
-    updateBirthplaceDropdown('');
-    birthplaceDropdown.style.display = 'block';
-  });
-  birthplaceSearch.addEventListener('input', (e) => updateBirthplaceDropdown(e.target.value));
-  document.addEventListener('click', (e) => {
-    if (!birthplaceSearch.contains(e.target) && !birthplaceDropdown.contains(e.target)) {
+function updateBirthplaceDropdown(filter = '') {
+  birthplaceDropdown.innerHTML = '';
+  // Only show places with variableKey that match the filter
+  const filtered = birthplaceOptions.filter(opt => 
+    opt.variableKey && 
+    opt.variableKey.trim() !== '' && 
+    opt.text.toLowerCase().includes(filter.toLowerCase())
+  );
+  filtered.forEach(opt => {
+    const item = document.createElement('div');
+    item.textContent = opt.text;
+    item.style.padding = '6px 8px';
+    item.style.cursor = 'pointer';
+    item.onclick = () => {
+      birthplaceSearch.value = opt.text;
+      birthplaceSelect.value = opt.value;
       birthplaceDropdown.style.display = 'none';
-    }
+      birthplaceSelect.dispatchEvent(new Event('change'));
+    };
+    item.onmouseenter = (e) => e.target.style.background = 'var(--bg3)';
+    item.onmouseleave = (e) => e.target.style.background = '';
+    birthplaceDropdown.appendChild(item);
   });
+  if (filtered.length === 0) {
+    const empty = document.createElement('div');
+    empty.textContent = 'No locations found';
+    empty.style.padding = '6px 8px';
+    empty.style.color = 'var(--dim)';
+    empty.style.fontStyle = 'italic';
+    birthplaceDropdown.appendChild(empty);
+  }
+}
 
+// Filter birthplaceOptions to only include places with variableKey
+const birthplaceOptions = Array.from(birthplaceSelect.options)
+  .map(opt => ({ 
+    value: opt.value, 
+    text: opt.textContent,
+    variableKey: masterData.data.places.find(p => p.id === opt.value)?.variableKey
+  }))
+  .filter(opt => opt.variableKey && opt.variableKey.trim() !== '');
+
+const selectedOption = birthplaceOptions.find(opt => opt.value === c.birthplaceId);
+if (selectedOption) birthplaceSearch.value = selectedOption.text;
+
+birthplaceSearch.addEventListener('focus', () => {
+  updateBirthplaceDropdown('');
+  birthplaceDropdown.style.display = 'block';
+});
+birthplaceSearch.addEventListener('input', (e) => updateBirthplaceDropdown(e.target.value));
+document.addEventListener('click', (e) => {
+  if (!birthplaceSearch.contains(e.target) && !birthplaceDropdown.contains(e.target)) {
+    birthplaceDropdown.style.display = 'none';
+  }
+});
 // Random name helper function
 function getRandomNameFromCountryList(gender, countryId) {
   const nameList = masterData.data.nameLists[countryId];
@@ -1609,23 +1735,41 @@ function openAddPartnerModal(charId) {
       </div>
     `).join('');
     
-    document.querySelectorAll('.partner-option').forEach(opt => {
-      opt.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const partnerId = opt.dataset.id;
-        if (!c.relationships) c.relationships = [];
-        c.relationships.push({ 
-          partnerId: partnerId, 
-          status: 'ongoing', 
-          details: { startYear: currentYear } 
-        });
-        saveMasterData();
-        modal.remove();
-        renderLoveTab();
-        showToast('Partner added');
-      });
+document.querySelectorAll('.partner-option').forEach(opt => {
+  opt.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const partnerId = opt.dataset.id;
+    if (!c.relationships) c.relationships = [];
+    
+    // Add to current character
+    c.relationships.push({ 
+      partnerId: partnerId, 
+      status: 'ongoing', 
+      details: { startYear: currentYear } 
     });
-  }
+    
+    // Add reverse relationship to partner
+    const partner = masterData.data.characters.find(ch => ch.id === partnerId);
+    if (partner) {
+      if (!partner.relationships) partner.relationships = [];
+      // Check if reverse relationship already exists
+      const reverseExists = partner.relationships.some(r => r.partnerId === c.id);
+      if (!reverseExists) {
+        partner.relationships.push({
+          partnerId: c.id,
+          status: 'ongoing',
+          details: { startYear: currentYear }
+        });
+      }
+    }
+    
+    saveMasterData();
+    modal.remove();
+    renderLoveTab();
+    showToast('Partner added');
+  });
+});
+
   
   const modal = document.createElement('div'); 
   modal.className = 'modal active';
@@ -1757,15 +1901,23 @@ function openPartnerDetails(charId, partnerId) {
     showToast('Relationship updated');
   });
   
-  document.getElementById('deleteRelBtn').addEventListener('click', () => {
-    if (confirm('Remove this relationship permanently?')) {
-      c.relationships = c.relationships.filter(r => r.partnerId !== partnerId);
-      saveMasterData();
-      modal.remove();
-      renderLoveTab();
-      showToast('Relationship removed');
+document.getElementById('deleteRelBtn').addEventListener('click', () => {
+  if (confirm('Remove this relationship permanently?')) {
+    // Remove from current character
+    c.relationships = c.relationships.filter(r => r.partnerId !== partnerId);
+    
+    // Remove from partner's relationships
+    const partner = masterData.data.characters.find(ch => ch.id === partnerId);
+    if (partner && partner.relationships) {
+      partner.relationships = partner.relationships.filter(r => r.partnerId !== c.id);
     }
-  });
+    
+    saveMasterData();
+    modal.remove();
+    renderLoveTab();
+    showToast('Relationship removed');
+  }
+});
   
   document.getElementById('closeRelModal').addEventListener('click', () => modal.remove());
   modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
@@ -4551,9 +4703,62 @@ function renderLoveTab() {
   });
 }
 
+function checkIfRelated(charId, partnerId) {
+  const char = masterData.data.characters.find(c => c.id === charId);
+  const partner = masterData.data.characters.find(c => c.id === partnerId);
+  if (!char || !partner) return null;
+  
+  const relations = [];
+  
+  // Check if siblings (share at least one parent)
+  if ((char.motherId && partner.motherId && char.motherId === partner.motherId) ||
+      (char.fatherId && partner.fatherId && char.fatherId === partner.fatherId)) {
+    relations.push('siblings');
+  }
+  
+  // Check if parent-child
+  if (char.motherId === partnerId || char.fatherId === partnerId) {
+    relations.push(`${partner.name} is parent of ${char.name}`);
+  }
+  if (partner.motherId === charId || partner.fatherId === charId) {
+    relations.push(`${char.name} is parent of ${partner.name}`);
+  }
+  
+  // Check cousins (share grandparents)
+  const getGrandparents = (person) => {
+    const grandparents = [];
+    if (person.motherId) {
+      const mother = masterData.data.characters.find(c => c.id === person.motherId);
+      if (mother) {
+        if (mother.motherId) grandparents.push(mother.motherId);
+        if (mother.fatherId) grandparents.push(mother.fatherId);
+      }
+    }
+    if (person.fatherId) {
+      const father = masterData.data.characters.find(c => c.id === person.fatherId);
+      if (father) {
+        if (father.motherId) grandparents.push(father.motherId);
+        if (father.fatherId) grandparents.push(father.fatherId);
+      }
+    }
+    return grandparents;
+  };
+  
+  const charGrandparents = getGrandparents(char);
+  const partnerGrandparents = getGrandparents(partner);
+  const commonGrandparents = charGrandparents.filter(g => partnerGrandparents.includes(g));
+  if (commonGrandparents.length > 0) {
+    relations.push('cousins');
+  }
+  
+  return relations.length > 0 ? relations : null;
+}
+
 function openAddPartnerModal(charId) {
   const c = masterData.data.characters.find(ch => ch.id === charId);
   const existingPartnerIds = (c.relationships || []).map(r => r.partnerId);
+  
+  
   
   // Get all locations for filter dropdown
   const allLocations = [...new Set(masterData.data.characters.map(ch => getCurrentLocation(ch)))];
@@ -4614,23 +4819,49 @@ function openAddPartnerModal(charId) {
       </div>
     `).join('');
     
-    document.querySelectorAll('.partner-option').forEach(opt => {
-      opt.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const partnerId = opt.dataset.id;
-        if (!c.relationships) c.relationships = [];
-        c.relationships.push({ 
-          partnerId: partnerId, 
-          status: 'ongoing', 
-          details: { startYear: currentYear } 
-        });
-        saveMasterData();
-        modal.remove();
-        renderLoveTab();
-        showToast('Partner added');
-      });
+document.querySelectorAll('.partner-option').forEach(opt => {
+  opt.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const partnerId = opt.dataset.id;
+    
+    // Check for family relationship
+    const relations = checkIfRelated(c.id, partnerId);
+    if (relations && relations.length > 0) {
+      const warningMsg = `⚠️ WARNING: This person is related as ${relations.join(', ')}. Continue anyway?`;
+      if (!confirm(warningMsg)) {
+        return;
+      }
+    }
+    
+    if (!c.relationships) c.relationships = [];
+    
+    // Add to current character
+    c.relationships.push({ 
+      partnerId: partnerId, 
+      status: 'ongoing', 
+      details: { startYear: currentYear } 
     });
-  }
+    
+    // Add reverse relationship to partner
+    const partner = masterData.data.characters.find(ch => ch.id === partnerId);
+    if (partner) {
+      if (!partner.relationships) partner.relationships = [];
+      const reverseExists = partner.relationships.some(r => r.partnerId === c.id);
+      if (!reverseExists) {
+        partner.relationships.push({
+          partnerId: c.id,
+          status: 'ongoing',
+          details: { startYear: currentYear }
+        });
+      }
+    }
+    
+    saveMasterData();
+    modal.remove();
+    renderLoveTab();
+    showToast('Partner added');
+  });
+});
   
   const modal = document.createElement('div'); 
   modal.className = 'modal active';
