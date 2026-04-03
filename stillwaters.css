@@ -1,5 +1,5 @@
 /* stillwaters.css - Shared Styles for All Still Waters Tools */
-/* Version 4.1 - Fixed Scrollbars & Locations Manager */
+/* Version 4.2 - Fixed Locations Manager Buttons */
 
 /* ============================================
    ROOT VARIABLES
@@ -194,7 +194,7 @@ label {
 }
 
 /* ============================================
-   SCROLLBARS - FIXED FOR ALL
+   SCROLLBARS
    ============================================ */
 ::-webkit-scrollbar {
   width: 6px;
@@ -628,6 +628,14 @@ label {
   gap: 6px;
 }
 
+/* CRITICAL BUTTON FIX - NOT INSIDE MEDIA QUERY */
+#addTypeBtn, #addGovBtn, #addPlaceBtn, #importLocBtn, #exportLocBtn {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  z-index: 1000 !important;
+  position: relative !important;
+}
+
 .place-list {
   flex: 1;
   overflow-y: auto;
@@ -842,7 +850,7 @@ label {
 }
 
 /* ============================================
-   RANK MANAGER - WITH SCROLLBAR
+   RANK MANAGER
    ============================================ */
 .rank-container {
   max-width: 1400px;
@@ -1818,40 +1826,4 @@ footer {
   .manage-section {
     padding: 12px;
   }
-  
-  /* ============================================
-   LOCATIONS MANAGER BUTTON FIX
-   ============================================ */
-.locations-app .sidebar-actions .btn,
-.locations-app .sidebar-actions button {
-  position: relative;
-  z-index: 100;
-  pointer-events: auto;
 }
-
-/* Ensure buttons in sidebar are clickable */
-.locations-app .sidebar-header {
-  position: relative;
-  z-index: 10;
-}
-
-/* Fix for tree header buttons not interfering */
-.tree-header .btn,
-.tree-header button {
-  pointer-events: auto !important;
-  position: relative;
-  z-index: 10;
-}
-
-/* Make sure buttons are above tree items */
-.place-list {
-  position: relative;
-  z-index: 1;
-}
-
-.locations-app .sidebar button {
-  cursor: pointer;
-  pointer-events: auto;
-}
-}
-
